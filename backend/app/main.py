@@ -1,5 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.models import (
+    User,
+    SellerProfile,
+    SellerSocialLink,
+    Listing,
+    ListingImage,
+    Order,
+    Payment,
+    Review,
+    Wishlist,
+    Follow,
+    Notification,
+)
+from app.routers import auth
 
 app = FastAPI(title="Drop Found API")
 
@@ -10,6 +24,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 
 
 @app.get("/")
