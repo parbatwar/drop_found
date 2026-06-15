@@ -26,9 +26,9 @@ def register(userdata: UserCreate, db: Session = Depends(get_db)):
         last_name=userdata.last_name,
         phone=userdata.phone,
     )
-    db.add(new_user)  # add to session
-    db.commit()  # save to database
-    db.refresh(new_user)  # refresh to get generated fields like id, created_at
+    db.add(new_user)        # add to session
+    db.commit()             # save to database
+    db.refresh(new_user)    # refresh to get generated fields like id, created_at
 
     token = create_access_token(user_id=str(new_user.id), role=new_user.role.value)
     return {"access_token": token, "token_type": "bearer"}

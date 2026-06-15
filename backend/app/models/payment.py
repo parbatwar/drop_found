@@ -15,10 +15,16 @@ class Payment(Base):
     order_id = Column(
         UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False, unique=True
     )
-    method = Column(Enum(PaymentMethod), nullable=False)
+    method = Column(
+        Enum(PaymentMethod, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     transaction_ref = Column(String(255), nullable=True, unique=True)
     amount = Column(Numeric(10, 2), nullable=False)
-    status = Column(Enum(PaymentStatus), nullable=False)
+    status = Column(
+        Enum(PaymentStatus, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

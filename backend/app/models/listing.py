@@ -35,11 +35,26 @@ class Listing(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
     price = Column(Numeric(10, 2), nullable=False)
-    condition = Column(Enum(ListingCondition), nullable=True)
-    status = Column(Enum(ListingStatus), nullable=False, default=ListingStatus.ACTIVE)
-    section = Column(Enum(ListingSection), nullable=False)
-    category = Column(Enum(ListingCategory), nullable=False)
-    size = Column(Enum(ListingSize), nullable=True)
+    condition = Column(
+        Enum(ListingCondition, values_callable=lambda x: [e.value for e in x]),
+        nullable=True,
+    )
+    status = Column(
+        Enum(ListingStatus, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=ListingStatus.ACTIVE,
+    )
+    section = Column(
+        Enum(ListingSection, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
+    category = Column(
+        Enum(ListingCategory, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
+    size = Column(
+        Enum(ListingSize, values_callable=lambda x: [e.value for e in x]), nullable=True
+    )
     is_boosted = Column(Boolean, default=False, nullable=False)
     boost_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -15,9 +15,16 @@ class Order(Base):
         UUID(as_uuid=True), ForeignKey("seller_profiles.id"), nullable=False
     )
     listing_id = Column(UUID(as_uuid=True), ForeignKey("listings.id"), nullable=False)
-    status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
+    status = Column(
+        Enum(OrderStatus, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=OrderStatus.PENDING,
+    )
     total_amount = Column(Numeric(10, 2), nullable=False)
-    delivery_method = Column(Enum(DeliveryMethod), nullable=False)
+    delivery_method = Column(
+        Enum(DeliveryMethod, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     delivery_fee = Column(Numeric(10, 2), nullable=False)
     delivery_address = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

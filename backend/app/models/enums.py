@@ -1,19 +1,24 @@
 import enum
 
 
-class UserRole(enum.Enum):
+class UserRole(str, enum.Enum):
     BUYER = "buyer"
     SELLER = "seller"
     ADMIN = "admin"
 
 
-class VerificationStatus(enum.Enum):
+class SellerType(str, enum.Enum):
+    THRIFT = "thrift"
+    SURPLUS = "surplus"
+
+
+class VerificationStatus(str, enum.Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
 
 
-class SocialPlatform(enum.Enum):
+class SocialPlatform(str, enum.Enum):
     FACEBOOK = "facebook"
     GOOGLE = "google"
     TWITTER = "twitter"
@@ -22,25 +27,25 @@ class SocialPlatform(enum.Enum):
     WEBSITE = "website"
 
 
-class ListingCondition(enum.Enum):
+class ListingCondition(str, enum.Enum):
     LIKE_NEW = "like_new"
     GOOD = "good"
     FAIR = "fair"
     OKAY = "okay"
 
 
-class ListingStatus(enum.Enum):
+class ListingStatus(str, enum.Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     SOLD = "sold"
 
 
-class ListingSection(enum.Enum):
+class ListingSection(str, enum.Enum):
     THRIFT = "thrift"
     SURPLUS = "surplus"
 
 
-class ListingCategory(enum.Enum):
+class ListingCategory(str, enum.Enum):
     TOPS = "tops"
     DRESSES = "dresses"
     JACKET = "jacket"
@@ -53,7 +58,7 @@ class ListingCategory(enum.Enum):
     OTHER = "other"
 
 
-class ListingSize(enum.Enum):
+class ListingSize(str, enum.Enum):
     XS = "xs"
     S = "s"
     M = "m"
@@ -63,35 +68,35 @@ class ListingSize(enum.Enum):
     FREE_SIZE = "free_size"
 
 
-class OrderStatus(enum.Enum):
+class OrderStatus(str, enum.Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
 
 
-class DeliveryMethod(enum.Enum):
+class DeliveryMethod(str, enum.Enum):
     SELLER = "seller"
     COURIER = "courier"
 
 
-class PaymentMethod(enum.Enum):
+class PaymentMethod(str, enum.Enum):
     ESEWA = "esewa"
     KHALTI = "khalti"
     COD = "cod"
 
 
-class PaymentStatus(enum.Enum):
+class PaymentStatus(str, enum.Enum):
     PENDING = "pending"
     SUCCESS = "success"
     FAILED = "failed"
 
 
-class PayoutStatus(enum.Enum):
+class PayoutStatus(str, enum.Enum):
     PENDING = "pending"
     PAID = "paid"
 
 
-class BusinessType(enum.Enum):
+class BusinessType(str, enum.Enum):
     BRAND = "brand"
     RETAILER = "retailer"

@@ -23,7 +23,11 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_email_verified = Column(Boolean, default=False)
-    role = Column(Enum(UserRole), default=UserRole.BUYER, nullable=False)
+    role = Column(
+        Enum(UserRole, values_callable=lambda x: [e.value for e in x]),
+        default=UserRole.BUYER,
+        nullable=False,
+    )
 
     # relationships
     seller_profile = relationship("SellerProfile", back_populates="user", uselist=False)
