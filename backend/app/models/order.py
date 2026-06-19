@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Enum, DateTime, ForeignKey, Numeric, UUID, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Numeric, UUID, Text
+from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
@@ -16,14 +17,15 @@ class Order(Base):
     )
     listing_id = Column(UUID(as_uuid=True), ForeignKey("listings.id"), nullable=False)
     status = Column(
-        Enum(OrderStatus, values_callable=lambda x: [e.value for e in x]),
+        Enum(OrderStatus, native_enum=False),
         nullable=False,
-        default=OrderStatus.PENDING,
+        default=OrderStatus.pending,
     )
     total_amount = Column(Numeric(10, 2), nullable=False)
     delivery_method = Column(
-        Enum(DeliveryMethod, values_callable=lambda x: [e.value for e in x]),
+        Enum(DeliveryMethod, native_enum=False),
         nullable=False,
+        default=DeliveryMethod.seller,
     )
     delivery_fee = Column(Numeric(10, 2), nullable=False)
     delivery_address = Column(Text, nullable=False)

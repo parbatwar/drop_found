@@ -37,7 +37,7 @@ class SellerService:
         )
 
         db.add(seller)
-        current_user.role = UserRole.SELLER
+        current_user.role = UserRole.seller
 
         db.commit()
         db.refresh(seller)

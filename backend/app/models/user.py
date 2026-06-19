@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Enum, String, Boolean, DateTime, UUID
+from sqlalchemy import Column, String, Boolean, DateTime, UUID
+from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -24,9 +25,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_email_verified = Column(Boolean, default=False)
     role = Column(
-        Enum(UserRole, values_callable=lambda x: [e.value for e in x]),
-        default=UserRole.BUYER,
-        nullable=False,
+        Enum(UserRole, native_enum=False), default=UserRole.buyer, nullable=False
     )
 
     # relationships

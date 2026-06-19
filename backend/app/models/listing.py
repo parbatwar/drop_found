@@ -2,7 +2,6 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Enum,
     ForeignKey,
     Integer,
     Numeric,
@@ -10,6 +9,7 @@ from sqlalchemy import (
     Text,
     UUID,
 )
+from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
@@ -35,26 +35,18 @@ class Listing(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
     price = Column(Numeric(10, 2), nullable=False)
-    condition = Column(
-        Enum(ListingCondition, values_callable=lambda x: [e.value for e in x]),
-        nullable=True,
-    )
+    condition = Column(Enum(ListingCondition, native_enum=False), nullable=True)
     status = Column(
-        Enum(ListingStatus, values_callable=lambda x: [e.value for e in x]),
+        Enum(ListingStatus, native_enum=False),
         nullable=False,
-        default=ListingStatus.ACTIVE,
+        default=ListingStatus.active,
     )
-    section = Column(
-        Enum(ListingSection, values_callable=lambda x: [e.value for e in x]),
-        nullable=False,
-    )
+    section = Column(Enum(ListingSection, native_enum=False), nullable=False)
     category = Column(
-        Enum(ListingCategory, values_callable=lambda x: [e.value for e in x]),
+        Enum(ListingCategory, native_enum=False),
         nullable=False,
     )
-    size = Column(
-        Enum(ListingSize, values_callable=lambda x: [e.value for e in x]), nullable=True
-    )
+    size = Column(Enum(ListingSize, native_enum=False), nullable=True)
     is_boosted = Column(Boolean, default=False, nullable=False)
     boost_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

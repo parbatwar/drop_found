@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Enum, DateTime, ForeignKey, Numeric, String, UUID
+from sqlalchemy import Column, DateTime, ForeignKey, Numeric, String, UUID
+from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -16,14 +17,16 @@ class Payment(Base):
         UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False, unique=True
     )
     method = Column(
-        Enum(PaymentMethod, values_callable=lambda x: [e.value for e in x]),
+        Enum(PaymentMethod, native_enum=False),
         nullable=False,
+        default=PaymentMethod.cod,
     )
     transaction_ref = Column(String(255), nullable=True, unique=True)
     amount = Column(Numeric(10, 2), nullable=False)
     status = Column(
-        Enum(PaymentStatus, values_callable=lambda x: [e.value for e in x]),
+        Enum(PaymentStatus, native_enum=False),
         nullable=False,
+        default=PaymentStatus.pending,
     )
     created_at = Column(DateTime, default=datetime.utcnow)
 

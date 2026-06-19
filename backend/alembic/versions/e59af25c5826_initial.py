@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: a37002d87468
+Revision ID: e59af25c5826
 Revises: 
-Create Date: 2026-06-12 13:56:49.595827
+Create Date: 2026-06-18 12:42:16.253137
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a37002d87468'
+revision: str = 'e59af25c5826'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -32,7 +32,7 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('is_email_verified', sa.Boolean(), nullable=True),
-    sa.Column('role', sa.Enum('BUYER', 'SELLER', 'ADMIN', name='userrole'), nullable=False),
+    sa.Column('role', sa.Enum('buyer', 'seller', 'admin', name='userrole', native_enum=False), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -53,9 +53,9 @@ def upgrade() -> None:
     sa.Column('slug', sa.String(length=255), nullable=False),
     sa.Column('bio', sa.Text(), nullable=True),
     sa.Column('location', sa.String(length=255), nullable=True),
+    sa.Column('seller_type', sa.Enum('thrift', 'surplus', name='sellertype', native_enum=False), nullable=False),
     sa.Column('avatar_url', sa.String(length=255), nullable=True),
-    sa.Column('id_document_url', sa.String(length=255), nullable=True),
-    sa.Column('verification_status', sa.Enum('PENDING', 'APPROVED', 'REJECTED', name='verificationstatus'), nullable=False),
+    sa.Column('verification_status', sa.Enum('pending', 'approved', 'rejected', name='verificationstatus', native_enum=False), nullable=False),
     sa.Column('verified_at', sa.DateTime(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
@@ -79,11 +79,11 @@ def upgrade() -> None:
     sa.Column('title', sa.String(length=255), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('price', sa.Numeric(precision=10, scale=2), nullable=False),
-    sa.Column('condition', sa.Enum('LIKE_NEW', 'GOOD', 'FAIR', 'OKAY', name='listingcondition'), nullable=True),
-    sa.Column('status', sa.Enum('ACTIVE', 'INACTIVE', 'SOLD', name='listingstatus'), nullable=False),
-    sa.Column('section', sa.Enum('THRIFT', 'SURPLUS', name='listingsection'), nullable=False),
-    sa.Column('category', sa.Enum('TOPS', 'DRESSES', 'JACKET', 'FOOTWEAR', 'ACCESSORIES', 'BAGS', 'TSHIRTS', 'SHIRTS', 'PANTS', 'OTHER', name='listingcategory'), nullable=False),
-    sa.Column('size', sa.Enum('XS', 'S', 'M', 'L', 'XL', 'XXL', 'FREE_SIZE', name='listingsize'), nullable=True),
+    sa.Column('condition', sa.Enum('like_new', 'good', 'fair', 'okay', name='listingcondition', native_enum=False), nullable=True),
+    sa.Column('status', sa.Enum('active', 'inactive', 'sold', name='listingstatus', native_enum=False), nullable=False),
+    sa.Column('section', sa.Enum('thrift', 'surplus', name='listingsection', native_enum=False), nullable=False),
+    sa.Column('category', sa.Enum('tops', 'dresses', 'jacket', 'footwear', 'accessories', 'bags', 'tshirts', 'shirts', 'pants', 'other', name='listingcategory', native_enum=False), nullable=False),
+    sa.Column('size', sa.Enum('xs', 's', 'm', 'l', 'xl', 'xxl', 'free_size', name='listingsize', native_enum=False), nullable=True),
     sa.Column('is_boosted', sa.Boolean(), nullable=False),
     sa.Column('boost_expires_at', sa.DateTime(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -94,7 +94,7 @@ def upgrade() -> None:
     op.create_table('seller_social_links',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('seller_id', sa.UUID(), nullable=False),
-    sa.Column('platform', sa.Enum('FACEBOOK', 'GOOGLE', 'TWITTER', 'INSTAGRAM', 'TIKTOK', 'WEBSITE', name='socialplatform'), nullable=False),
+    sa.Column('platform', sa.Enum('facebook', 'google', 'twitter', 'instagram', 'tiktok', 'website', name='socialplatform', native_enum=False), nullable=False),
     sa.Column('url', sa.String(length=255), nullable=False),
     sa.ForeignKeyConstraint(['seller_id'], ['seller_profiles.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -113,9 +113,9 @@ def upgrade() -> None:
     sa.Column('buyer_id', sa.UUID(), nullable=False),
     sa.Column('seller_id', sa.UUID(), nullable=False),
     sa.Column('listing_id', sa.UUID(), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'DELIVERED', 'CANCELLED', name='orderstatus'), nullable=False),
+    sa.Column('status', sa.Enum('pending', 'confirmed', 'delivered', 'cancelled', name='orderstatus', native_enum=False), nullable=False),
     sa.Column('total_amount', sa.Numeric(precision=10, scale=2), nullable=False),
-    sa.Column('delivery_method', sa.Enum('SELLER', 'COURIER', name='deliverymethod'), nullable=False),
+    sa.Column('delivery_method', sa.Enum('seller', 'courier', name='deliverymethod', native_enum=False), nullable=False),
     sa.Column('delivery_fee', sa.Numeric(precision=10, scale=2), nullable=False),
     sa.Column('delivery_address', sa.Text(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -137,10 +137,10 @@ def upgrade() -> None:
     op.create_table('payments',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('order_id', sa.UUID(), nullable=False),
-    sa.Column('method', sa.Enum('ESEWA', 'KHALTI', 'COD', name='paymentmethod'), nullable=False),
+    sa.Column('method', sa.Enum('esewa', 'khalti', 'cod', name='paymentmethod', native_enum=False), nullable=False),
     sa.Column('transaction_ref', sa.String(length=255), nullable=True),
     sa.Column('amount', sa.Numeric(precision=10, scale=2), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'SUCCESS', 'FAILED', name='paymentstatus'), nullable=False),
+    sa.Column('status', sa.Enum('pending', 'success', 'failed', name='paymentstatus', native_enum=False), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ),
     sa.PrimaryKeyConstraint('id'),

@@ -2,101 +2,101 @@ import enum
 
 
 class UserRole(str, enum.Enum):
-    BUYER = "buyer"
-    SELLER = "seller"
-    ADMIN = "admin"
+    buyer = "buyer"
+    seller = "seller"
+    admin = "admin"
 
 
 class SellerType(str, enum.Enum):
-    THRIFT = "thrift"
-    SURPLUS = "surplus"
+    thrift = "thrift"
+    surplus = "surplus"
 
 
 class VerificationStatus(str, enum.Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
 
 
 class SocialPlatform(str, enum.Enum):
-    FACEBOOK = "facebook"
-    GOOGLE = "google"
-    TWITTER = "twitter"
-    INSTAGRAM = "instagram"
-    TIKTOK = "tiktok"
-    WEBSITE = "website"
+    facebook = "facebook"
+    google = "google"
+    twitter = "twitter"
+    instagram = "instagram"
+    tiktok = "tiktok"
+    website = "website"
 
 
 class ListingCondition(str, enum.Enum):
-    LIKE_NEW = "like_new"
-    GOOD = "good"
-    FAIR = "fair"
-    OKAY = "okay"
+    like_new = "like_new"
+    good = "good"
+    fair = "fair"
+    okay = "okay"
 
 
 class ListingStatus(str, enum.Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SOLD = "sold"
+    active = "active"
+    inactive = "inactive"
+    sold = "sold"
 
 
 class ListingSection(str, enum.Enum):
-    THRIFT = "thrift"
-    SURPLUS = "surplus"
+    thrift = "thrift"
+    surplus = "surplus"
 
 
 class ListingCategory(str, enum.Enum):
-    TOPS = "tops"
-    DRESSES = "dresses"
-    JACKET = "jacket"
-    FOOTWEAR = "footwear"
-    ACCESSORIES = "accessories"
-    BAGS = "bags"
-    TSHIRTS = "tshirts"
-    SHIRTS = "shirts"
-    PANTS = "pants"
-    OTHER = "other"
+    tops = "tops"
+    dresses = "dresses"
+    jacket = "jacket"
+    footwear = "footwear"
+    accessories = "accessories"
+    bags = "bags"
+    tshirts = "tshirts"
+    shirts = "shirts"
+    pants = "pants"
+    other = "other"
 
 
 class ListingSize(str, enum.Enum):
-    XS = "xs"
-    S = "s"
-    M = "m"
-    L = "l"
-    XL = "xl"
-    XXL = "xxl"
-    FREE_SIZE = "free_size"
+    xs = "xs"
+    s = "s"
+    m = "m"
+    l = "l"
+    xl = "xl"
+    xxl = "xxl"
+    free_size = "free_size"
 
 
 class OrderStatus(str, enum.Enum):
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    pending = "pending"
+    confirmed = "confirmed"
+    delivered = "delivered"
+    cancelled = "cancelled"
 
 
 class DeliveryMethod(str, enum.Enum):
-    SELLER = "seller"
-    COURIER = "courier"
+    seller = "seller"
+    courier = "courier"
 
 
 class PaymentMethod(str, enum.Enum):
-    ESEWA = "esewa"
-    KHALTI = "khalti"
-    COD = "cod"
+    esewa = "esewa"
+    khalti = "khalti"
+    cod = "cod"
 
 
 class PaymentStatus(str, enum.Enum):
-    PENDING = "pending"
-    SUCCESS = "success"
-    FAILED = "failed"
+    pending = "pending"
+    success = "success"
+    failed = "failed"
 
 
 class PayoutStatus(str, enum.Enum):
-    PENDING = "pending"
-    PAID = "paid"
+    pending = "pending"
+    paid = "paid"
 
 
 class BusinessType(str, enum.Enum):
-    BRAND = "brand"
-    RETAILER = "retailer"
+    brand = "brand"
+    retailer = "retailer"

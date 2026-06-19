@@ -1,4 +1,5 @@
-from sqlalchemy import Column, ForeignKey, String, Enum, DateTime, UUID, Text
+from sqlalchemy import Column, ForeignKey, String, DateTime, UUID, Text
+from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -19,15 +20,13 @@ class SellerProfile(Base):
     slug = Column(String(255), nullable=False, unique=True)
     bio = Column(Text)
     location = Column(String(255))
-    seller_type = Column(
-        Enum(SellerType, values_callable=lambda x: [e.value for e in x]), nullable=False
-    )
+    seller_type = Column(Enum(SellerType, native_enum=False), nullable=False)
     avatar_url = Column(String(255))
     # id_document_url = Column(String(255))
     verification_status = Column(
-        Enum(VerificationStatus, values_callable=lambda x: [e.value for e in x]),
+        Enum(VerificationStatus, native_enum=False),
+        default=VerificationStatus.pending.value,
         nullable=False,
-        default=VerificationStatus.PENDING,
     )
     verified_at = Column(DateTime)
 
@@ -56,10 +55,7 @@ class SellerSocialLink(Base):
     seller_id = Column(
         UUID(as_uuid=True), ForeignKey("seller_profiles.id"), nullable=False
     )
-    platform = Column(
-        Enum(SocialPlatform, values_callable=lambda x: [e.value for e in x]),
-        nullable=False,
-    )
+    platform = Column(Enum(SocialPlatform, native_enum=False), nullable=False)
     url = Column(String(255), nullable=False)
 
     seller = relationship("SellerProfile", back_populates="social_links")
