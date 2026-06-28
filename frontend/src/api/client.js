@@ -4,7 +4,7 @@ import axios from 'axios'; // axios vaneko API call garne library ho
 
 // creating axios object with baseURL
 const apiClient = axios.create({ 
-    baseURL: 'https://localhost:8000/api', 
+    baseURL: 'http://localhost:8000',
 })
 
 // Request server ma janu vanda agadi run yo code
