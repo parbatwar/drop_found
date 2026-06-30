@@ -1,6 +1,6 @@
 # Drop Found 👕🛍️
 
-An online clothing marketplace built to connect sellers with buyers through a simple and accessible platform for thrift and surplus fashion.
+An online clothing marketplace built to connect sellers with buyers through a simple and accessible platform.
 
 ## Status
 
@@ -20,10 +20,6 @@ Currently building the MVP (Minimum Viable Product).
 
 * Seller onboarding flow
 * Lightweight verification process
-* Support for:
-
-  * Thrift sellers
-  * Surplus sellers
 
 ### Listings
 
