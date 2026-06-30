@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createListing } from '../../api/listings';
 import { getMySellerProfile } from '../../api/seller';
+import { getListingOptions } from '../../api/meta';
 
 function CreateListing() {
     const navigate = useNavigate();
     const [seller, setSeller] = useState(null);
     const [loadingSeller, setLoadingSeller] = useState(true);
+    const [options, setOptions] = useState(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -22,11 +24,17 @@ function CreateListing() {
 
     // fetch seller profile on load to know their seller_type
     useEffect(() => {
-        getMySellerProfile()
-            .then((res) => setSeller(res.data))
+        Promise.all([
+            getMySellerProfile(),
+            getListingOptions(),
+        ])
+            .then(([sellerRes, optionsRes]) => {
+                setSeller(sellerRes.data);
+                setOptions(optionsRes.data);
+            })
             .catch((err) => {
                 console.error(err);
-                setError('Could not load your seller profile');
+                setError('Could not load listing setup');
             })
             .finally(() => setLoadingSeller(false));
     }, []);
@@ -135,6 +143,7 @@ function CreateListing() {
                     <label className="block text-xs tracking-wider uppercase text-gray-500 mb-2">
                         Category
                     </label>
+
                     <select
                         name="category"
                         value={formData.category}
@@ -142,37 +151,46 @@ function CreateListing() {
                         className="w-full border-b border-gray-300 px-0 py-3 text-sm focus:border-black outline-none bg-white"
                         required
                     >
-                        <option value="">Select category</option>
-                        <option value="tops">Tops</option>
-                        <option value="dresses">Dresses</option>
-                        <option value="jacket">Jacket</option>
-                        <option value="footwear">Footwear</option>
-                        <option value="accessories">Accessories</option>
-                        <option value="bags">Bags</option>
-                        <option value="tshirts">T-Shirts</option>
-                        <option value="shirts">Shirts</option>
-                        <option value="pants">Pants</option>
-                        <option value="other">Other</option>
+                        <option value="">
+                            Select category
+                        </option>
+
+                        {options?.categories.map((cat) => (
+                            <option
+                                key={cat}
+                                value={cat}
+                            >
+                                {cat.replaceAll('_', ' ')}
+                            </option>
+                        ))}
                     </select>
                 </div>
 
                 {/* Condition - only relevant for thrift sellers */}
-                {seller.seller_type === 'thrift' && (
+                {seller?.seller_type === 'thrift' && (
                     <div>
                         <label className="block text-xs tracking-wider uppercase text-gray-500 mb-2">
                             Condition
                         </label>
+
                         <select
                             name="condition"
                             value={formData.condition}
                             onChange={handleChange}
                             className="w-full border-b border-gray-300 px-0 py-3 text-sm focus:border-black outline-none bg-white"
                         >
-                            <option value="">Select condition</option>
-                            <option value="like_new">Like New</option>
-                            <option value="good">Good</option>
-                            <option value="fair">Fair</option>
-                            <option value="okay">Okay</option>
+                            <option value="">
+                                Select condition
+                            </option>
+
+                            {options?.conditions.map((condition) => (
+                                <option
+                                    key={condition}
+                                    value={condition}
+                                >
+                                    {condition.replaceAll('_', ' ')}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 )}
@@ -182,20 +200,25 @@ function CreateListing() {
                     <label className="block text-xs tracking-wider uppercase text-gray-500 mb-2">
                         Size (optional)
                     </label>
+
                     <select
                         name="size"
                         value={formData.size}
                         onChange={handleChange}
                         className="w-full border-b border-gray-300 px-0 py-3 text-sm focus:border-black outline-none bg-white"
                     >
-                        <option value="">No size</option>
-                        <option value="xs">XS</option>
-                        <option value="s">S</option>
-                        <option value="m">M</option>
-                        <option value="l">L</option>
-                        <option value="xl">XL</option>
-                        <option value="xxl">XXL</option>
-                        <option value="free_size">Free Size</option>
+                        <option value="">
+                            No size
+                        </option>
+
+                        {options?.sizes.map((size) => (
+                            <option
+                                key={size}
+                                value={size}
+                            >
+                                {size.replaceAll('_', ' ')}
+                            </option>
+                        ))}
                     </select>
                 </div>
 

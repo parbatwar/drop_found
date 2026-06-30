@@ -13,6 +13,7 @@ import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerProfile from './pages/seller/SellerProfile';
 import Listings from './pages/seller/Listings';
 import CreateListing from './pages/seller/CreateListing';
+import EditListing from './pages/seller/EditListing';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
                 <Route path="/seller/dashboard" element={<SellerDashboard />} />
                 <Route path="/seller/listings" element={<Listings />} />
                 <Route path="/seller/listings/new" element={<CreateListing />} />
+                <Route path="/seller/listings/:id/edit" element={<EditListing />} />
             </Route>
         </Route>
 
