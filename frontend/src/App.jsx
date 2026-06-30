@@ -14,6 +14,7 @@ import SellerProfile from './pages/seller/SellerProfile';
 import Listings from './pages/seller/Listings';
 import CreateListing from './pages/seller/CreateListing';
 import EditListing from './pages/seller/EditListing';
+import ProductDetail from './pages/listings/ProductDetail';
 
 function App() {
   return (
@@ -26,7 +27,8 @@ function App() {
             <Route path="/" element={<Home />} />
 
             {/* Public seller profile */}
-            <Route path="/seller/:slug" element={<SellerProfile />} />
+            <Route path="/shop/:slug" element={<SellerProfile />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
         </Route>
 
         {/* Protected Routes - Require Login */}

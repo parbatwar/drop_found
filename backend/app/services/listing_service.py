@@ -92,3 +92,15 @@ class ListingService:
         db.delete(listing)
         db.commit()
         return {"detail": "Listing deleted successfully"}
+
+    @staticmethod
+    def get_seller_listings(
+        seller_id: str,
+        db,
+    ):
+        return (
+            db.query(Listing)
+            .filter(Listing.seller_id == seller_id)
+            .order_by(Listing.created_at.desc())
+            .all()
+        )

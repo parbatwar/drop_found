@@ -23,6 +23,17 @@ def get_listings(db=Depends(get_db)):
     return ListingService.get_listings(db)
 
 
+@router.get("/seller/{seller_id}")
+def get_seller_listings(
+    seller_id: str,
+    db=Depends(get_db),
+):
+    return ListingService.get_seller_listings(
+        seller_id=seller_id,
+        db=db,
+    )
+
+
 @router.get("/{listing_id}")
 def get_listing(listing_id: str, db=Depends(get_db)):
     return ListingService.get_listing(listing_id=listing_id, db=db)
