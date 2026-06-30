@@ -1,8 +1,24 @@
 // pages/Home.jsx
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect  } from 'react';
+
+import { getListings } from '../api/listings';
+import { getSellers } from '../api/seller';
 
 function Home() {
+    const [listings, setListings] = useState([]);
+    const [sellers, setSellers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        Promise.all([getListings(), getSellers()])
+            .then(([listingsRes, sellersRes]) => {
+                setListings(listingsRes.data);
+                setSellers(sellersRes.data);
+            })
+            .catch((err) => console.error('Failed to load homepage data:', err))
+            .finally(() => setLoading(false));
+    }, []);
 
     return (
         <>
@@ -91,32 +107,38 @@ function Home() {
                             <h2 className="text-2xl font-light tracking-[0.15em]">Shops</h2>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        {[
-                            { name: 'Kathmandu Thrift Co.', items: 124, verified: true },
-                            { name: 'Patan Vintage House', items: 87, verified: true },
-                            { name: 'Thamel Surplus', items: 56, verified: false },
-                            { name: 'Lalitpur Wardrobe', items: 102, verified: true },
-                            { name: 'Boudha Basics', items: 73, verified: false },
-                        ].map((shop, index) => (
-                            <Link key={index} to={`/shop/${shop.name.toLowerCase().replace(/\s/g, '-')}`} className="group">
-                                <div className="aspect-square bg-gray-100 overflow-hidden mb-3">
-                                    <img
-                                        src={`https://images.unsplash.com/photo-${[1523381210434, 1539008835657, 1490481651875, 1529139572806, 1523381210434][index]}?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`}
-                                        alt={shop.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                </div>
-                                <h3 className="text-sm font-light">{shop.name}</h3>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    {shop.verified && <span className="text-gray-400">✓</span>}
-                                    <span>{shop.items} items</span>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
+
+                    {loading ? (
+                        <p className="text-sm text-gray-400">Loading...</p>
+                    ) : sellers.length === 0 ? (
+                        <p className="text-sm text-gray-400">No shops yet.</p>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            {sellers.slice(0, 5).map((shop) => (
+                                <Link key={shop.id} to={`/shop/${shop.slug}`} className="group">
+                                    <div className="aspect-square bg-gray-100 overflow-hidden mb-3">
+                                        {shop.avatar_url ? (
+                                            <img
+                                                src={shop.avatar_url}
+                                                alt={shop.shop_name}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-200" />
+                                        )}
+                                    </div>
+                                    <h3 className="text-sm font-light">{shop.shop_name}</h3>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        <span className="text-gray-400">✓</span>
+                                        <span className="capitalize">{shop.seller_type}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
+
 
             {/* This Week - New Drops */}
             <section className="py-16 border-t border-gray-100">
@@ -130,38 +152,40 @@ function Home() {
                             Browse All
                         </Link>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {[
-                            { name: 'Vintage Levi\'s 501 Denim Jacket', shop: 'Kathmandu Thrift Co.', price: 'NPR 3,200', tag: 'Thrift' },
-                            { name: 'Cream Wool Crewneck Knit', shop: 'Patan Vintage House', price: 'NPR 1,800', tag: 'Thrift' },
-                            { name: 'Black Leather Lace-Up Boots', shop: 'Thamel Surplus', price: 'NPR 4,500', tag: 'Surplus' },
-                            { name: 'Plaid Cotton Flannel Overshirt', shop: 'Lalitpur Wardrobe', price: 'NPR 1,200', tag: 'Thrift' },
-                            { name: 'Washed Cotton Crew Tee', shop: 'Boudha Basics', price: 'NPR 650', tag: 'Thrift' },
-                            { name: 'Brown Corduroy Trousers', shop: 'Kathmandu Thrift Co.', price: 'NPR 1,450', tag: 'Thrift' },
-                            { name: 'Indigo Selvedge Denim Jacket', shop: 'Patan Vintage House', price: 'NPR 2,800', tag: 'Surplus' },
-                            { name: 'Off-White Cable Knit Sweater', shop: 'Boudha Basics', price: 'NPR 1,950', tag: 'Thrift' },
-                        ].map((item, index) => (
-                            <Link key={index} to={`/product/${item.name.toLowerCase().replace(/\s/g, '-')}`} className="group">
-                                <div className="aspect-[3/4] bg-gray-100 overflow-hidden mb-3 relative">
-                                    <img
-                                        src={`https://images.unsplash.com/photo-${[1539008835657, 1490481651875, 1523381210434, 1539008835657, 1490481651875, 1523381210434, 1539008835657, 1490481651875][index]}?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80`}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                    <span className={`absolute top-3 left-3 px-3 py-1 text-xs tracking-[0.2em] uppercase ${
-                                        item.tag === 'Thrift' ? 'bg-white text-black' : 'bg-black text-white'
-                                    }`}>
-                                        {item.tag}
-                                    </span>
-                                </div>
-                                <h3 className="text-sm font-light">{item.name}</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">{item.shop}</p>
-                                <p className="text-sm font-light mt-1">{item.price}</p>
-                            </Link>
-                        ))}
-                    </div>
+
+                    {loading ? (
+                        <p className="text-sm text-gray-400">Loading...</p>
+                    ) : listings.length === 0 ? (
+                        <p className="text-sm text-gray-400">No listings yet.</p>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {listings.slice(0, 8).map((item) => (
+                                <Link key={item.id} to={`/product/${item.id}`} className="group">
+                                    <div className="aspect-[3/4] bg-gray-100 overflow-hidden mb-3 relative">
+                                        {item.images?.[0] ? (
+                                            <img
+                                                src={item.images[0].image_url}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-200" />
+                                        )}
+                                        <span className={`absolute top-3 left-3 px-3 py-1 text-xs tracking-[0.2em] uppercase ${
+                                            item.section === 'thrift' ? 'bg-white text-black' : 'bg-black text-white'
+                                        }`}>
+                                            {item.section}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-sm font-light">{item.title}</h3>
+                                    <p className="text-sm font-light mt-1">NPR {item.price}</p>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
+
 
             {/* For Sellers CTA */}
             <section className="bg-gray-50 py-20">

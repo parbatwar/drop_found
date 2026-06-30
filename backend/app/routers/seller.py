@@ -9,6 +9,11 @@ from app.models.user import User
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
 
+@router.get("/", response_model=list[SellerResponse])
+def get_sellers(db: Session = Depends(get_db)):
+    return SellerService.get_all_sellers(db)
+
+
 @router.post("/apply", response_model=SellerResponse)
 def apply(
     data: SellerApply, current_user=Depends(get_current_user), db=Depends(get_db)

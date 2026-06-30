@@ -7,16 +7,24 @@ from app.utils.slug import generate_slug
 class SellerService:
 
     @staticmethod
+    def get_all_sellers(db):
+        return (
+            db.query(SellerProfile)
+            .filter(SellerProfile.verification_status == "approved")
+            .all()
+        )
+
+    @staticmethod
     def apply(data, current_user, db):
         """
         Handles the application for a user to become a seller.
         """
-        exisitng_profile = (
+        existing_profile = (
             db.query(SellerProfile)
             .filter(SellerProfile.user_id == current_user.id)
             .first()
         )
-        if exisitng_profile:
+        if existing_profile:
             raise HTTPException(
                 status_code=409,
                 detail="Seller Profile already exists for this account",
