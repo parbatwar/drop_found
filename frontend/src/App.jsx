@@ -7,13 +7,17 @@ import Home from './pages/Home';
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import NotFound from './pages/NotFound';
+import Profile from './pages/Profile';
 
+// Seller Pages
 import SellerApply from './pages/seller/SellerApply';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerProfile from './pages/seller/SellerProfile';
 import Listings from './pages/seller/Listings';
 import CreateListing from './pages/seller/CreateListing';
 import EditListing from './pages/seller/EditListing';
+
+// Product/Listing Pages
 import ProductDetail from './pages/listings/ProductDetail';
 
 function App() {
@@ -29,11 +33,19 @@ function App() {
             {/* Public seller profile */}
             <Route path="/shop/:slug" element={<SellerProfile />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            
         </Route>
 
         {/* Protected Routes - Require Login */}
         <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
+                {/* Base User Pages */}
+                <Route path="/profile" element={<Profile />} />
+                {/* <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/wishlist" element={<WishlistPage />} />
+                <Route path="/following" element={<FollowingPage />} /> */}
+
+                {/* Seller Routes */}
                 <Route path="/apply" element={<SellerApply />} />
                 <Route path="/seller/dashboard" element={<SellerDashboard />} />
                 <Route path="/seller/listings" element={<Listings />} />

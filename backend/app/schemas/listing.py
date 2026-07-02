@@ -11,8 +11,7 @@ from app.models.enums import (
 )
 
 
-class ListingImageResponse(BaseModel):
-    id: UUID
+class ListingImageCreate(BaseModel):
     image_url: str
     display_order: int
 
@@ -28,6 +27,16 @@ class ListingCreate(BaseModel):
     section: ListingSection
     category: ListingCategory
     size: ListingSize | None = None
+    images: List[ListingImageCreate] = []
+
+
+class ListingImageResponse(BaseModel):
+    id: UUID
+    image_url: str
+    display_order: int
+
+    class Config:
+        from_attributes = True
 
 
 class ListingUpdate(BaseModel):

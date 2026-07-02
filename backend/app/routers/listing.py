@@ -1,9 +1,10 @@
+from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
 from app.database import get_db
-from app.schemas.listing import ListingCreate, ListingUpdate
+from app.schemas.listing import ListingCreate, ListingResponse, ListingUpdate
 from app.services.listing_service import ListingService
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
@@ -18,12 +19,12 @@ def create_listing(
     return ListingService.create_listing(data=data, user=current_user, db=db)
 
 
-@router.get("/")
+@router.get("/", response_model=List[ListingResponse])
 def get_listings(db=Depends(get_db)):
     return ListingService.get_listings(db)
 
 
-@router.get("/seller/{seller_id}")
+@router.get("/seller/{seller_id}", response_model=List[ListingResponse])
 def get_seller_listings(
     seller_id: str,
     db=Depends(get_db),
@@ -34,12 +35,12 @@ def get_seller_listings(
     )
 
 
-@router.get("/{listing_id}")
+@router.get("/{listing_id}", response_model=ListingResponse)
 def get_listing(listing_id: str, db=Depends(get_db)):
     return ListingService.get_listing(listing_id=listing_id, db=db)
 
 
-@router.patch("/{listing_id}")
+@router.patch("/{listing_id}", response_model=ListingResponse)
 def update_listing(
     listing_id: str,
     data: ListingUpdate,

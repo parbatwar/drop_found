@@ -1,7 +1,6 @@
 // pages/Home.jsx
 import { Link } from 'react-router-dom';
-import { useState, useEffect  } from 'react';
-
+import { useState, useEffect } from 'react';
 import { getListings } from '../api/listings';
 import { getSellers } from '../api/seller';
 
@@ -13,124 +12,125 @@ function Home() {
     useEffect(() => {
         Promise.all([getListings(), getSellers()])
             .then(([listingsRes, sellersRes]) => {
-                setListings(listingsRes.data);
-                setSellers(sellersRes.data);
+                setListings(listingsRes?.data || []);
+                setSellers(sellersRes?.data || []);
             })
             .catch((err) => console.error('Failed to load homepage data:', err))
             .finally(() => setLoading(false));
     }, []);
 
+    // Clean loading skeleton component to keep the minimalist vibe
+    const SkeletonCard = ({ aspect = 'aspect-square' }) => (
+        <div className="animate-pulse space-y-3">
+            <div className={`${aspect} bg-neutral-100 rounded-sm`} />
+            <div className="h-3 bg-neutral-100 rounded w-2/3" />
+            <div className="h-3 bg-neutral-100 rounded w-1/3" />
+        </div>
+    );
+
     return (
-        <>
+        <div className="bg-white min-h-screen text-neutral-900">
             {/* Hero Section */}
-            <section className="bg-gray-50 py-20 md:py-28">
+            <section className="py-16 md:py-24 border-b border-neutral-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <span className="text-xs tracking-[0.3em] uppercase text-gray-400">
-                                SS 25 — New Drops Weekly
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                        
+                        {/* Hero Copy */}
+                        <div className="lg:col-span-5 space-y-6">
+                            <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 font-medium block">
+                                SS 26 — New Drops Weekly
                             </span>
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.05em] mt-4 mb-6 leading-tight">
+                            <h1 className="text-4xl md:text-5xl font-light tracking-[0.08em] leading-[1.15] text-black">
                                 FIND IT.<br />WEAR IT.
                             </h1>
-                            <p className="text-gray-600 leading-relaxed max-w-md mb-8">
+                            <p className="text-neutral-500 text-sm leading-relaxed max-w-sm">
                                 Nepal's online thrift and surplus marketplace. Hand-picked pieces 
                                 from independent sellers in Kathmandu, Patan, and beyond.
                             </p>
-                            <div className="flex flex-wrap gap-4">
+                            
+                            <div className="flex flex-wrap gap-3 pt-2">
                                 <Link
                                     to="/thrift"
-                                    className="bg-black text-white px-8 py-3 text-sm tracking-[0.2em] uppercase hover:bg-gray-800 transition-colors duration-300"
+                                    className="bg-black text-white px-7 py-3 text-xs tracking-[0.2em] uppercase hover:bg-neutral-800 transition-colors duration-300"
                                 >
                                     Shop Thrift
                                 </Link>
                                 <Link
                                     to="/surplus"
-                                    className="border border-black px-8 py-3 text-sm tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-300"
+                                    className="border border-neutral-200 px-7 py-3 text-xs tracking-[0.2em] uppercase hover:bg-black hover:text-white hover:border-black transition-colors duration-300"
                                 >
                                     Shop Surplus
                                 </Link>
                             </div>
                             
-                            <div className="flex gap-8 mt-8 pt-8 border-t border-gray-200">
+                            {/* Analytics Strip */}
+                            <div className="grid grid-cols-3 gap-4 pt-8 border-t border-neutral-100">
                                 <div>
-                                    <p className="text-2xl font-light">50+</p>
-                                    <p className="text-xs text-gray-500 tracking-wide">Thrift Sellers</p>
+                                    <p className="text-xl font-light tracking-tight">50+</p>
+                                    <p className="text-[10px] text-neutral-400 tracking-wider uppercase mt-0.5">Thrift Shops</p>
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-light">20+</p>
-                                    <p className="text-xs text-gray-500 tracking-wide">Surplus Sellers</p>
+                                    <p className="text-xl font-light tracking-tight">20+</p>
+                                    <p className="text-[10px] text-neutral-400 tracking-wider uppercase mt-0.5">Surplus Hubs</p>
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-light">1.2K+</p>
-                                    <p className="text-xs text-gray-500 tracking-wide">Items Available</p>
+                                    <p className="text-xl font-light tracking-tight">1.2K+</p>
+                                    <p className="text-[10px] text-neutral-400 tracking-wider uppercase mt-0.5">Live Items</p>
                                 </div>
                             </div>
                         </div>
                         
-                        <div className="relative">
-                            <div className="aspect-[4/3] overflow-hidden bg-gray-200">
+
+                        {/* Hero Image Context */}
+                        <div className="lg:col-span-7 pl-0 lg:pl-8">
+                            <div className="aspect-[16/10] overflow-hidden bg-neutral-50 border border-neutral-100 rounded-sm">
                                 <img
-                                    src="https://images.unsplash.com/photo-1490481651875-aed2d4d73b2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                                    alt="Editorial"
-                                    className="w-full h-full object-cover"
+                                    src="https://images.unsplash.com/photo-1540221652346-e5dd6b50f3e7?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                                    alt="High-fidelity minimalist premium editorial campaign portrait"
+                                    className="w-full h-full object-cover transition-all duration-700 ease-out"
                                 />
                             </div>
-                            <div className="absolute -bottom-4 -right-4 bg-white p-4 shadow-lg">
-                                <span className="text-xs tracking-[0.2em] uppercase">Editorial campaign</span>
-                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
 
-            {/* Surplus Coming Soon */}
-            <section className="py-16 border-b border-gray-100">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-2xl mx-auto text-center">
-                        <h2 className="text-2xl font-light tracking-[0.15em] mt-2 mb-4">
-                            Surplus — Coming Soon.
-                        </h2>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Join the waitlist for premium surplus drops
-                        </p>
                     </div>
                 </div>
             </section>
 
             {/* Featured Shops */}
-            <section className="py-16">
+            <section className="py-16 border-b border-neutral-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <span className="text-xs tracking-[0.3em] uppercase text-gray-400">Featured</span>
-                            <h2 className="text-2xl font-light tracking-[0.15em]">Shops</h2>
-                        </div>
+                    <div className="mb-10">
+                        <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block mb-1">Curated Spaces</span>
+                        <h2 className="text-xl font-light tracking-[0.15em] uppercase text-black">Verified Shops</h2>
                     </div>
 
                     {loading ? (
-                        <p className="text-sm text-gray-400">Loading...</p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            {[...Array(5)].map((_, i) => <SkeletonCard key={i} aspect="aspect-square" />)}
+                        </div>
                     ) : sellers.length === 0 ? (
-                        <p className="text-sm text-gray-400">No shops yet.</p>
+                        <p className="text-xs tracking-wider text-neutral-400 py-4">No verified shops listed at the moment.</p>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                             {sellers.slice(0, 5).map((shop) => (
-                                <Link key={shop.id} to={`/shop/${shop.slug}`} className="group">
-                                    <div className="aspect-square bg-gray-100 overflow-hidden mb-3">
+                                <Link key={shop.id} to={`/shop/${shop.slug}`} className="group block">
+                                    <div className="aspect-square bg-neutral-50 border border-neutral-100 overflow-hidden mb-3 relative">
                                         {shop.avatar_url ? (
                                             <img
                                                 src={shop.avatar_url}
                                                 alt={shop.shop_name}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform cubic-bezier(0.4, 0, 0.2, 1) duration-500"
                                             />
                                         ) : (
-                                            <div className="w-full h-full bg-gray-200" />
+                                            <div className="w-full h-full flex items-center justify-center bg-neutral-50 text-neutral-300 text-xs tracking-widest uppercase">
+                                                {shop.shop_name?.slice(0,2)}
+                                            </div>
                                         )}
                                     </div>
-                                    <h3 className="text-sm font-light">{shop.shop_name}</h3>
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <span className="text-gray-400">✓</span>
-                                        <span className="capitalize">{shop.seller_type}</span>
+                                    <h3 className="text-xs uppercase tracking-wider text-neutral-800 group-hover:text-black transition-colors">{shop.shop_name}</h3>
+                                    <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 mt-1 uppercase tracking-widest">
+                                        <span className="text-neutral-300">/</span>
+                                        <span>{shop.seller_type || 'Curator'}</span>
                                     </div>
                                 </Link>
                             ))}
@@ -139,46 +139,47 @@ function Home() {
                 </div>
             </section>
 
-
             {/* This Week - New Drops */}
-            <section className="py-16 border-t border-gray-100">
+            <section className="py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-end justify-between mb-10">
                         <div>
-                            <span className="text-xs tracking-[0.3em] uppercase text-gray-400">This Week</span>
-                            <h2 className="text-2xl font-light tracking-[0.15em]">New Drops</h2>
+                            <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block mb-1">Latest Arrivals</span>
+                            <h2 className="text-xl font-light tracking-[0.15em] uppercase text-black">New Drops</h2>
                         </div>
-                        <Link to="/all" className="text-sm text-gray-500 hover:text-black transition-colors tracking-wider uppercase">
+                        <Link to="/all" className="text-xs text-neutral-400 hover:text-black transition-colors tracking-widest uppercase border-b border-transparent hover:border-black pb-0.5">
                             Browse All
                         </Link>
                     </div>
 
                     {loading ? (
-                        <p className="text-sm text-gray-400">Loading...</p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {[...Array(8)].map((_, i) => <SkeletonCard key={i} aspect="aspect-[3/4]" />)}
+                        </div>
                     ) : listings.length === 0 ? (
-                        <p className="text-sm text-gray-400">No listings yet.</p>
+                        <p className="text-xs tracking-wider text-neutral-400 py-4">No drops found this week.</p>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {listings.slice(0, 8).map((item) => (
-                                <Link key={item.id} to={`/product/${item.id}`} className="group">
-                                    <div className="aspect-[3/4] bg-gray-100 overflow-hidden mb-3 relative">
+                                <Link key={item.id} to={`/product/${item.id}`} className="group block">
+                                    <div className="aspect-[3/4] bg-neutral-50 border border-neutral-100 overflow-hidden mb-3 relative">
                                         {item.images?.[0] ? (
                                             <img
                                                 src={item.images[0].image_url}
                                                 alt={item.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform cubic-bezier(0.4, 0, 0.2, 1) duration-500"
                                             />
                                         ) : (
-                                            <div className="w-full h-full bg-gray-200" />
+                                            <div className="w-full h-full bg-neutral-100" />
                                         )}
-                                        <span className={`absolute top-3 left-3 px-3 py-1 text-xs tracking-[0.2em] uppercase ${
-                                            item.section === 'thrift' ? 'bg-white text-black' : 'bg-black text-white'
-                                        }`}>
-                                            {item.section}
-                                        </span>
+                                        {item.section && (
+                                            <span className="absolute bottom-3 left-3 px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-medium shadow-sm bg-white text-black border border-neutral-100">
+                                                {item.section}
+                                            </span>
+                                        )}
                                     </div>
-                                    <h3 className="text-sm font-light">{item.title}</h3>
-                                    <p className="text-sm font-light mt-1">NPR {item.price}</p>
+                                    <h3 className="text-xs tracking-wide text-neutral-600 truncate group-hover:text-black transition-colors">{item.title}</h3>
+                                    <p className="text-xs font-medium text-neutral-900 mt-1">NPR {Number(item.price).toLocaleString()}</p>
                                 </Link>
                             ))}
                         </div>
@@ -186,26 +187,28 @@ function Home() {
                 </div>
             </section>
 
-
-            {/* For Sellers CTA */}
-            <section className="bg-gray-50 py-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-3xl font-light tracking-[0.1em] mb-4">
-                        For Sellers
+            {/* For Sellers B2B CTA */}
+            <section className="bg-neutral-50 py-20 border-t border-neutral-100">
+                <div className="max-w-3xl mx-auto px-4 text-center space-y-5">
+                    <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 block">Partnership</span>
+                    <h2 className="text-2xl font-light tracking-[0.1em] text-black uppercase">
+                        Become a Curator
                     </h2>
-                    <p className="text-gray-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-                        Open your shop on Drop Found. List your pre-loved inventory, set your own prices,
-                        and reach buyers across Nepal. No listing fees.
+                    <p className="text-neutral-500 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
+                        Open your shop on Drop Found. List your pre-loved inventory, set your own rates, 
+                        and reach intentional buyers across Nepal without initial listing fees.
                     </p>
-                    <Link
-                        to="/apply"
-                        className="inline-block bg-black text-white px-10 py-3 text-sm tracking-[0.2em] uppercase hover:bg-gray-800 transition-colors duration-300"
-                    >
-                        Apply To Sell
-                    </Link>
+                    <div className="pt-2">
+                        <Link
+                            to="/apply"
+                            className="inline-block bg-black text-white px-9 py-3 text-xs tracking-[0.2em] uppercase hover:bg-neutral-800 transition-colors duration-300"
+                        >
+                            Apply To Sell
+                        </Link>
+                    </div>
                 </div>
             </section>
-        </>
+        </div>
     );
 }
 

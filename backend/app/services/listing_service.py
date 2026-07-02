@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from app.models.listing import Listing
+from app.models.listing import Listing, ListingImage  # Added import for ListingImage
 from app.models.seller import SellerProfile
 
 
@@ -20,6 +20,7 @@ class ListingService:
                 status_code=403, detail="Your account is pending verification"
             )
 
+        # 1. Instantiate the primary parent model without handling the images array directly
         listing = Listing(
             title=data.title,
             description=data.description,
@@ -32,6 +33,19 @@ class ListingService:
         )
 
         db.add(listing)
+        db.flush()  # Flushes record state instantly to generate listing.id UUID for foreign key mapping
+
+        # 2. Iterate through the validated nested images array and save them to the DB
+        if hasattr(data, "images") and data.images:
+            for img_inbound in data.images:
+                db_image = ListingImage(
+                    listing_id=listing.id,
+                    image_url=img_inbound.image_url,
+                    display_order=img_inbound.display_order,
+                )
+                db.add(db_image)
+
+        # 3. Save everything atomically
         db.commit()
         db.refresh(listing)
 
@@ -65,7 +79,10 @@ class ListingService:
                 detail="You do not have permission to update this listing",
             )
 
+        # exclude_unset handles updating only changed fields without breaking the schema structures
         for field, value in data.dict(exclude_unset=True).items():
+            if field == "images":
+                continue  # Let update handling for existing images be a separate refinement if needed
             setattr(listing, field, value)
 
         db.commit()
