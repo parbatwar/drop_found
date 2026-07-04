@@ -1,7 +1,7 @@
 // src/pages/SellerApply.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { applySeller } from '../../api/seller';
+import { applySeller, getMySellerProfile } from '../../api/seller';
 import { getSellerOptions } from '../../api/meta';
 
 function SellerApply() {
@@ -18,25 +18,61 @@ function SellerApply() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [fetchingOptions, setFetchingOptions] = useState(true);
+    const [isReapplying, setIsReapplying] = useState(false);
 
-    // Fetch dynamic enum options on mount via your custom client method
+    // Run systemic account existence and meta verification options on mount
     useEffect(() => {
-        getSellerOptions()
-            .then((res) => {
-                const types = res.data?.seller_types || [];
+        const initializationSequence = async () => {
+            try {
+                // 1. Check if they already have a seller profile
+                let existingRejectedProfile = null;
+
+                try {
+                    const profileCheck = await getMySellerProfile();
+                    const status = profileCheck.data?.verification_status;
+
+                    if (status === 'pending' || status === 'approved') {
+                        // Already pending review or already approved — nothing to do here
+                        navigate('/seller/dashboard', { replace: true });
+                        return;
+                    }
+
+                    if (status === 'rejected') {
+                        // Previously rejected — let them see the form again, pre-filled
+                        existingRejectedProfile = profileCheck.data;
+                        setIsReapplying(true);
+                    }
+                } catch (profileErr) {
+                    // An error here likely means 404 (Not Found), which means they are clear to apply!
+                    console.log("No existing seller profile detected. Proceeding with application configuration.");
+                }
+
+                // 2. Fetch enum options
+                const optionsRes = await getSellerOptions();
+                const types = optionsRes.data?.seller_types || [];
                 setSellerTypes(types);
-                
-                // Establish initial select value fallback safely
-                if (types.length > 0) {
+
+                // 3. Pre-fill form — either with previous rejected values, or a sensible default
+                if (existingRejectedProfile) {
+                    setFormData({
+                        shop_name: existingRejectedProfile.shop_name || '',
+                        bio: existingRejectedProfile.bio || '',
+                        location: existingRejectedProfile.location || '',
+                        seller_type: existingRejectedProfile.seller_type || (types[0] || ''),
+                    });
+                } else if (types.length > 0) {
                     setFormData(prev => ({ ...prev, seller_type: types[0] }));
                 }
-            })
-            .catch((err) => {
-                console.error("Failed to load seller enums:", err);
+            } catch (err) {
+                console.error("Initialization failure within seller pipeline:", err);
                 setError("Could not load backend configurations safely.");
-            })
-            .finally(() => setFetchingOptions(false));
-    }, []);
+            } finally {
+                setFetchingOptions(false);
+            }
+        };
+
+        initializationSequence();
+    }, [navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -68,6 +104,16 @@ function SellerApply() {
         }
     };
 
+    if (fetchingOptions) {
+        return (
+            <div className="bg-white min-h-screen flex items-center justify-center">
+                <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
+                    Verifying Merchant Profile Status...
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white min-h-screen text-neutral-900 py-16 md:py-24">
             <div className="max-w-xl mx-auto px-4 sm:px-6">
@@ -78,9 +124,16 @@ function SellerApply() {
                         Open a Shop
                     </span>
                     <h1 className="text-3xl font-light tracking-[0.08em] text-black uppercase">
-                        Seller Application
+                        {isReapplying ? 'Reapply as a Seller' : 'Seller Application'}
                     </h1>
                 </div>
+
+                {/* Reapplication Notice */}
+                {isReapplying && !error && (
+                    <div className="bg-neutral-50 border-l-2 border-neutral-400 text-neutral-800 px-4 py-3 text-xs tracking-wide mb-8 uppercase">
+                        Your previous application was not approved. You can update the details below and resubmit.
+                    </div>
+                )}
                 
                 {/* Clean Status Interventions */}
                 {error && (
@@ -111,23 +164,19 @@ function SellerApply() {
                         <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
                             Seller Type *
                         </label>
-                        {fetchingOptions ? (
-                            <div className="h-10 bg-neutral-50 animate-pulse border border-neutral-200 rounded-sm" />
-                        ) : (
-                            <select
-                                name="seller_type"
-                                value={formData.seller_type}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none appearance-none cursor-pointer capitalize"
-                                style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
-                            >
-                                {sellerTypes.map((type) => (
-                                    <option key={type} value={type}>
-                                        {type}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
+                        <select
+                            name="seller_type"
+                            value={formData.seller_type}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none appearance-none cursor-pointer capitalize"
+                            style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
+                        >
+                            {sellerTypes.map((type) => (
+                                <option key={type} value={type}>
+                                    {type}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Location */}
@@ -164,10 +213,10 @@ function SellerApply() {
                     <div className="pt-4">
                         <button
                             type="submit"
-                            disabled={loading || fetchingOptions}
+                            disabled={loading}
                             className="w-full bg-black text-white px-6 py-3.5 text-xs tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors duration-300 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Submitting Application...' : 'Submit Application'}
+                            {loading ? 'Submitting Application...' : (isReapplying ? 'Resubmit Application' : 'Submit Application')}
                         </button>
                     </div>
                 </form>

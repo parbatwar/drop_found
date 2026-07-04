@@ -19,6 +19,10 @@ class SellerUpdate(BaseModel):
     avatar_url: str | None = None
 
 
+class ReviewSellerRequest(BaseModel):
+    status: VerificationStatus
+
+
 class SellerResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID

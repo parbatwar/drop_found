@@ -13,7 +13,7 @@ from app.models import (
     Follow,
     Notification,
 )
-from app.routers import auth, seller, listing, order, meta
+from app.routers import auth, admin, seller, listing, order, meta
 
 app = FastAPI(title="Drop Found API")
 
@@ -26,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(seller.router)
 app.include_router(listing.router)
 app.include_router(order.router)

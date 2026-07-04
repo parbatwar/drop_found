@@ -1,6 +1,8 @@
+// src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 
 import Layout from './components/Layout';
+import AdminLayout from './components/admin/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Home from './pages/Home';
@@ -8,6 +10,9 @@ import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
+
+// Admin Pages
+import AdminSellers from './pages/admin/AdminSellers';
 
 // Seller Pages
 import SellerApply from './pages/seller/SellerApply';
@@ -23,30 +28,38 @@ import ProductDetail from './pages/listings/ProductDetail';
 function App() {
   return (
     <Routes>
+        {/* Auth Routes */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Public Routes with Layout */}
+        {/* ========================================================= */}
+        {/* 1. PUBLIC LANDING LAYER (Storefront Viewports)           */}
+        {/* ========================================================= */}
         <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
-
-            {/* Public seller profile */}
             <Route path="/shop/:slug" element={<SellerProfile />} />
             <Route path="/product/:id" element={<ProductDetail />} />
-            
         </Route>
 
-        {/* Protected Routes - Require Login */}
+        {/* ========================================================= */}
+        {/* 2. BASE CUSTOMER ACCOUNTS ROUTING ENGINE                 */}
+        {/* ========================================================= */}
         <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-                {/* Base User Pages */}
                 <Route path="/profile" element={<Profile />} />
-                {/* <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/wishlist" element={<WishlistPage />} />
-                <Route path="/following" element={<FollowingPage />} /> */}
-
-                {/* Seller Routes */}
                 <Route path="/apply" element={<SellerApply />} />
+            </Route>
+        </Route>
+
+        {/* ========================================================= */}
+        {/* 3. PROTECTED MERCHANT OPERATIONS LAYER (Seller Control)  */}
+        {/* ========================================================= */}
+        <Route element={<ProtectedRoute allowedRoles={['seller', 'admin']} />}>
+            {/* 
+               For a quick prototype MVP, you can swap out <Layout /> for a dedicated 
+               <SellerLayout /> later if you want a clean seller dashboard view! 
+            */}
+            <Route element={<Layout />}>
                 <Route path="/seller/dashboard" element={<SellerDashboard />} />
                 <Route path="/seller/listings" element={<Listings />} />
                 <Route path="/seller/listings/new" element={<CreateListing />} />
@@ -54,8 +67,22 @@ function App() {
             </Route>
         </Route>
 
-        <Route path="*" element={<NotFound />} />
+        {/* ========================================================= */}
+        {/* 4. PROTECTED ADMINISTRATIVE HUB LAYOUT LAYER (HQ Control) */}
+        {/* ========================================================= */}
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            <Route element={<AdminLayout />}>
+                <Route path="/admin/dashboard" element={
+                    <div className="p-8 font-light text-neutral-500 uppercase tracking-widest text-xs">
+                        Overview Metrics Coming Soon...
+                    </div>
+                } />
+                <Route path="/admin/sellers" element={<AdminSellers />} />
+            </Route>
+        </Route>
 
+        {/* Catch-All Fallback Block */}
+        <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

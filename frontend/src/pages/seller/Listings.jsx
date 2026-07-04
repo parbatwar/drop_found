@@ -77,7 +77,7 @@ function Listings() {
                         to="/seller/listings/new"
                         className="inline-block bg-black text-white text-center px-8 py-3.5 text-xs tracking-[0.2em] uppercase hover:bg-neutral-800 transition-colors duration-300 rounded-sm"
                     >
-                        + Create Placement
+                        + Add Listing
                     </Link>
                 </div>
 
@@ -152,14 +152,14 @@ function Listings() {
                                             to={`/seller/listings/${item.id}/edit`}
                                             className="text-[10px] tracking-widest uppercase font-medium text-neutral-500 hover:text-black underline underline-offset-4 transition-colors duration-200"
                                         >
-                                            Edit Specs
+                                            Edit Listing
                                         </Link>
                                         <button
                                             type="button"
                                             onClick={() => handleDelete(item.id)}
                                             className="text-[10px] tracking-widest uppercase font-medium text-red-400 hover:text-red-600 transition-colors duration-200"
                                         >
-                                            Decommission
+                                            Delete
                                         </button>
                                     </div>
 

@@ -35,7 +35,12 @@ function Login(){
             // Now update context state with user info
             login(token, userRes.data);
 
-            navigate('/');
+            // Redirect based on role
+            if (userRes.data.role === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/');
+            }
         } catch (error) {
             console.error('Login failed:', error);
             alert('Invalid email or password');

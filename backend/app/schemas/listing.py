@@ -47,6 +47,7 @@ class ListingUpdate(BaseModel):
     status: ListingStatus | None = None
     category: ListingCategory | None = None
     size: ListingSize | None = None
+    images: list[ListingImageCreate] | None = None
 
 
 class ListingResponse(BaseModel):

@@ -79,11 +79,28 @@ class ListingService:
                 detail="You do not have permission to update this listing",
             )
 
-        # exclude_unset handles updating only changed fields without breaking the schema structures
+        # update non-image fields
         for field, value in data.dict(exclude_unset=True).items():
             if field == "images":
-                continue  # Let update handling for existing images be a separate refinement if needed
+                continue
             setattr(listing, field, value)
+
+        # handle images — replace all if new set provided
+        update_data = data.dict(exclude_unset=True)
+        if "images" in update_data and update_data["images"] is not None:
+            # delete existing images
+            db.query(ListingImage).filter(
+                ListingImage.listing_id == listing.id
+            ).delete()
+
+            # insert new images
+            for img in update_data["images"]:
+                db_image = ListingImage(
+                    listing_id=listing.id,
+                    image_url=img["image_url"],
+                    display_order=img["display_order"],
+                )
+                db.add(db_image)
 
         db.commit()
         db.refresh(listing)
@@ -121,3 +138,60 @@ class ListingService:
             .order_by(Listing.created_at.desc())
             .all()
         )
+
+    @staticmethod
+    def add_image(listing_id, data, current_user, db):
+        listing = db.query(Listing).filter(Listing.id == listing_id).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail="Listing not found")
+
+        seller = (
+            db.query(SellerProfile)
+            .filter(SellerProfile.user_id == current_user.id)
+            .first()
+        )
+        if not seller or listing.seller_id != seller.id:
+            raise HTTPException(status_code=403, detail="Not your listing")
+
+        # max 6 images check
+        current_count = (
+            db.query(ListingImage).filter(ListingImage.listing_id == listing_id).count()
+        )
+        if current_count >= 6:
+            raise HTTPException(status_code=400, detail="Maximum 6 images per listing")
+
+        image = ListingImage(
+            listing_id=listing_id,
+            image_url=data.image_url,
+            display_order=data.display_order,
+        )
+        db.add(image)
+        db.commit()
+        db.refresh(image)
+        return image
+
+    @staticmethod
+    def delete_image(listing_id, image_id, current_user, db):
+        listing = db.query(Listing).filter(Listing.id == listing_id).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail="Listing not found")
+
+        seller = (
+            db.query(SellerProfile)
+            .filter(SellerProfile.user_id == current_user.id)
+            .first()
+        )
+        if not seller or listing.seller_id != seller.id:
+            raise HTTPException(status_code=403, detail="Not your listing")
+
+        image = (
+            db.query(ListingImage)
+            .filter(ListingImage.id == image_id, ListingImage.listing_id == listing_id)
+            .first()
+        )
+        if not image:
+            raise HTTPException(status_code=404, detail="Image not found")
+
+        db.delete(image)
+        db.commit()
+        return {"detail": "Image deleted"}

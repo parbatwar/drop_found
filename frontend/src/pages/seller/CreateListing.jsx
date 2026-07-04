@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createListing } from '../../api/listings';
 import { getMySellerProfile } from '../../api/seller';
 import { getListingOptions } from '../../api/meta';
-import axios from 'axios';
+import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
 
 function CreateListing() {
     const navigate = useNavigate();
@@ -51,9 +51,18 @@ function CreateListing() {
         });
     };
 
-    // Handle selecting local image files
+    // Handle selecting local image files with strict upstream bounds validation
     const handleImageChange = (e) => {
+        setError('');
         const files = Array.from(e.target.files);
+        
+        // Enforce structural restriction cap (6 total assets boundary validation)
+        const totalImages = images.length + files.length;
+        if (totalImages > 6) {
+            setError('Maximum of 6 total images allowed for this product collection entry.');
+            return;
+        }
+
         const mappedImages = files.map((file) => ({
             file,
             previewUrl: URL.createObjectURL(file),
@@ -70,26 +79,6 @@ function CreateListing() {
         });
     };
 
-    // Sequential Cloudinary direct upload pipeline
-    const uploadImagesToCloudinary = async () => {
-        const uploadedUrls = [];
-        const CLOUD_NAME = "fk8ildu5";
-        const UPLOAD_PRESET = "duzchcrj"; 
-
-        for (let img of images) {
-            const data = new FormData();
-            data.append('file', img.file);
-            data.append('upload_preset', UPLOAD_PRESET);
-
-            const res = await axios.post(
-                `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-                data
-            );
-            uploadedUrls.push(res.data.secure_url);
-        }
-        return uploadedUrls;
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -103,7 +92,12 @@ function CreateListing() {
 
         try {
             setUploadingImages(true);
-            const imageUrlsList = await uploadImagesToCloudinary();
+            
+            // Parallelized network dispatch concurrency implementation
+            const imageUrlsList = await Promise.all(
+                images.map((img) => uploadToCloudinary(img.file))
+            );
+            
             setUploadingImages(false);
 
             // Construct payload matching Listing & ListingImage models
@@ -115,7 +109,6 @@ function CreateListing() {
                 price: parseFloat(formData.price),
                 condition: formData.condition || null,
                 size: formData.size || null,
-                // Nested collection corresponding directly to your backend schema relationships
                 images: imageUrlsList.map((url, index) => ({
                     image_url: url,
                     display_order: index,
@@ -168,9 +161,14 @@ function CreateListing() {
                     
                     {/* Minimalist Grid Gallery Uploader */}
                     <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-3">
-                            Collection Gallery Visuals *
-                        </label>
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500">
+                                Collection Gallery Visuals *
+                            </label>
+                            <span className="text-[9px] text-neutral-400 tracking-wider uppercase">
+                                {images.length} / 6 Images
+                            </span>
+                        </div>
                         
                         <div className="grid grid-cols-3 gap-3">
                             {images.map((img, index) => (
@@ -190,14 +188,16 @@ function CreateListing() {
                                 </div>
                             ))}
 
-                            {/* Trigger Block */}
-                            <div 
-                                onClick={() => fileInputRef.current.click()}
-                                className="aspect-[3/4] border border-dashed border-neutral-200 hover:border-black flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 p-4 text-center bg-neutral-50 rounded-sm"
-                            >
-                                <span className="text-xl font-light text-neutral-400">+</span>
-                                <span className="text-[9px] tracking-widest uppercase text-neutral-400 mt-1">Add Image</span>
-                            </div>
+                            {/* Trigger Block - Hide or disable visually if max index hit */}
+                            {images.length < 6 && (
+                                <div 
+                                    onClick={() => fileInputRef.current.click()}
+                                    className="aspect-[3/4] border border-dashed border-neutral-200 hover:border-black flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 p-4 text-center bg-neutral-50 rounded-sm"
+                                >
+                                    <span className="text-xl font-light text-neutral-400">+</span>
+                                    <span className="text-[9px] tracking-widest uppercase text-neutral-400 mt-1">Add Image</span>
+                                </div>
+                            )}
                         </div>
 
                         <input 

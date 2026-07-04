@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
 from app.database import get_db
-from app.schemas.listing import ListingCreate, ListingResponse, ListingUpdate
+from app.schemas.listing import (
+    ListingCreate,
+    ListingImageCreate,
+    ListingResponse,
+    ListingUpdate,
+)
 from app.services.listing_service import ListingService
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
@@ -59,3 +64,23 @@ def delete_listing(
     return ListingService.delete_listing(
         listing_id=listing_id, current_user=current_user, db=db
     )
+
+
+@router.post("/{listing_id}/images")
+def add_listing_image(
+    listing_id: str,
+    data: ListingImageCreate,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return ListingService.add_image(listing_id, data, current_user, db)
+
+
+@router.delete("/{listing_id}/images/{image_id}")
+def delete_listing_image(
+    listing_id: str,
+    image_id: str,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return ListingService.delete_image(listing_id, image_id, current_user, db)
