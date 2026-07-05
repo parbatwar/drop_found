@@ -1,14 +1,15 @@
 from pydantic import BaseModel
-from datetime import datetime
 from uuid import UUID
-from app.models.enums import OrderStatus, DeliveryMethod
+from datetime import datetime
+from app.models.enums import OrderStatus, PaymentMethod
 
 
 class OrderCreate(BaseModel):
     listing_id: UUID
-    delivery_method: DeliveryMethod
+    receiver_phone: str
     delivery_address: str
-    delivery_fee: float = 0.00
+    payment_method: PaymentMethod
+    delivery_fee: float = 100.00
 
 
 class OrderUpdate(BaseModel):
@@ -22,9 +23,10 @@ class OrderResponse(BaseModel):
     listing_id: UUID
     status: OrderStatus
     total_amount: float
-    delivery_method: DeliveryMethod
-    delivery_fee: float
+    receiver_phone: str
     delivery_address: str
+    delivery_fee: float
+    payment_method: PaymentMethod
     created_at: datetime
     updated_at: datetime
 

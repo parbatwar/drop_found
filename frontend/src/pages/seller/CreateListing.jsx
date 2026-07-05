@@ -283,7 +283,7 @@ function CreateListing() {
 
                     {/* Condition Split Rule */}
                     <div className="grid grid-cols-2 gap-4">
-                        {seller?.seller_type === 'thrift' ? (
+                        {seller?.seller_type === 'thrift' && (
                             <div>
                                 <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
                                     Condition Grade *
@@ -302,11 +302,6 @@ function CreateListing() {
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-                        ) : (
-                            <div className="bg-neutral-50 p-3 flex flex-col justify-center border border-neutral-100 rounded-sm">
-                                <span className="text-[9px] tracking-widest uppercase text-neutral-400 font-medium block">Stock Category</span>
-                                <span className="text-xs uppercase font-light text-black tracking-wide mt-0.5">Surplus Deployment</span>
                             </div>
                         )}
 

@@ -9,7 +9,7 @@ function SellerDashboard() {
         { id: 1, name: 'Add New Product', path: '/seller/listings/new' },
         { id: 2, name: 'Manage Products', path: '/seller/listings' },
         { id: 3, name: 'View Sales', path: '/seller/sales' },
-        { id: 4, name: 'Orders', path: '/seller/orders' },
+        { id: 4, name: 'ViewOrders', path: '/seller/orders' },
         { id: 5, name: 'Analytics', path: '/seller/analytics' },
         { id: 6, name: 'Manage Shop', path: '/seller/shop' },
     ];

@@ -1,10 +1,10 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Numeric, UUID, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Numeric, UUID, String, Text
 from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 from app.database import Base
-from app.models.enums import OrderStatus, DeliveryMethod
+from app.models.enums import OrderStatus, PaymentMethod
 
 
 class Order(Base):
@@ -22,11 +22,17 @@ class Order(Base):
         default=OrderStatus.pending,
     )
     total_amount = Column(Numeric(10, 2), nullable=False)
-    delivery_method = Column(
-        Enum(DeliveryMethod, native_enum=False),
+
+    # Delivery (Changes per order)
+    receiver_phone = Column(String(50), nullable=False)
+    delivery_address = Column(Text, nullable=False)
+    delivery_fee = Column(Numeric(10, 2), nullable=False, default=0.00)
+    payment_method = Column(
+        Enum(PaymentMethod, native_enum=False),
         nullable=False,
-        default=DeliveryMethod.seller,
+        default=PaymentMethod.cod,
     )
+
     delivery_fee = Column(Numeric(10, 2), nullable=False)
     delivery_address = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

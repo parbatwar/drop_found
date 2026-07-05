@@ -39,7 +39,7 @@ function Navbar() {
     const handleLogout = async () => {
         setIsProfileDropdownOpen(false);
         await logout();
-        navigate('/');
+        navigate('/login');
     };
 
     return (

@@ -75,11 +75,6 @@ class OrderStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 
-class DeliveryMethod(str, enum.Enum):
-    seller = "seller"
-    courier = "courier"
-
-
 class PaymentMethod(str, enum.Enum):
     esewa = "esewa"
     khalti = "khalti"

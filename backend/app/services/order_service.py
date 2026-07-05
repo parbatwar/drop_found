@@ -23,7 +23,8 @@ class OrderService:
             listing_id=data.listing_id,
             status=OrderStatus.pending,
             total_amount=listing.price + Decimal(str(data.delivery_fee)),
-            delivery_method=data.delivery_method,
+            payment_method=data.payment_method,
+            receiver_phone=data.receiver_phone,
             delivery_fee=data.delivery_fee,
             delivery_address=data.delivery_address,
         )

@@ -21,6 +21,11 @@ import SellerProfile from './pages/seller/SellerProfile';
 import Listings from './pages/seller/Listings';
 import CreateListing from './pages/seller/CreateListing';
 import EditListing from './pages/seller/EditListing';
+import SellerOrders from './pages/seller/Orders';
+
+// Order Pages
+import MyOrders from './pages/orders/MyOrders';
+import Checkout from './pages/orders/Checkout';
 
 // Product/Listing Pages
 import ProductDetail from './pages/listings/ProductDetail';
@@ -48,13 +53,15 @@ function App() {
             <Route element={<Layout />}>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/apply" element={<SellerApply />} />
+                <Route path="/orders" element={<MyOrders />} />
+                <Route path="/checkout" element={<Checkout />} />
             </Route>
         </Route>
 
         {/* ========================================================= */}
         {/* 3. PROTECTED MERCHANT OPERATIONS LAYER (Seller Control)  */}
         {/* ========================================================= */}
-        <Route element={<ProtectedRoute allowedRoles={['seller', 'admin']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['seller']} />}>
             {/* 
                For a quick prototype MVP, you can swap out <Layout /> for a dedicated 
                <SellerLayout /> later if you want a clean seller dashboard view! 
@@ -64,6 +71,7 @@ function App() {
                 <Route path="/seller/listings" element={<Listings />} />
                 <Route path="/seller/listings/new" element={<CreateListing />} />
                 <Route path="/seller/listings/:id/edit" element={<EditListing />} />
+                <Route path="/seller/orders" element={<SellerOrders />} />
             </Route>
         </Route>
 
