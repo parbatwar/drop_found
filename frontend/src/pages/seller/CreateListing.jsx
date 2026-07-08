@@ -17,6 +17,7 @@ function CreateListing() {
         title: '',
         description: '',
         price: '',
+        quantity: 1,
         condition: '',
         category: '',
         size: '',
@@ -107,6 +108,7 @@ function CreateListing() {
                 description: formData.description.trim() || null,
                 section: seller.seller_type, // Auto-derived segment context
                 price: parseFloat(formData.price),
+                quantity: Number(formData.quantity),
                 condition: formData.condition || null,
                 size: formData.size || null,
                 images: imageUrlsList.map((url, index) => ({
@@ -242,7 +244,7 @@ function CreateListing() {
                     </div>
 
                     {/* Price and Category Layout Split */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
                                 Valuation (NPR) *
@@ -278,6 +280,22 @@ function CreateListing() {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
+                                Quantity *
+                            </label>
+                            <input
+                                type="number"
+                                name="quantity"
+                                value={formData.quantity}
+                                onChange={handleChange}
+                                min="1"
+                                step="1"
+                                required
+                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
+                            />
                         </div>
                     </div>
 

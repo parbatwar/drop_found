@@ -34,6 +34,7 @@ class Listing(Base):
     )
     title = Column(String(255), nullable=False)
     description = Column(Text)
+    quantity = Column(Integer, nullable=False, default=1)
     price = Column(Numeric(10, 2), nullable=False)
     condition = Column(Enum(ListingCondition, native_enum=False), nullable=True)
     status = Column(
@@ -47,8 +48,8 @@ class Listing(Base):
         nullable=False,
     )
     size = Column(Enum(ListingSize, native_enum=False), nullable=True)
-    is_boosted = Column(Boolean, default=False, nullable=False)
-    boost_expires_at = Column(DateTime, nullable=True)
+    # is_boosted = Column(Boolean, default=False, nullable=False)
+    # boost_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

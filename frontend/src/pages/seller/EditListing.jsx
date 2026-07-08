@@ -18,6 +18,7 @@ function EditListing() {
         title: '',
         description: '',
         price: '',
+        quantity: 1,
         condition: '',
         category: '',
         size: '',
@@ -49,6 +50,7 @@ function EditListing() {
                     title: listing.title || '',
                     description: listing.description || '',
                     price: listing.price ?? '',
+                    quantity: listing.quantity ?? 1,
                     condition: listing.condition || '',
                     category: listing.category || '',
                     size: listing.size || '',
@@ -143,6 +145,7 @@ function EditListing() {
                 title: formData.title.trim(),
                 description: formData.description.trim() || null,
                 price: parseFloat(formData.price),
+                quantity: Number(formData.quantity),
                 category: formData.category || null,
                 condition: seller?.seller_type === 'thrift' ? formData.condition || null : null,
                 size: formData.size || null,
@@ -299,7 +302,7 @@ function EditListing() {
                     </div>
 
                     {/* Price and Category Layout Split */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
                                 Valuation (NPR) *
@@ -336,11 +339,27 @@ function EditListing() {
                                 ))}
                             </select>
                         </div>
+
+                        <div>
+                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
+                                Quantity *
+                            </label>
+
+                            <input
+                                type="number"
+                                name="quantity"
+                                value={formData.quantity}
+                                onChange={handleChange}
+                                step="1"
+                                required
+                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
+                            />
+                        </div>
                     </div>
 
                     {/* Condition Split Rule */}
                     <div className="grid grid-cols-2 gap-4">
-                        {seller?.seller_type === 'thrift' ? (
+                        {seller?.seller_type === 'thrift' && (
                             <div>
                                 <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
                                     Condition Grade *
@@ -359,11 +378,6 @@ function EditListing() {
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-                        ) : (
-                            <div className="bg-neutral-50 p-3 flex flex-col justify-center border border-neutral-100 rounded-sm">
-                                <span className="text-[9px] tracking-widest uppercase text-neutral-400 font-medium block">Stock Category</span>
-                                <span className="text-xs uppercase font-light text-black tracking-wide mt-0.5">Surplus Deployment</span>
                             </div>
                         )}
 

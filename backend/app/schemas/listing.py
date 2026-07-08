@@ -23,6 +23,7 @@ class ListingCreate(BaseModel):
     title: str
     description: str | None = None
     price: float
+    quantity: int = 1
     condition: ListingCondition | None = None
     section: ListingSection
     category: ListingCategory
@@ -43,6 +44,7 @@ class ListingUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     price: float | None = None
+    quantity: int
     condition: ListingCondition | None = None
     status: ListingStatus | None = None
     category: ListingCategory | None = None
@@ -56,12 +58,13 @@ class ListingResponse(BaseModel):
     title: str
     description: str | None
     price: float
+    quantity: int
     condition: ListingCondition | None
     status: ListingStatus
     section: ListingSection
     category: ListingCategory
     size: ListingSize | None
-    is_boosted: bool
+    # is_boosted: bool
     images: List[ListingImageResponse] = []
     created_at: datetime
     updated_at: datetime

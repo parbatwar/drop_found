@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getSellerListings, deleteListing } from '../../api/listings'; // Ensure getSellerListings is linked to /listings/seller/{id}
+import { getSellerListings, deleteListing } from '../../api/listings';
 import { getMySellerProfile } from '../../api/seller';
 
 function Listings() {

@@ -13,6 +13,8 @@ function ProductDetail() {
     const [error, setError] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
 
+    const canBuy = listing && listing.status === "active" && listing.quantity > 0;
+
     useEffect(() => {
         getListing(id)
             .then((res) => {
@@ -85,10 +87,16 @@ function ProductDetail() {
                         <div className="grid grid-cols-2 gap-y-4 gap-x-8 py-6 border-t border-b border-neutral-100 text-xs">
                             <div><span className="text-[10px] text-neutral-400 uppercase block mb-0.5">Size</span><span className="font-normal uppercase text-black">{listing.size?.replace('_', ' ')}</span></div>
                             <div><span className="text-[10px] text-neutral-400 uppercase block mb-0.5">Condition</span><span className="font-normal capitalize text-black">{listing.condition?.replace('_', ' ')}</span></div>
+                            <div>
+                                <span className="text-[10px] text-neutral-400 uppercase block mb-0.5">
+                                    Quantity
+                                </span>
+                                <span>{listing.quantity}</span>
+                            </div>
                         </div>
 
                         <div className="pt-2">
-                            {listing.status === 'active' ? (
+                            {canBuy ? (
                                 <button
                                     onClick={handleCheckoutRedirect}
                                     className="w-full bg-black text-white py-4 text-xs tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors"
@@ -97,7 +105,9 @@ function ProductDetail() {
                                 </button>
                             ) : (
                                 <div className="w-full border border-neutral-200 py-4 text-center text-xs text-neutral-400 uppercase tracking-[0.25em] bg-neutral-50">
-                                    Piece Sold Out
+                                    {listing?.status === "inactive"
+                                        ? "Currently Unavailable"
+                                        : "Sold Out"}
                                 </div>
                             )}
                         </div>

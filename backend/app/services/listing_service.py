@@ -1,6 +1,8 @@
 from fastapi import HTTPException
+from app.models.enums import ListingStatus
 from app.models.listing import Listing, ListingImage  # Added import for ListingImage
 from app.models.seller import SellerProfile
+from app.schemas import listing
 
 
 class ListingService:
@@ -25,6 +27,7 @@ class ListingService:
             title=data.title,
             description=data.description,
             price=data.price,
+            quantity=data.quantity,
             condition=data.condition,
             section=data.section,
             category=data.category,
@@ -53,7 +56,23 @@ class ListingService:
 
     @staticmethod
     def get_listings(db):
-        return db.query(Listing).all()
+        return db.query(Listing).filter(Listing.status == ListingStatus.active).all()
+
+    @staticmethod
+    def get_my_listings(current_user, db):
+        seller = (
+            db.query(SellerProfile)
+            .filter(SellerProfile.user_id == current_user.id)
+            .first()
+        )
+        if not seller:
+            raise HTTPException(status_code=403, detail="Not a seller")
+        return (
+            db.query(Listing)
+            .filter(Listing.seller_id == seller.id)
+            .order_by(Listing.created_at.desc())
+            .all()
+        )
 
     @staticmethod
     def get_listing(listing_id, db):
@@ -84,6 +103,13 @@ class ListingService:
             if field == "images":
                 continue
             setattr(listing, field, value)
+
+        # Auto status management
+        if listing.quantity <= 0:
+            listing.quantity = 0
+            listing.status = ListingStatus.sold
+        elif listing.quantity > 0 and listing.status == ListingStatus.sold:
+            listing.status = ListingStatus.active
 
         # handle images — replace all if new set provided
         update_data = data.dict(exclude_unset=True)

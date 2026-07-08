@@ -29,6 +29,14 @@ def get_listings(db=Depends(get_db)):
     return ListingService.get_listings(db)
 
 
+@router.get("/me", response_model=List[ListingResponse])
+def get_my_listings(
+    current_user=Depends(get_current_user),
+    db=Depends(get_db),
+):
+    return ListingService.get_my_listings(current_user, db)
+
+
 @router.get("/seller/{seller_id}", response_model=List[ListingResponse])
 def get_seller_listings(
     seller_id: str,

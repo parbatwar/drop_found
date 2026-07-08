@@ -5,6 +5,7 @@ from app.models.enums import ListingStatus
 from app.models.listing import Listing
 from app.models.order import Order, OrderStatus
 from app.models.seller import SellerProfile
+from app.schemas import listing
 
 
 class OrderService:
@@ -16,6 +17,8 @@ class OrderService:
             raise HTTPException(status_code=404, detail="Listing not found")
         if listing.status.value != "active":
             raise HTTPException(status_code=400, detail="Listing is not available")
+        if listing.quantity < 1:
+            raise HTTPException(status_code=400, detail="Item out of stock")
 
         order = Order(
             buyer_id=current_user.id,
@@ -29,7 +32,9 @@ class OrderService:
             delivery_address=data.delivery_address,
         )
 
-        listing.status = ListingStatus.sold
+        listing.quantity -= 1
+        if listing.quantity == 0:
+            listing.status = ListingStatus.inactive
 
         db.add(order)
         db.commit()
