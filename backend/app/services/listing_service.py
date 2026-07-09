@@ -154,13 +154,13 @@ class ListingService:
         return {"detail": "Listing deleted successfully"}
 
     @staticmethod
-    def get_seller_listings(
-        seller_id: str,
-        db,
-    ):
+    def get_seller_listings(seller_id: str, db):
         return (
             db.query(Listing)
-            .filter(Listing.seller_id == seller_id)
+            .filter(
+                Listing.seller_id == seller_id,
+                Listing.status == ListingStatus.active,
+            )
             .order_by(Listing.created_at.desc())
             .all()
         )

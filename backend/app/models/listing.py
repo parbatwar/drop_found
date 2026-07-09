@@ -60,6 +60,7 @@ class Listing(Base):
     seller = relationship("SellerProfile", back_populates="listings")
     orders = relationship("Order", back_populates="listing")
     wishlists = relationship("Wishlist", back_populates="listing")
+    reviews = relationship("Review", back_populates="listing")
 
 
 class ListingImage(Base):

@@ -1,128 +1,136 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getListing } from '../../api/listings';
-import { createOrder } from '../../api/orders';
-import { useAuth } from '../../context/AuthContext';
+import { useEffect, useState } from "react";
+import { getSellerOrders, updateOrderStatus } from "../../api/orders";
 
-function ProductDetail() {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const { user } = useAuth();
+function SellerOrders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const [listing, setListing] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [activeIndex, setActiveIndex] = useState(0);
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
-    // New: Order Form State
-    const [showOrderForm, setShowOrderForm] = useState(false);
-    const [orderData, setOrderData] = useState({
-        delivery_method: 'seller',
-        delivery_address: '',
-        delivery_fee: 0,
-    });
-    const [ordering, setOrdering] = useState(false);
-    const [orderError, setOrderError] = useState('');
+  const loadOrders = async () => {
+    try {
+      const res = await getSellerOrders();
+      setOrders(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        getListing(id)
-            .then((res) => {
-                setListing(res.data);
-                setActiveIndex(0);
-            })
-            .catch(() => setError('Listing not found'))
-            .finally(() => setLoading(false));
-    }, [id]);
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      await updateOrderStatus(id, { status });
+      loadOrders();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update order");
+    }
+  };
 
-    const handleOrderChange = (e) => {
-        setOrderData({ ...orderData, [e.target.name]: e.target.value });
-    };
-
-    const handlePlaceOrder = async (e) => {
-        e.preventDefault();
-        setOrderError('');
-        setOrdering(true);
-
-        try {
-            await createOrder({
-                listing_id: listing.id,
-                delivery_method: orderData.delivery_method,
-                delivery_address: orderData.delivery_address,
-                delivery_fee: parseFloat(orderData.delivery_fee) || 0,
-            });
-            navigate('/orders');
-        } catch (err) {
-            setOrderError(err.response?.data?.detail || 'Failed to place order');
-        } finally {
-            setOrdering(false);
-        }
-    };
-
-    if (loading) return <div className="flex justify-center items-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b border-black"></div></div>;
-
-    if (error || !listing) return (
-        <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-4">
-            <p className="text-neutral-400 text-xs uppercase tracking-widest">{error || 'Listing not found'}</p>
-            <Link to="/" className="text-xs uppercase tracking-widest text-black border-b border-black pb-0.5 inline-block">Back to Home</Link>
-        </div>
-    );
-
-    const hasImages = listing.images && listing.images.length > 0;
-
+  if (loading) {
     return (
-        <div className="bg-white min-h-screen text-neutral-900 antialiased">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-start">
-                    
-                    {/* LEFT SIDE: Image Gallery (Same as your code) */}
-                    <div className="space-y-4">
-                         <div className="relative aspect-square w-full bg-neutral-50 border border-neutral-100 overflow-hidden">
-                            {hasImages ? <img src={listing.images[activeIndex].image_url} className="w-full h-full object-contain p-6" alt={listing.title} /> : <div className="w-full h-full flex items-center justify-center text-neutral-300">No Image</div>}
-                        </div>
-                    </div>
-
-                    {/* RIGHT SIDE: EDITORIAL DATA PANEL + ORDER FORM */}
-                    <div className="space-y-8">
-                        <div className="space-y-3 pb-6 border-b border-neutral-100">
-                            <h1 className="text-2xl font-light uppercase">{listing.title}</h1>
-                            <p className="text-xl font-light">NPR {Number(listing.price).toLocaleString()}</p>
-                        </div>
-
-                        {!showOrderForm ? (
-                            <button
-                                onClick={() => {
-                                    if (!user) return navigate('/login');
-                                    setShowOrderForm(true);
-                                }}
-                                className="w-full bg-black text-white py-4 text-xs tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors"
-                            >
-                                Proceed to Checkout
-                            </button>
-                        ) : (
-                            <form onSubmit={handlePlaceOrder} className="space-y-4 border border-neutral-200 p-6">
-                                <h3 className="text-xs font-medium uppercase tracking-wider">Delivery Details</h3>
-                                {orderError && <p className="text-red-500 text-xs">{orderError}</p>}
-                                
-                                <select name="delivery_method" value={orderData.delivery_method} onChange={handleOrderChange} className="w-full border-b border-neutral-300 py-2 text-sm outline-none">
-                                    <option value="seller">Seller Delivers</option>
-                                    <option value="courier">Courier Pickup</option>
-                                </select>
-                                
-                                <input name="delivery_address" placeholder="Delivery Address" required onChange={handleOrderChange} className="w-full border-b border-neutral-300 py-2 text-sm outline-none" />
-                                
-                                <div className="flex gap-3 pt-4">
-                                    <button type="submit" disabled={ordering} className="flex-1 bg-black text-white py-3 text-xs uppercase hover:bg-neutral-800">
-                                        {ordering ? 'Processing...' : 'Confirm Order'}
-                                    </button>
-                                    <button type="button" onClick={() => setShowOrderForm(false)} className="px-6 border border-neutral-300 text-xs uppercase">Cancel</button>
-                                </div>
-                            </form>
-                        )}
-                    </div>
-                </div>
-            </div>
+      <div className="flex justify-center items-center min-h-[70vh]">
+        <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
+          Loading
         </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-20">
+      {/* Header */}
+      <div className="border-b border-neutral-200 pb-6 mb-12">
+        <h1 className="text-3xl font-light tracking-[0.08em] uppercase text-black">
+          Order Ledger
+        </h1>
+        <p className="text-[10px] tracking-[0.4em] uppercase text-neutral-500 mt-2">
+          {orders.length} Active Records
+        </p>
+      </div>
+
+      {orders.length === 0 ? (
+        <div className="bg-neutral-50 border-l-2 border-black p-6 text-[10px] uppercase tracking-widest text-neutral-600">
+          No orders currently in queue.
+        </div>
+      ) : (
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-neutral-200">
+                {["Product", "Buyer", "Phone", "Payment", "Total", "Status", ""].map((head) => (
+                  <th key={head} className="py-4 px-2 text-[10px] tracking-widest uppercase text-neutral-500 font-medium whitespace-nowrap">
+                    {head}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {orders.map((order) => (
+                <tr key={order.id} className="group hover:bg-neutral-50/70 transition-colors duration-300">
+                  {/* Product */}
+                  <td className="py-5 pr-8 whitespace-nowrap">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-16 overflow-hidden bg-neutral-100 flex-shrink-0">
+                        <img
+                          src={order.listing.images?.[0]?.image_url}
+                          alt={order.listing.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      </div>
+                      <span className="text-sm font-light uppercase tracking-wide">{order.listing.title}</span>
+                    </div>
+                  </td>
+
+                  {/* Buyer */}
+                  <td className="py-5 px-2 text-[11px] uppercase tracking-[0.05em] text-neutral-700">{order.buyer.first_name} {order.buyer.last_name}</td>
+
+                  {/* Phone */}
+                  <td className="py-5 px-2 text-[11px] uppercase tracking-widest text-neutral-500">{order.receiver_phone}</td>
+
+                  {/* Payment */}
+                  <td className="py-5 px-2 text-[11px] uppercase tracking-widest text-neutral-500">{order.payment_method}</td>
+
+                  {/* Total */}
+                  <td className="py-5 px-2 text-sm font-medium tracking-wide">NPR {Number(order.total_amount).toLocaleString()}</td>
+
+                  {/* Status */}
+                  <td className="py-5 px-2">
+                    <span className={`text-[10px] tracking-[0.3em] uppercase ${order.status === 'pending' ? 'text-neutral-400' : 'text-black'}`}>
+                      {order.status}
+                    </span>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="py-5 pl-4 text-right">
+                    {order.status === "pending" && (
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => handleStatusUpdate(order.id, "accepted")}
+                          className="px-4 py-2.5 bg-black text-white text-[10px] tracking-widest uppercase hover:bg-neutral-800 rounded-sm transition-all"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(order.id, "cancelled")}
+                          className="px-4 py-2.5 border border-neutral-200 text-[10px] tracking-widest uppercase hover:border-black rounded-sm transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default ProductDetail;
+export default SellerOrders;

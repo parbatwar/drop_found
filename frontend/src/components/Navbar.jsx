@@ -158,7 +158,7 @@ function Navbar() {
                                                     <Link to="/seller/listings" className="block px-4 py-2 text-xs text-neutral-500 hover:text-black">
                                                         Manage Products
                                                     </Link>
-                                                    <Link to="/seller/sales" className="block px-4 py-2 text-xs text-neutral-500 hover:text-black">
+                                                    <Link to="/seller/orders" className="block px-4 py-2 text-xs text-neutral-500 hover:text-black">
                                                         View Orders
                                                     </Link>
                                                 </div>

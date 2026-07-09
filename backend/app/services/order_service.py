@@ -5,7 +5,7 @@ from app.models.enums import ListingStatus
 from app.models.listing import Listing
 from app.models.order import Order, OrderStatus
 from app.models.seller import SellerProfile
-from app.schemas import listing
+from app.schemas import listing, order
 
 
 class OrderService:
@@ -32,10 +32,6 @@ class OrderService:
             delivery_address=data.delivery_address,
         )
 
-        listing.quantity -= 1
-        if listing.quantity == 0:
-            listing.status = ListingStatus.inactive
-
         db.add(order)
         db.commit()
         db.refresh(order)
@@ -57,13 +53,33 @@ class OrderService:
         return db.query(Order).filter(Order.seller_id == seller.id).all()
 
     @staticmethod
-    def update_order_status(order_id: str, current_user, new_status: str, db):
+    def update_order_status(order_id: str, current_user, new_status: OrderStatus, db):
         order = db.query(Order).filter(Order.id == order_id).first()
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
         if order.seller_id != current_user.seller_profile.id:
             raise HTTPException(status_code=403, detail="Not your order")
+
+        if order.status != OrderStatus.pending:
+            raise HTTPException(
+                status_code=400, detail="Order has already been processed"
+            )
+
         order.status = new_status
+
+        if new_status == OrderStatus.accepted:
+            listing = order.listing
+
+            if listing.quantity <= 0:
+                raise HTTPException(
+                    status_code=400, detail="Item is already out of stock"
+                )
+
+            listing.quantity -= 1
+
+            if listing.quantity == 0:
+                listing.status = ListingStatus.sold
+
         db.commit()
         db.refresh(order)
         return order

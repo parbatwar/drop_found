@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 from app.models.enums import OrderStatus, PaymentMethod
@@ -16,11 +16,41 @@ class OrderUpdate(BaseModel):
     status: OrderStatus
 
 
+class OrderListingImage(BaseModel):
+    image_url: str
+
+    class Config:
+        from_attributes = True
+
+
+class OrderListing(BaseModel):
+    id: UUID
+    title: str
+    price: float
+    images: list[OrderListingImage] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class OrderBuyer(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+
+    class Config:
+        from_attributes = True
+
+
 class OrderResponse(BaseModel):
     id: UUID
     buyer_id: UUID
     seller_id: UUID
     listing_id: UUID
+
+    buyer: OrderBuyer
+    listing: OrderListing
+
     status: OrderStatus
     total_amount: float
     receiver_phone: str

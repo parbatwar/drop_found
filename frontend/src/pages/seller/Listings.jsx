@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getSellerListings, deleteListing } from '../../api/listings';
-import { getMySellerProfile } from '../../api/seller';
+import { getMyListings, deleteListing } from '../../api/listings';
 
 function Listings() {
     const [listings, setListings] = useState([]);
@@ -11,13 +10,10 @@ function Listings() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 1. Fetch the profile parameters to resolve the target identity string context safely
-                const sellerRes = await getMySellerProfile();
-                const sellerId = sellerRes.data.id;
+                const listingsRes = await getMyListings();
 
-                // 2. Directly call the optimized seller endpoint instead of filtering the whole global collection
-                const listingsRes = await getSellerListings(sellerId);
                 console.log("RAW LISTINGS DATA FROM BACKEND:", listingsRes.data);
+
                 setListings(listingsRes.data);
             } catch (err) {
                 console.error(err);

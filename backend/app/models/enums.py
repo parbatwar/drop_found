@@ -70,8 +70,10 @@ class ListingSize(str, enum.Enum):
 
 class OrderStatus(str, enum.Enum):
     pending = "pending"
-    confirmed = "confirmed"
+    accepted = "accepted"
+    shipped = "shipped"
     delivered = "delivered"
+    rejected = "rejected"
     cancelled = "cancelled"
 
 

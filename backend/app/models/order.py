@@ -33,8 +33,6 @@ class Order(Base):
         default=PaymentMethod.cod,
     )
 
-    delivery_fee = Column(Numeric(10, 2), nullable=False)
-    delivery_address = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
