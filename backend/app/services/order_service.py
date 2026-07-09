@@ -5,7 +5,6 @@ from app.models.enums import ListingStatus
 from app.models.listing import Listing
 from app.models.order import Order, OrderStatus
 from app.models.seller import SellerProfile
-from app.schemas import listing, order
 
 
 class OrderService:
@@ -13,10 +12,13 @@ class OrderService:
     def create_order(data, current_user, db):
 
         listing = db.query(Listing).filter(Listing.id == data.listing_id).first()
+
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
-        if listing.status.value != "active":
+
+        if listing.status != ListingStatus.active:
             raise HTTPException(status_code=400, detail="Listing is not available")
+
         if listing.quantity < 1:
             raise HTTPException(status_code=400, detail="Item out of stock")
 
@@ -35,6 +37,7 @@ class OrderService:
         db.add(order)
         db.commit()
         db.refresh(order)
+
         return order
 
     @staticmethod
@@ -48,31 +51,65 @@ class OrderService:
             .filter(SellerProfile.user_id == current_user.id)
             .first()
         )
+
         if not seller:
             raise HTTPException(status_code=403, detail="Not a seller")
+
         return db.query(Order).filter(Order.seller_id == seller.id).all()
 
     @staticmethod
     def update_order_status(order_id: str, current_user, new_status: OrderStatus, db):
         order = db.query(Order).filter(Order.id == order_id).first()
+
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
+
         if order.seller_id != current_user.seller_profile.id:
             raise HTTPException(status_code=403, detail="Not your order")
 
-        if order.status != OrderStatus.pending:
+        current_status = order.status
+
+        # Allowed status transitions
+        if current_status == OrderStatus.pending:
+            allowed = [
+                OrderStatus.accepted,
+                OrderStatus.rejected,
+                OrderStatus.cancelled,
+            ]
+
+        elif current_status == OrderStatus.accepted:
+            allowed = [
+                OrderStatus.shipped,
+                OrderStatus.delivered,
+                OrderStatus.cancelled,
+            ]
+
+        elif current_status == OrderStatus.shipped:
+            allowed = [
+                OrderStatus.delivered,
+            ]
+
+        else:
             raise HTTPException(
-                status_code=400, detail="Order has already been processed"
+                status_code=400,
+                detail="Order can no longer be updated",
             )
 
-        order.status = new_status
+        if new_status not in allowed:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid status transition",
+            )
 
+        listing = order.listing
+
+        # Accept order → reserve stock
         if new_status == OrderStatus.accepted:
-            listing = order.listing
 
             if listing.quantity <= 0:
                 raise HTTPException(
-                    status_code=400, detail="Item is already out of stock"
+                    status_code=400,
+                    detail="Item is already out of stock",
                 )
 
             listing.quantity -= 1
@@ -80,6 +117,17 @@ class OrderService:
             if listing.quantity == 0:
                 listing.status = ListingStatus.sold
 
+        # Cancel after acceptance → restore stock
+        if (
+            current_status == OrderStatus.accepted
+            and new_status == OrderStatus.cancelled
+        ):
+            listing.quantity += 1
+            listing.status = ListingStatus.active
+
+        order.status = new_status
+
         db.commit()
         db.refresh(order)
+
         return order

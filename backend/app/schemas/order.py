@@ -37,6 +37,15 @@ class OrderBuyer(BaseModel):
     id: UUID
     first_name: str
     last_name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
+class ReviewMini(BaseModel):
+    id: UUID
+    rating: int
 
     class Config:
         from_attributes = True
@@ -50,6 +59,8 @@ class OrderResponse(BaseModel):
 
     buyer: OrderBuyer
     listing: OrderListing
+
+    review: ReviewMini | None = None
 
     status: OrderStatus
     total_amount: float

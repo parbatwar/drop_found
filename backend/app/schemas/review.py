@@ -4,9 +4,7 @@ from uuid import UUID
 
 
 class ReviewCreate(BaseModel):
-    seller_id: UUID
-    order_id: UUID
-    rating: int = Field(..., ge=1, le=5)  # must be between 1 and 5
+    rating: int = Field(..., ge=1, le=5)
     comment: str | None = None
 
 
@@ -15,13 +13,25 @@ class ReviewUpdate(BaseModel):
     comment: str | None = None
 
 
+class ReviewBuyer(BaseModel):
+    first_name: str
+    last_name: str
+
+    class Config:
+        from_attributes = True
+
+
 class ReviewResponse(BaseModel):
     id: UUID
     buyer_id: UUID
     seller_id: UUID
     order_id: UUID
+
+    buyer: ReviewBuyer
+
     rating: int
     comment: str | None
+
     is_visible: bool
     created_at: datetime
 

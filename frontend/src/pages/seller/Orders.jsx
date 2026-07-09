@@ -26,7 +26,24 @@ function SellerOrders() {
       loadOrders();
     } catch (err) {
       console.error(err);
-      alert("Failed to update order");
+      alert(err.response?.data?.detail || "Failed to update order");
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending":
+        return "text-yellow-600";
+      case "accepted":
+        return "text-blue-600";
+      case "delivered":
+        return "text-green-600";
+      case "rejected":
+        return "text-red-600";
+      case "cancelled":
+        return "text-neutral-400";
+      default:
+        return "text-black";
     }
   };
 
@@ -41,87 +58,169 @@ function SellerOrders() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
       {/* Header */}
       <div className="border-b border-neutral-200 pb-6 mb-12">
-        <h1 className="text-3xl font-light tracking-[0.08em] uppercase text-black">
-          Order Ledger
+        <h1 className="text-3xl font-light tracking-[0.08em] uppercase">
+          Seller Orders
         </h1>
+
         <p className="text-[10px] tracking-[0.4em] uppercase text-neutral-500 mt-2">
-          {orders.length} Active Records
+          {orders.length} Orders
         </p>
       </div>
 
       {orders.length === 0 ? (
-        <div className="bg-neutral-50 border-l-2 border-black p-6 text-[10px] uppercase tracking-widest text-neutral-600">
-          No orders currently in queue.
+        <div className="bg-neutral-50 border-l-2 border-black p-6">
+          <p className="text-[10px] uppercase tracking-[0.3em]">
+            No orders found.
+          </p>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-neutral-200">
-                {["Product", "Buyer", "Phone", "Payment", "Total", "Status", ""].map((head) => (
-                  <th key={head} className="py-4 px-2 text-[10px] tracking-widest uppercase text-neutral-500 font-medium whitespace-nowrap">
-                    {head}
-                  </th>
-                ))}
+                <th className="py-4 text-left text-[10px] uppercase tracking-[0.3em]">
+                  Product
+                </th>
+
+                <th className="py-4 text-left text-[10px] uppercase tracking-[0.3em]">
+                  Buyer
+                </th>
+
+                <th className="py-4 text-left text-[10px] uppercase tracking-[0.3em]">
+                  Phone
+                </th>
+
+                <th className="py-4 text-left text-[10px] uppercase tracking-[0.3em]">
+                  Address
+                </th>
+
+                <th className="py-4 text-left text-[10px] uppercase tracking-[0.3em]">
+                  Payment
+                </th>
+
+                <th className="py-4 text-left text-[10px] uppercase tracking-[0.3em]">
+                  Total
+                </th>
+
+                <th className="py-4 text-left text-[10px] uppercase tracking-[0.3em]">
+                  Status
+                </th>
+
+                <th className="py-4 text-right text-[10px] uppercase tracking-[0.3em]">
+                  Actions
+                </th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-neutral-100">
               {orders.map((order) => (
-                <tr key={order.id} className="group hover:bg-neutral-50/70 transition-colors duration-300">
+                <tr
+                  key={order.id}
+                  className="hover:bg-neutral-50 transition-colors"
+                >
                   {/* Product */}
-                  <td className="py-5 pr-8 whitespace-nowrap">
+                  <td className="py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-16 overflow-hidden bg-neutral-100 flex-shrink-0">
+                      <div className="w-14 h-16 bg-neutral-100 overflow-hidden flex-shrink-0">
                         <img
-                          src={order.listing.images?.[0]?.image_url}
-                          alt={order.listing.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          src={order.listing?.images?.[0]?.image_url}
+                          alt={order.listing?.title}
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                      <span className="text-sm font-light uppercase tracking-wide">{order.listing.title}</span>
+
+                      <div>
+                        <p className="text-sm font-medium uppercase">
+                          {order.listing?.title}
+                        </p>
+                      </div>
                     </div>
                   </td>
 
                   {/* Buyer */}
-                  <td className="py-5 px-2 text-[11px] uppercase tracking-[0.05em] text-neutral-700">{order.buyer.first_name} {order.buyer.last_name}</td>
+                  <td className="py-5 text-sm">
+                    {order.buyer?.first_name} {order.buyer?.last_name}
+                  </td>
 
                   {/* Phone */}
-                  <td className="py-5 px-2 text-[11px] uppercase tracking-widest text-neutral-500">{order.receiver_phone}</td>
+                  <td className="py-5 text-sm">
+                    {order.receiver_phone}
+                  </td>
+
+                  {/* Address */}
+                  <td className="py-5 text-sm max-w-xs">
+                    {order.delivery_address}
+                  </td>
 
                   {/* Payment */}
-                  <td className="py-5 px-2 text-[11px] uppercase tracking-widest text-neutral-500">{order.payment_method}</td>
+                  <td className="py-5 text-sm uppercase">
+                    {order.payment_method}
+                  </td>
 
                   {/* Total */}
-                  <td className="py-5 px-2 text-sm font-medium tracking-wide">NPR {Number(order.total_amount).toLocaleString()}</td>
+                  <td className="py-5 font-medium">
+                    NPR {Number(order.total_amount).toLocaleString()}
+                  </td>
 
                   {/* Status */}
-                  <td className="py-5 px-2">
-                    <span className={`text-[10px] tracking-[0.3em] uppercase ${order.status === 'pending' ? 'text-neutral-400' : 'text-black'}`}>
+                  <td className="py-5">
+                    <span
+                      className={`text-[10px] uppercase tracking-[0.3em] font-medium ${getStatusColor(
+                        order.status
+                      )}`}
+                    >
                       {order.status}
                     </span>
                   </td>
 
                   {/* Actions */}
-                  <td className="py-5 pl-4 text-right">
-                    {order.status === "pending" && (
-                      <div className="flex gap-2 justify-end">
+                  <td className="py-5">
+                    <div className="flex justify-end gap-2">
+
+                      {order.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(order.id, "accepted")
+                            }
+                            className="px-4 py-2 bg-black text-white text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800"
+                          >
+                            Accept
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(order.id, "rejected")
+                            }
+                            className="px-4 py-2 border border-neutral-300 text-[10px] uppercase tracking-[0.2em] hover:border-black"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+
+                      {order.status === "accepted" && (
                         <button
-                          onClick={() => handleStatusUpdate(order.id, "accepted")}
-                          className="px-4 py-2.5 bg-black text-white text-[10px] tracking-widest uppercase hover:bg-neutral-800 rounded-sm transition-all"
+                          onClick={() =>
+                            handleStatusUpdate(order.id, "delivered")
+                          }
+                          className="px-4 py-2 bg-black text-white text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800"
                         >
-                          Accept
+                          Mark Delivered
                         </button>
-                        <button
-                          onClick={() => handleStatusUpdate(order.id, "cancelled")}
-                          className="px-4 py-2.5 border border-neutral-200 text-[10px] tracking-widest uppercase hover:border-black rounded-sm transition-all"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
+                      )}
+
+                      {(order.status === "delivered" ||
+                        order.status === "rejected" ||
+                        order.status === "cancelled") && (
+                        <span className="text-[10px] uppercase tracking-[0.3em] text-neutral-400">
+                          Completed
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
