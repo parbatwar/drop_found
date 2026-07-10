@@ -1,9 +1,12 @@
 from typing import List
+from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user_optional
 from app.database import get_db
+from app.models.user import User
 from app.schemas.listing import (
     ListingCreate,
     ListingImageCreate,
@@ -49,8 +52,12 @@ def get_seller_listings(
 
 
 @router.get("/{listing_id}", response_model=ListingResponse)
-def get_listing(listing_id: str, db=Depends(get_db)):
-    return ListingService.get_listing(listing_id=listing_id, db=db)
+def get_listing(
+    listing_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    return ListingService.get_listing(listing_id, current_user, db)
 
 
 @router.patch("/{listing_id}", response_model=ListingResponse)

@@ -64,7 +64,8 @@ class ListingResponse(BaseModel):
     section: ListingSection
     category: ListingCategory
     size: ListingSize | None
-    # is_boosted: bool
+
+    is_wishlisted: bool = False
     images: List[ListingImageResponse] = []
     created_at: datetime
     updated_at: datetime

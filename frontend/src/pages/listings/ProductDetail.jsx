@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getListing } from '../../api/listings';
 import { useAuth } from '../../context/AuthContext';
+import { addToWishlist, removeFromWishlist } from "../../api/wishlist";
+
 
 function ProductDetail() {
     const { id } = useParams();
@@ -12,6 +14,7 @@ function ProductDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
+    const [isWishlisted, setIsWishlisted] = useState(false);
 
     const canBuy = listing && listing.status === "active" && listing.quantity > 0;
 
@@ -27,6 +30,12 @@ function ProductDetail() {
             })
             .finally(() => setLoading(false));
     }, [id]);
+
+    useEffect(() => {
+        if (listing) {
+            setIsWishlisted(listing.is_wishlisted);
+        }
+    }, [listing]);
 
     const handleCheckoutRedirect = () => {
         if (!user) {
@@ -45,6 +54,26 @@ function ProductDetail() {
     const prevImage = () => {
         if (!listing?.images) return;
         setActiveIndex((prev) => (prev - 1 + listing.images.length) % listing.images.length);
+    };
+
+    const handleWishlist = async () => {
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+
+        try {
+            if (isWishlisted) {
+                await removeFromWishlist(listing.id);
+                setIsWishlisted(false);
+            } else {
+                await addToWishlist(listing.id);
+                setIsWishlisted(true);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong.");
+        }
     };
 
     if (loading) return <div className="flex justify-center items-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b border-black"></div></div>;
@@ -86,7 +115,16 @@ function ProductDetail() {
 
                         <div className="grid grid-cols-2 gap-y-4 gap-x-8 py-6 border-t border-b border-neutral-100 text-xs">
                             <div><span className="text-[10px] text-neutral-400 uppercase block mb-0.5">Size</span><span className="font-normal uppercase text-black">{listing.size?.replace('_', ' ')}</span></div>
-                            <div><span className="text-[10px] text-neutral-400 uppercase block mb-0.5">Condition</span><span className="font-normal capitalize text-black">{listing.condition?.replace('_', ' ')}</span></div>
+                            {listing.section === "thrift" && (
+                                <div>
+                                    <span className="text-[10px] text-neutral-400 uppercase block mb-0.5">
+                                        Condition
+                                    </span>
+                                    <span className="font-normal capitalize text-black">
+                                        {listing.condition?.replace("_", " ")}
+                                    </span>
+                                </div>
+                            )}
                             <div>
                                 <span className="text-[10px] text-neutral-400 uppercase block mb-0.5">
                                     Quantity
@@ -111,6 +149,20 @@ function ProductDetail() {
                                 </div>
                             )}
                         </div>
+
+                        <div className="flex justify-center pt-4">
+                            <button
+                                onClick={handleWishlist}
+                                className="text-4xl select-none transition-transform hover:scale-110"
+                            >
+                                {isWishlisted ? (
+                                    <span className="text-red-500">♥</span>
+                                ) : (
+                                    <span className="text-black">♡</span>
+                                )}
+                            </button>
+                        </div>
+
                     </div>
 
                 </div>

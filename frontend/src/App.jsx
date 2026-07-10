@@ -26,6 +26,7 @@ import SellerOrders from './pages/seller/Orders';
 // Order Pages
 import MyOrders from './pages/orders/MyOrders';
 import Checkout from './pages/orders/Checkout';
+import Wishlist from './pages/Wishlist';
 
 // Product/Listing Pages
 import ProductDetail from './pages/listings/ProductDetail';
@@ -55,6 +56,7 @@ function App() {
                 <Route path="/apply" element={<SellerApply />} />
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/wishlist" element={<Wishlist />} />
             </Route>
         </Route>
 

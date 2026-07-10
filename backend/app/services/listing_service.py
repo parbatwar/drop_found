@@ -3,6 +3,7 @@ from app.models.enums import ListingStatus
 from app.models.listing import Listing, ListingImage  # Added import for ListingImage
 from app.models.seller import SellerProfile
 from app.schemas import listing
+from app.models.wishlist import Wishlist
 
 
 class ListingService:
@@ -75,10 +76,29 @@ class ListingService:
         )
 
     @staticmethod
-    def get_listing(listing_id, db):
+    def get_listing(listing_id, current_user, db):
+        """
+        Fetch a listing by its ID and determine if it's wishlisted by the current user.
+        """
         listing = db.query(Listing).filter(Listing.id == listing_id).first()
+
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
+
+        listing.is_wishlisted = False
+
+        if current_user:
+            wishlist = (
+                db.query(Wishlist)
+                .filter(
+                    Wishlist.buyer_id == current_user.id,
+                    Wishlist.listing_id == listing.id,
+                )
+                .first()
+            )
+
+            listing.is_wishlisted = wishlist is not None
+
         return listing
 
     @staticmethod

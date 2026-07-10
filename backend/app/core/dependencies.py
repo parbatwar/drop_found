@@ -5,9 +5,32 @@ from app.database import get_db
 from app.models.user import User, UserRole
 from app.core.security import SECRET_KEY, ALGORITHM
 import jwt
+from typing import Optional
 
 # Dependency to get the current user from the token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="/auth/login",
+    auto_error=False,
+)
+
+
+def get_current_user_optional(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db),
+):
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+    user = db.query(User).filter(User.id == user_id).first()
+    return user
 
 
 def get_current_user(

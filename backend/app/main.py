@@ -13,7 +13,17 @@ from app.models import (
     Follow,
     Notification,
 )
-from app.routers import auth, admin, seller, listing, order, meta, review, user
+from app.routers import (
+    auth,
+    admin,
+    seller,
+    listing,
+    order,
+    meta,
+    review,
+    user,
+    wishlist,
+)
 
 app = FastAPI(title="Drop Found API")
 
@@ -33,6 +43,7 @@ app.include_router(order.router)
 app.include_router(meta.router)
 app.include_router(review.router)
 app.include_router(user.router)
+app.include_router(wishlist.router)
 
 
 @app.get("/")
