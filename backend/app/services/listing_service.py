@@ -56,8 +56,43 @@ class ListingService:
         return listing
 
     @staticmethod
-    def get_listings(db):
-        return db.query(Listing).filter(Listing.status == ListingStatus.active).all()
+    def get_listings(
+        db,
+        search=None,
+        category=None,
+        section=None,
+        size=None,
+        sort="newest",
+    ):
+        query = db.query(Listing).filter(Listing.status == ListingStatus.active)
+
+        # Search by title
+        if search:
+            query = query.filter(Listing.title.ilike(f"%{search}%"))
+
+        # Filter by category
+        if category:
+            query = query.filter(Listing.category == category)
+
+        # Filter by section
+        if section:
+            query = query.filter(Listing.section == section)
+
+        # Filter by size
+        if size:
+            query = query.filter(Listing.size == size)
+
+        # Sorting
+        if sort == "price_asc":
+            query = query.order_by(Listing.price.asc())
+
+        elif sort == "price_desc":
+            query = query.order_by(Listing.price.desc())
+
+        else:
+            query = query.order_by(Listing.created_at.desc())
+
+        return query.all()
 
     @staticmethod
     def get_my_listings(current_user, db):

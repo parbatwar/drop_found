@@ -32,6 +32,8 @@ class SellerResponse(BaseModel):
     location: str | None = None
     avatar_url: str | None = None
     # id_document_url: str | None = None
+
+    is_following: bool = False
     verification_status: VerificationStatus
     verified_at: datetime | None = None
     seller_type: SellerType

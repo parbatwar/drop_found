@@ -10,6 +10,7 @@ import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
+import Browse from './pages/Browse';
 
 // Admin Pages
 import AdminSellers from './pages/admin/AdminSellers';
@@ -45,6 +46,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/shop/:slug" element={<SellerProfile />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/browse" element={<Browse />} />
         </Route>
 
         {/* ========================================================= */}

@@ -5,6 +5,7 @@ from app.database import get_db
 from app.schemas.seller import SellerApply, SellerResponse
 from app.services.seller_service import SellerService
 from app.models.user import User
+from app.core.dependencies import get_current_user_optional
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
@@ -30,5 +31,9 @@ def me(current_user: User = Depends(get_current_user), db: Session = Depends(get
 
 
 @router.get("/{slug}", response_model=SellerResponse)
-def seller_slug(slug: str, db: Session = Depends(get_db)):
-    return SellerService.seller_slug(slug, db)
+def seller_slug(
+    slug: str,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    return SellerService.seller_slug(slug, db, current_user)

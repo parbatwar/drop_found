@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.core.dependencies import get_current_user_optional
 from app.database import get_db
+from app.models.enums import ListingCategory, ListingSection, ListingSize
 from app.models.user import User
 from app.schemas.listing import (
     ListingCreate,
@@ -27,9 +28,23 @@ def create_listing(
     return ListingService.create_listing(data=data, user=current_user, db=db)
 
 
-@router.get("/", response_model=List[ListingResponse])
-def get_listings(db=Depends(get_db)):
-    return ListingService.get_listings(db)
+@router.get("/", response_model=list[ListingResponse])
+def get_listings(
+    search: str | None = None,
+    category: ListingCategory | None = None,
+    section: ListingSection | None = None,
+    size: ListingSize | None = None,
+    sort: str = "newest",
+    db: Session = Depends(get_db),
+):
+    return ListingService.get_listings(
+        db=db,
+        search=search,
+        category=category,
+        section=section,
+        size=size,
+        sort=sort,
+    )
 
 
 @router.get("/me", response_model=List[ListingResponse])

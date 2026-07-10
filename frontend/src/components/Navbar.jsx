@@ -147,6 +147,9 @@ function Navbar() {
                                                 <Link to="/wishlist" className="block px-4 py-2 text-xs text-neutral-600 hover:bg-neutral-50 hover:text-black">
                                                     Saved Items
                                                 </Link>
+                                                <Link to="/browse" className="block px-4 py-2 text-xs text-neutral-600 hover:bg-neutral-50 hover:text-black">
+                                                    Browse Products
+                                                </Link>
                                             </div>
 
                                             {/* Seller Management Options */}

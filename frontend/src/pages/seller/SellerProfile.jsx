@@ -1,13 +1,17 @@
 // src/pages/SellerProfile.jsx
 
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 
 import { getSellerBySlug } from '../../api/seller';
 import { getSellerListings } from '../../api/listings';
+import { followSeller, unfollowSeller } from '../../api/follow';
+import { useAuth } from '../../context/AuthContext';
 
 function SellerProfile() {
     const { slug } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [seller, setSeller] = useState(null);
     const [listings, setListings] = useState([]);
@@ -15,12 +19,15 @@ function SellerProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [isFollowing, setIsFollowing] = useState(false);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const sellerRes = await getSellerBySlug(slug);
 
                 setSeller(sellerRes.data);
+                setIsFollowing(sellerRes.data.is_following);
 
                 const listingsRes = await getSellerListings(
                     sellerRes.data.id
@@ -37,6 +44,26 @@ function SellerProfile() {
 
         fetchData();
     }, [slug]);
+
+    const handleFollow = async () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        try {
+            if (isFollowing) {
+                await unfollowSeller(seller.id);
+                setIsFollowing(false);
+            } else {
+                await followSeller(seller.id);
+                setIsFollowing(true);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong.");
+        }
+    };
 
     if (loading) {
         return (
@@ -77,9 +104,26 @@ function SellerProfile() {
                     />
                 )}
 
-                <h1 className="text-4xl font-light tracking-[0.05em]">
-                    {seller.shop_name}
-                </h1>
+                <div className="flex items-center justify-between gap-6">
+
+                    <h1 className="text-4xl font-light tracking-[0.05em]">
+                        {seller.shop_name}
+                    </h1>
+
+                    {user?.id !== seller.user_id && (
+                        <button
+                            onClick={handleFollow}
+                            className={`px-6 py-2 text-xs uppercase tracking-[0.2em] transition ${
+                                isFollowing
+                                    ? "bg-black text-white"
+                                    : "border border-black text-black hover:bg-black hover:text-white"
+                            }`}
+                        >
+                            {isFollowing ? "Following" : "Follow"}
+                        </button>
+                    )}
+
+                </div>
 
                 {seller.bio && (
                     <p className="text-gray-600 mt-3 max-w-2xl">
@@ -98,7 +142,9 @@ function SellerProfile() {
                             📍 {seller.location}
                         </span>
                     )}
+
                 </div>
+
             </div>
 
             {/* Listings */}
@@ -142,6 +188,7 @@ function SellerProfile() {
                                 <p className="text-sm text-gray-500">
                                     NPR {item.price}
                                 </p>
+
                             </Link>
                         ))}
 

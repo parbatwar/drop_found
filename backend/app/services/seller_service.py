@@ -3,6 +3,9 @@ from app.models.seller import SellerProfile
 from app.models.enums import UserRole, VerificationStatus
 from app.utils.slug import generate_slug
 
+from app.models.user import User
+from app.models.follow import Follow
+
 
 class SellerService:
 
@@ -92,9 +95,24 @@ class SellerService:
         return existing_profile
 
     @staticmethod
-    def seller_slug(slug, db):
+    def seller_slug(slug, db, current_user: User | None = None):
         seller = db.query(SellerProfile).filter(SellerProfile.slug == slug).first()
+
         if not seller:
             raise HTTPException(status_code=404, detail="Seller Profile not found")
+
+        seller.is_following = False
+
+        if current_user:
+            follow = (
+                db.query(Follow)
+                .filter(
+                    Follow.buyer_id == current_user.id,
+                    Follow.seller_id == seller.id,
+                )
+                .first()
+            )
+
+            seller.is_following = follow is not None
 
         return seller

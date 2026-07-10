@@ -3,7 +3,10 @@ import apiClient from './client';
 export const getSellerListings = (sellerId) =>
     apiClient.get(`/listings/seller/${sellerId}`);
 
-export const getListings = () => apiClient.get('/listings/');
+export const getListings = (params = {}) =>
+  apiClient.get("/listings", {
+    params,
+  });
 export const getListing = (id) => apiClient.get(`/listings/${id}`);
 export const getMyListings = () => apiClient.get("/listings/me");
 
