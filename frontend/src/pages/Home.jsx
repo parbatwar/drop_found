@@ -2,13 +2,18 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getListings } from '../api/listings';
-import { getSellers } from '../api/seller';
+import { getSellers, getMySellerProfile } from '../api/seller';
+import { useAuth } from '../context/AuthContext';
 
 function Home() {
+    const { user } = useAuth();
     const [listings, setListings] = useState([]);
     const [sellers, setSellers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [sellerStatus, setSellerStatus] = useState(null);
+    const [statusLoading, setStatusLoading] = useState(true);
 
+    // Fetch homepage data
     useEffect(() => {
         Promise.all([getListings(), getSellers()])
             .then(([listingsRes, sellersRes]) => {
@@ -18,6 +23,96 @@ function Home() {
             .catch((err) => console.error('Failed to load homepage data:', err))
             .finally(() => setLoading(false));
     }, []);
+
+    // Check seller application status
+    useEffect(() => {
+        const checkSellerStatus = async () => {
+            if (!user) {
+                setStatusLoading(false);
+                return;
+            }
+
+            try {
+                const response = await getMySellerProfile();
+                const status = response.data?.verification_status;
+                setSellerStatus(status);
+            } catch (error) {
+                if (error.response?.status === 404) {
+                    setSellerStatus(null);
+                } else {
+                    console.error('Failed to fetch seller status:', error);
+                }
+            } finally {
+                setStatusLoading(false);
+            }
+        };
+
+        checkSellerStatus();
+    }, [user]);
+
+    // Get seller section content based on status
+    const getSellerSectionContent = () => {
+        if (statusLoading) {
+            return {
+                label: 'Partnership',
+                title: 'Become a Curator',
+                description: 'Open your shop on Drop Found. List your pre-loved inventory, set your own rates, and reach intentional buyers across Nepal without initial listing fees.',
+                buttonText: 'Loading...',
+                buttonLink: '#',
+                buttonDisabled: true,
+                buttonClass: 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+            };
+        }
+
+        if (sellerStatus === 'pending') {
+            return {
+                label: 'Application Status',
+                title: 'Application Under Review',
+                description: 'Your application is currently being reviewed by our team. We\'ll notify you once approved. This usually takes 2-3 business days.',
+                buttonText: '⏳ Under Review',
+                buttonLink: '#',
+                buttonDisabled: true,
+                buttonClass: 'bg-neutral-200 text-neutral-600 cursor-not-allowed relative'
+            };
+        }
+
+        if (sellerStatus === 'approved') {
+            return {
+                label: 'Welcome Seller',
+                title: 'You\'re a Seller!',
+                description: 'Your shop is live on Drop Found. Start managing your listings, orders, and sales from your seller dashboard.',
+                buttonText: 'Go to Dashboard',
+                buttonLink: '/seller/dashboard',
+                buttonDisabled: false,
+                buttonClass: 'bg-black text-white hover:bg-neutral-800'
+            };
+        }
+
+        if (sellerStatus === 'rejected') {
+            return {
+                label: 'Reapplication',
+                title: 'Reapply to Sell',
+                description: 'Your previous application was not approved. Please review your shop details and reapply with updated information. We\'re here to help you get started.',
+                buttonText: 'Reapply Now',
+                buttonLink: '/seller/apply',
+                buttonDisabled: false,
+                buttonClass: 'bg-black text-white hover:bg-neutral-800'
+            };
+        }
+
+        // No application
+        return {
+            label: 'Partnership',
+            title: 'Become a Curator',
+            description: 'Open your shop on Drop Found. List your pre-loved inventory, set your own rates, and reach intentional buyers across Nepal without initial listing fees.',
+            buttonText: 'Apply To Sell',
+            buttonLink: '/apply',
+            buttonDisabled: false,
+            buttonClass: 'bg-black text-white hover:bg-neutral-800'
+        };
+    };
+
+    const sectionContent = getSellerSectionContent();
 
     // Clean loading skeleton component to keep the minimalist vibe
     const SkeletonCard = ({ aspect = 'aspect-square' }) => (
@@ -187,24 +282,34 @@ function Home() {
                 </div>
             </section>
 
-            {/* For Sellers B2B CTA */}
+            {/* For Sellers B2B CTA - Dynamic based on status */}
             <section className="bg-neutral-50 py-20 border-t border-neutral-100">
                 <div className="max-w-3xl mx-auto px-4 text-center space-y-5">
-                    <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 block">Partnership</span>
+                    <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 block">
+                        {sectionContent.label}
+                    </span>
                     <h2 className="text-2xl font-light tracking-[0.1em] text-black uppercase">
-                        Become a Curator
+                        {sectionContent.title}
                     </h2>
                     <p className="text-neutral-500 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-                        Open your shop on Drop Found. List your pre-loved inventory, set your own rates, 
-                        and reach intentional buyers across Nepal without initial listing fees.
+                        {sectionContent.description}
                     </p>
                     <div className="pt-2">
-                        <Link
-                            to="/apply"
-                            className="inline-block bg-black text-white px-9 py-3 text-xs tracking-[0.2em] uppercase hover:bg-neutral-800 transition-colors duration-300"
-                        >
-                            Apply To Sell
-                        </Link>
+                        {sectionContent.buttonDisabled ? (
+                            <button
+                                className={`inline-block px-9 py-3 text-xs tracking-[0.2em] uppercase ${sectionContent.buttonClass}`}
+                                disabled
+                            >
+                                {sectionContent.buttonText}
+                            </button>
+                        ) : (
+                            <Link
+                                to={sectionContent.buttonLink}
+                                className={`inline-block px-9 py-3 text-xs tracking-[0.2em] uppercase transition-colors duration-300 ${sectionContent.buttonClass}`}
+                            >
+                                {sectionContent.buttonText}
+                            </Link>
+                        )}
                     </div>
                 </div>
             </section>

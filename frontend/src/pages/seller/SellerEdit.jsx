@@ -1,4 +1,4 @@
-// src/pages/seller/SellerEditShop.jsx
+// src/pages/seller/SellerEdit.jsx
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,7 @@ import {
 import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
 
 
-function SellerEditShop() {
+function SellerEdit() {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -204,7 +204,7 @@ function SellerEditShop() {
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={() => navigate('/seller/shop')}
+                            onClick={() => navigate('/seller/dashboard')}
                             className="flex-1 border border-neutral-300 py-3 uppercase text-xs"
                         >
                             Cancel
@@ -227,4 +227,4 @@ function SellerEditShop() {
     );
 }
 
-export default SellerEditShop;
+export default SellerEdit;

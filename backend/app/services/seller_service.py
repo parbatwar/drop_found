@@ -1,6 +1,9 @@
 from fastapi import HTTPException
+from app.models.catalog.listing import Listing
 from app.models.seller.seller import SellerProfile
 from app.models.enums.enums import UserRole, VerificationStatus
+from app.models.social.review import Review
+from app.utils.seller import get_verified_seller
 from app.utils.slug import generate_slug
 
 from app.models.user.user import User
@@ -10,15 +13,7 @@ from app.models.seller.follow import Follow
 class SellerService:
 
     @staticmethod
-    def get_all_sellers(db):
-        return (
-            db.query(SellerProfile)
-            .filter(SellerProfile.verification_status == "approved")
-            .all()
-        )
-
-    @staticmethod
-    def apply(data, current_user, db):
+    def apply_for_seller(data, current_user, db):
         """
         Handles the application for a user to become a seller.
         Allows reapplication if a previous application was rejected.
@@ -85,18 +80,9 @@ class SellerService:
         return seller
 
     @staticmethod
-    def update_profile(current_user, data, db):
-        seller = (
-            db.query(SellerProfile)
-            .filter(SellerProfile.user_id == current_user.id)
-            .first()
-        )
-
-        if not seller:
-            raise HTTPException(
-                status_code=404,
-                detail="Seller profile not found",
-            )
+    def update_seller_profile(current_user, data, db):
+        """Update the current user's seller profile."""
+        seller = get_verified_seller(current_user, db)
 
         if data.shop_name and data.shop_name != seller.shop_name:
             slug = generate_slug(data.shop_name)
@@ -134,19 +120,26 @@ class SellerService:
         return seller
 
     @staticmethod
-    def me(current_user, db):
-        existing_profile = (
+    def get_all_sellers(db):
+        """Get all approved sellers."""
+        return (
             db.query(SellerProfile)
-            .filter(SellerProfile.user_id == current_user.id)
-            .first()
+            .filter(SellerProfile.verification_status == "approved")
+            .all()
         )
-        if not existing_profile:
-            raise HTTPException(status_code=404, detail="Seller Profile not found")
-
-        return existing_profile
 
     @staticmethod
-    def seller_slug(slug, db, current_user: User | None = None):
+    def get_my_seller_profile(current_user, db):
+        """Get the current user's seller profile with stats."""
+        seller = get_verified_seller(current_user, db)
+        return seller
+
+    @staticmethod
+    def get_seller_profile(slug, db, current_user: User | None = None):
+        """
+        Fetches a seller profile by its slug for public viewing.
+        If the user is authenticated, it checks if they follow the seller.
+        """
         seller = db.query(SellerProfile).filter(SellerProfile.slug == slug).first()
 
         if not seller:

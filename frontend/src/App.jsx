@@ -23,8 +23,7 @@ import Listings from './pages/seller/Listings';
 import CreateListing from './pages/seller/CreateListing';
 import EditListing from './pages/seller/EditListing';
 import SellerOrders from './pages/seller/Orders';
-import SellerShop from './pages/seller/SellerShop';
-import SellerEditShop from './pages/seller/SellerEditShop';
+import SellerEdit from './pages/seller/SellerEdit';
 
 // Shop Pages
 import SellerProfile from './pages/shop/SellerProfile';
@@ -77,8 +76,7 @@ function App() {
                 <Route path="/seller/listings/new" element={<CreateListing />} />
                 <Route path="/seller/listings/:id/edit" element={<EditListing />} />
                 <Route path="/seller/orders" element={<SellerOrders />} />
-                <Route path="/seller/shop" element={<SellerShop />} />
-                <Route path="/seller/shop/edit" element={<SellerEditShop />} />
+                <Route path="/seller/shop/edit" element={<SellerEdit />} />
             </Route>
         </Route>
 
