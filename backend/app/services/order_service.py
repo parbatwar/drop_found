@@ -1,10 +1,10 @@
 from decimal import Decimal
 
 from fastapi import HTTPException
-from app.models.enums import ListingStatus
-from app.models.listing import Listing
-from app.models.order import Order, OrderStatus
-from app.models.seller import SellerProfile
+from app.models.enums.listing_enum import ListingStatus
+from app.models.catalog.listing import Listing
+from app.models.order.order import Order, OrderStatus
+from app.models.seller.seller import SellerProfile
 
 
 class OrderService:

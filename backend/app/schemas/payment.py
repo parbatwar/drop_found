@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
-from app.models.enums import PaymentMethod, PaymentStatus
+from app.models.enums.enums import PaymentMethod, PaymentStatus
 
 
 class PaymentCreate(BaseModel):

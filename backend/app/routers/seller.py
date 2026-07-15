@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.database import get_db
-from app.schemas.seller import SellerApply, SellerResponse
+from app.schemas.seller import SellerApply, SellerResponse, SellerUpdate
 from app.services.seller_service import SellerService
-from app.models.user import User
+from app.models.user.user import User
 from app.core.dependencies import get_current_user_optional
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
@@ -28,6 +28,15 @@ def apply(
 @router.get("/me", response_model=SellerResponse)
 def me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return SellerService.me(current_user, db)
+
+
+@router.put("/me", response_model=SellerResponse)
+def update_profile(
+    data: SellerUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return SellerService.update_profile(current_user, data, db)
 
 
 @router.get("/{slug}", response_model=SellerResponse)

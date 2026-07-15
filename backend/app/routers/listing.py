@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.core.dependencies import get_current_user_optional
 from app.database import get_db
-from app.models.enums import ListingCategory, ListingSection, ListingSize
-from app.models.user import User
+from app.models.enums.listing_enum import ListingSize, Gender, ListingColor
+from app.models.user.user import User
 from app.schemas.listing import (
     ListingCreate,
     ListingImageCreate,
@@ -31,18 +31,20 @@ def create_listing(
 @router.get("/", response_model=list[ListingResponse])
 def get_listings(
     search: str | None = None,
-    category: ListingCategory | None = None,
-    section: ListingSection | None = None,
+    category_id: UUID | None = None,
+    gender: Gender | None = None,
     size: ListingSize | None = None,
+    color: ListingColor | None = None,
     sort: str = "newest",
     db: Session = Depends(get_db),
 ):
     return ListingService.get_listings(
         db=db,
         search=search,
-        category=category,
-        section=section,
+        category_id=category_id,
+        gender=gender,
         size=size,
+        color=color,
         sort=sort,
     )
 

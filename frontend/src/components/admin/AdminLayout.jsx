@@ -14,6 +14,7 @@ function AdminLayout() {
     const menuItems = [
         { path: '/admin/dashboard', label: 'Overview' },
         { path: '/admin/sellers', label: 'Pending Sellers' },
+        { path: '/admin/categories', label: 'Categories' },
         // Future tabs can go here seamlessly (e.g., Reports, Listings)
     ];
 

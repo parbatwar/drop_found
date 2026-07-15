@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
 import uuid
-from app.models.enums import UserRole
+from app.models.enums.enums import UserRole
 
 
 class User(Base):

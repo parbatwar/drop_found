@@ -1,6 +1,6 @@
 from fastapi import HTTPException
-from app.models.wishlist import Wishlist
-from app.models.listing import Listing
+from app.models.social.wishlist import Wishlist
+from app.models.catalog.listing import Listing
 
 
 class WishlistService:

@@ -3,7 +3,7 @@ import getpass
 from sqlalchemy import select
 
 from app.database import get_db
-from app.models.user import User, UserRole
+from app.models.user.user import User, UserRole
 from app.core.security import hash_password
 
 

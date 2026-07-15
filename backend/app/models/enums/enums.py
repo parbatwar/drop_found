@@ -27,47 +27,6 @@ class SocialPlatform(str, enum.Enum):
     website = "website"
 
 
-class ListingCondition(str, enum.Enum):
-    like_new = "like_new"
-    good = "good"
-    fair = "fair"
-    okay = "okay"
-
-
-class ListingStatus(str, enum.Enum):
-    active = "active"
-    inactive = "inactive"
-    sold = "sold"
-
-
-class ListingSection(str, enum.Enum):
-    thrift = "thrift"
-    surplus = "surplus"
-
-
-class ListingCategory(str, enum.Enum):
-    tops = "tops"
-    dresses = "dresses"
-    jacket = "jacket"
-    footwear = "footwear"
-    accessories = "accessories"
-    bags = "bags"
-    tshirts = "tshirts"
-    shirts = "shirts"
-    pants = "pants"
-    other = "other"
-
-
-class ListingSize(str, enum.Enum):
-    xs = "xs"
-    s = "s"
-    m = "m"
-    l = "l"
-    xl = "xl"
-    xxl = "xxl"
-    free_size = "free_size"
-
-
 class OrderStatus(str, enum.Enum):
     pending = "pending"
     accepted = "accepted"

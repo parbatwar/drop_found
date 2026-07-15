@@ -24,6 +24,7 @@ from app.routers import (
     user,
     wishlist,
     follow,
+    categories,
 )
 
 app = FastAPI(title="Drop Found API")
@@ -46,6 +47,7 @@ app.include_router(review.router)
 app.include_router(user.router)
 app.include_router(wishlist.router)
 app.include_router(follow.router)
+app.include_router(categories.router)
 
 
 @app.get("/")

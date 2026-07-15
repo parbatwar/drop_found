@@ -1,15 +1,15 @@
 from pydantic import BaseModel
 import uuid
 from datetime import datetime
-from app.models.enums import SellerType, VerificationStatus
+from app.models.enums.enums import SellerType, VerificationStatus
 
 
 class SellerApply(BaseModel):
     seller_type: SellerType
     shop_name: str
-    bio: str | None = None
+    avatar_url: str | None = None
     location: str | None = None
-    # id_document_url: str
+    bio: str | None = None
 
 
 class SellerUpdate(BaseModel):
@@ -31,7 +31,6 @@ class SellerResponse(BaseModel):
     bio: str | None = None
     location: str | None = None
     avatar_url: str | None = None
-    # id_document_url: str | None = None
 
     is_following: bool = False
     verification_status: VerificationStatus

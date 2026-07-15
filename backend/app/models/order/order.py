@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 from app.database import Base
-from app.models.enums import OrderStatus, PaymentMethod
+from app.models.enums.enums import OrderStatus, PaymentMethod
 
 
 class Order(Base):

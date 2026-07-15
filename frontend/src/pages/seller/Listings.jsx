@@ -127,12 +127,12 @@ function Listings() {
                                                 {item.title}
                                             </h3>
                                             <span className="text-xs font-medium text-neutral-900 tracking-wider pt-0.5">
-                                                NPR {parseFloat(item.price).toLocaleString()}
+                                                NPR {Number(item.price).toLocaleString()}
                                             </span>
                                         </div>
                                         
                                         <div className="flex items-center space-x-2 text-[10px] text-neutral-400 tracking-wider uppercase font-medium">
-                                            <span className="capitalize">{item.category.replaceAll('_', ' ')}</span>
+                                            <span className="capitalize">{item.category_name}</span>
                                             {item.size && (
                                                 <>
                                                     <span className="text-neutral-200">•</span>

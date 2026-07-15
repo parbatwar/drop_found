@@ -3,9 +3,9 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.seller import SellerProfile  # Adjust if your profile model path varies
-from app.models.user import User
-from app.models.enums import VerificationStatus
+from app.models.seller.seller import SellerProfile  # Adjust if your profile model path varies
+from app.models.user.user import User
+from app.models.enums.enums import VerificationStatus
 from app.schemas.seller import ReviewSellerRequest
 
 

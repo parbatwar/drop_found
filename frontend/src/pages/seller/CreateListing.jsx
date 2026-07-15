@@ -19,7 +19,8 @@ function CreateListing() {
         price: '',
         quantity: 1,
         condition: '',
-        category: '',
+        category_id: '',
+        gender: '',
         size: '',
     });
 
@@ -106,7 +107,6 @@ function CreateListing() {
                 ...formData,
                 title: formData.title.trim(),
                 description: formData.description.trim() || null,
-                section: seller.seller_type, // Auto-derived segment context
                 price: parseFloat(formData.price),
                 quantity: Number(formData.quantity),
                 condition: formData.condition || null,
@@ -117,11 +117,20 @@ function CreateListing() {
                 })),
             };
 
+            console.log(JSON.stringify(payload, null, 2));
             await createListing(payload);
             navigate('/seller/listings');
         } catch (err) {
-            console.error('Create listing process aborted:', err);
-            setError(err.response?.data?.detail || 'Failed to successfully publish product listing to repository.');
+            console.error("Full error:", err.response?.data);
+
+            const detail = err.response?.data?.detail;
+
+            if (Array.isArray(detail)) {
+                setError(detail.map((e) => `${e.loc.join(".")}: ${e.msg}`).join("\n"));
+            } else {
+                setError(detail || "Failed to create listing.");
+            }
+
             setUploadingImages(false);
         } finally {
             setSubmitting(false);
@@ -267,21 +276,44 @@ function CreateListing() {
                                 Category *
                             </label>
                             <select
-                                name="category"
-                                value={formData.category}
+                                name="category_id"
+                                value={formData.category_id}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none cursor-pointer capitalize"
+                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
                                 required
                             >
-                                <option value="">Select</option>
+                                <option value="">Select Category</option>
                                 {options?.categories.map((cat) => (
-                                    <option key={cat} value={cat}>
-                                        {cat.replaceAll('_', ' ')}
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
                                     </option>
                                 ))}
                             </select>
                         </div>
 
+                        <div>
+                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
+                                Gender *
+                            </label>
+                            <select
+                                name="gender"
+                                value={formData.gender}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
+                                required
+                            >
+                                <option value="">Select</option>
+                                {options?.genders.map((gender) => (
+                                    <option key={gender} value={gender}>
+                                        {gender}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Quantity - Now separate or in a new grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
                                 Quantity *
@@ -324,7 +356,7 @@ function CreateListing() {
                         )}
 
                         {/* Size Selection */}
-                        <div>
+                        <div className={seller?.seller_type !== 'thrift' ? 'col-span-2' : ''}>
                             <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
                                 Measurement Size
                             </label>
@@ -343,6 +375,7 @@ function CreateListing() {
                             </select>
                         </div>
                     </div>
+
 
                     {/* Action Controls */}
                     <div className="pt-4">

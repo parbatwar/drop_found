@@ -1,27 +1,29 @@
 from fastapi import HTTPException
-from app.models.enums import ListingStatus
-from app.models.listing import Listing, ListingImage  # Added import for ListingImage
-from app.models.seller import SellerProfile
-from app.schemas import listing
-from app.models.wishlist import Wishlist
+from app.models.enums.listing_enum import ListingStatus
+from app.models.catalog.listing import Listing
+from app.models.catalog.listing_image import ListingImage
+from app.models.social.wishlist import Wishlist
+from app.utils.seller import (
+    get_verified_seller,
+    validate_listing_owner,
+)
+from app.utils.category import get_active_category
 
 
 class ListingService:
     @staticmethod
     def create_listing(data, user, db):
-        existing_seller = (
-            db.query(SellerProfile).filter(SellerProfile.user_id == user.id).first()
-        )
+        seller = get_verified_seller(user, db)
 
-        if not existing_seller:
+        if seller.seller_type == "thrift" and data.condition is None:
             raise HTTPException(
-                status_code=403, detail="Only sellers can create listings"
+                status_code=400, detail="Condition is required for thrift listings."
             )
 
-        if existing_seller.verification_status.value != "approved":
-            raise HTTPException(
-                status_code=403, detail="Your account is pending verification"
-            )
+        if len(data.images) > 6:
+            raise HTTPException(status_code=400, detail="Maximum 6 images allowed.")
+
+        get_active_category(data.category_id, db)
 
         # 1. Instantiate the primary parent model without handling the images array directly
         listing = Listing(
@@ -29,18 +31,19 @@ class ListingService:
             description=data.description,
             price=data.price,
             quantity=data.quantity,
-            condition=data.condition,
-            section=data.section,
-            category=data.category,
+            category_id=data.category_id,
+            gender=data.gender,
             size=data.size,
-            seller_id=existing_seller.id,
+            condition=data.condition,
+            color=data.color,
+            is_on_sale=data.is_on_sale,
+            seller_id=seller.id,
         )
-
         db.add(listing)
         db.flush()  # Flushes record state instantly to generate listing.id UUID for foreign key mapping
 
         # 2. Iterate through the validated nested images array and save them to the DB
-        if hasattr(data, "images") and data.images:
+        if data.images:
             for img_inbound in data.images:
                 db_image = ListingImage(
                     listing_id=listing.id,
@@ -59,9 +62,10 @@ class ListingService:
     def get_listings(
         db,
         search=None,
-        category=None,
-        section=None,
+        category_id=None,
+        gender=None,
         size=None,
+        color=None,
         sort="newest",
     ):
         query = db.query(Listing).filter(Listing.status == ListingStatus.active)
@@ -71,16 +75,20 @@ class ListingService:
             query = query.filter(Listing.title.ilike(f"%{search}%"))
 
         # Filter by category
-        if category:
-            query = query.filter(Listing.category == category)
+        if category_id:
+            query = query.filter(Listing.category_id == category_id)
 
-        # Filter by section
-        if section:
-            query = query.filter(Listing.section == section)
+        # Filter by gender
+        if gender:
+            query = query.filter(Listing.gender == gender)
 
         # Filter by size
         if size:
             query = query.filter(Listing.size == size)
+
+        # Filter by color
+        if color:
+            query = query.filter(Listing.color == color)
 
         # Sorting
         if sort == "price_asc":
@@ -96,13 +104,8 @@ class ListingService:
 
     @staticmethod
     def get_my_listings(current_user, db):
-        seller = (
-            db.query(SellerProfile)
-            .filter(SellerProfile.user_id == current_user.id)
-            .first()
-        )
-        if not seller:
-            raise HTTPException(status_code=403, detail="Not a seller")
+        seller = get_verified_seller(current_user, db)
+
         return (
             db.query(Listing)
             .filter(Listing.seller_id == seller.id)
@@ -142,21 +145,33 @@ class ListingService:
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
 
-        seller = (
-            db.query(SellerProfile)
-            .filter(SellerProfile.user_id == current_user.id)
-            .first()
-        )
-        if not seller or listing.seller_id != seller.id:
+        seller = get_verified_seller(current_user, db)
+        validate_listing_owner(listing, seller)
+
+        # handle images — replace all if new set provided
+        update_data = data.model_dump(exclude_unset=True)
+
+        print("UPDATE DATA")
+        print(update_data)
+
+        if (
+            seller.seller_type == "thrift"
+            and "condition" in update_data
+            and update_data["condition"] is None
+        ):
             raise HTTPException(
-                status_code=403,
-                detail="You do not have permission to update this listing",
+                status_code=400, detail="Condition is required for thrift listings."
             )
 
-        # update non-image fields
-        for field, value in data.dict(exclude_unset=True).items():
+        # Validate category if changing
+        if "category_id" in update_data:
+            get_active_category(update_data["category_id"], db)
+
+        # Update all non-image fields
+        for field, value in update_data.items():
             if field == "images":
                 continue
+
             setattr(listing, field, value)
 
         # Auto status management
@@ -166,9 +181,14 @@ class ListingService:
         elif listing.quantity > 0 and listing.status == ListingStatus.sold:
             listing.status = ListingStatus.active
 
-        # handle images — replace all if new set provided
-        update_data = data.dict(exclude_unset=True)
         if "images" in update_data and update_data["images"] is not None:
+
+            if len(update_data["images"]) > 6:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Maximum 6 images allowed.",
+                )
+
             # delete existing images
             db.query(ListingImage).filter(
                 ListingImage.listing_id == listing.id
@@ -184,7 +204,18 @@ class ListingService:
                 db.add(db_image)
 
         db.commit()
+
+        print("AFTER COMMIT")
+        print(listing.title)
+        print(listing.price)
+        print(listing.quantity)
+
         db.refresh(listing)
+
+        print("AFTER REFRESH")
+        print(listing.title)
+        print(listing.price)
+
         return listing
 
     @staticmethod
@@ -193,16 +224,8 @@ class ListingService:
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
 
-        seller = (
-            db.query(SellerProfile)
-            .filter(SellerProfile.user_id == current_user.id)
-            .first()
-        )
-        if not seller or listing.seller_id != seller.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You do not have permission to delete this listing",
-            )
+        seller = get_verified_seller(current_user, db)
+        validate_listing_owner(listing, seller)
 
         db.delete(listing)
         db.commit()
@@ -226,13 +249,8 @@ class ListingService:
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
 
-        seller = (
-            db.query(SellerProfile)
-            .filter(SellerProfile.user_id == current_user.id)
-            .first()
-        )
-        if not seller or listing.seller_id != seller.id:
-            raise HTTPException(status_code=403, detail="Not your listing")
+        seller = get_verified_seller(current_user, db)
+        validate_listing_owner(listing, seller)
 
         # max 6 images check
         current_count = (
@@ -257,13 +275,8 @@ class ListingService:
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
 
-        seller = (
-            db.query(SellerProfile)
-            .filter(SellerProfile.user_id == current_user.id)
-            .first()
-        )
-        if not seller or listing.seller_id != seller.id:
-            raise HTTPException(status_code=403, detail="Not your listing")
+        seller = get_verified_seller(current_user, db)
+        validate_listing_owner(listing, seller)
 
         image = (
             db.query(ListingImage)

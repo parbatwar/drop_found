@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 
-from app.models.enums import OrderStatus
-from app.models.order import Order
-from app.models.review import Review
+from app.models.enums.enums import OrderStatus
+from app.models.order.order import Order
+from app.models.social.review import Review
 
 
 class ReviewService:

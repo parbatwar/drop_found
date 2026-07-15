@@ -1,9 +1,9 @@
-from app.models.user import User
-from app.models.seller import SellerProfile, SellerSocialLink
-from app.models.listing import Listing, ListingImage
-from app.models.order import Order
-from app.models.payment import Payment
-from app.models.review import Review
-from app.models.wishlist import Wishlist
-from app.models.follow import Follow
-from app.models.notification import Notification
+from app.models.user.user import User
+from app.models.seller.seller import SellerProfile, SellerSocialLink
+from app.models.catalog import Listing, ListingImage, Category
+from app.models.order.order import Order
+from app.models.order.payment import Payment
+from app.models.social.review import Review
+from app.models.social.wishlist import Wishlist
+from app.models.seller.follow import Follow
+from app.models.social.notification import Notification

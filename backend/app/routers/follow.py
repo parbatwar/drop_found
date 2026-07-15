@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user import User
+from app.models.user.user import User
 from app.schemas.follow import FollowCreate, FollowResponse
 from app.services.follow_service import FollowService
 from app.core.dependencies import get_current_user

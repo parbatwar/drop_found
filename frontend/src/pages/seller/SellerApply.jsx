@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applySeller, getMySellerProfile } from '../../api/seller';
 import { getSellerOptions } from '../../api/meta';
+import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
 
 function SellerApply() {
     const navigate = useNavigate();
@@ -13,12 +14,14 @@ function SellerApply() {
         bio: '',
         location: '',
         seller_type: '',
+        avatar_url: '',
     });
     
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [fetchingOptions, setFetchingOptions] = useState(true);
     const [isReapplying, setIsReapplying] = useState(false);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
 
     // Run systemic account existence and meta verification options on mount
     useEffect(() => {
@@ -59,6 +62,7 @@ function SellerApply() {
                         bio: existingRejectedProfile.bio || '',
                         location: existingRejectedProfile.location || '',
                         seller_type: existingRejectedProfile.seller_type || (types[0] || ''),
+                        avatar_url: existingRejectedProfile.avatar_url || '',
                     });
                 } else if (types.length > 0) {
                     setFormData(prev => ({ ...prev, seller_type: types[0] }));
@@ -79,6 +83,26 @@ function SellerApply() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleLogoUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploadingLogo(true);
+
+            const url = await uploadToCloudinary(file);
+
+            setFormData(prev => ({
+                ...prev,
+                avatar_url: url,
+            }));
+        } catch (err) {
+            setError('Failed to upload logo.');
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -90,6 +114,7 @@ function SellerApply() {
                 bio: formData.bio.trim() || null,
                 location: formData.location.trim() || null,
                 seller_type: formData.seller_type,
+                avatar_url: formData.avatar_url || null,
             };
 
             await applySeller(payload);
@@ -207,6 +232,33 @@ function SellerApply() {
                             rows={4}
                             className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none resize-none"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-2">
+                            Shop Logo
+                        </label>
+
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="block w-full text-sm text-neutral-600"
+                        />
+
+                        {uploadingLogo && (
+                            <p className="text-xs text-neutral-500 mt-2">
+                                Uploading...
+                            </p>
+                        )}
+
+                        {formData.avatar_url && (
+                            <img
+                                src={formData.avatar_url}
+                                alt="Shop Logo"
+                                className="mt-4 h-24 w-24 rounded-full object-cover border border-neutral-200"
+                            />
+                        )}
                     </div>
 
                     {/* Submit Handle Action */}

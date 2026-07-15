@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
-from app.models.follow import Follow
-from app.models.seller import SellerProfile
+from app.models.seller.follow import Follow
+from app.models.seller.seller import SellerProfile
 
 
 class FollowService:

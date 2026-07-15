@@ -1,23 +1,42 @@
-from fastapi import APIRouter
-from app.models.enums import (
-    ListingCategory,
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models.catalog.category import Category
+from app.models.enums.listing_enum import (
+    Gender,
     ListingCondition,
     ListingSize,
-    ListingSection,
+    ListingColor,
     ListingStatus,
-    SellerType,
 )
+from app.models.enums.enums import SellerType
+from app.models.enums.listing_enum import Gender, ListingColor
 
 router = APIRouter(prefix="/meta", tags=["meta"])
 
 
 @router.get("/listing-options")
-def get_listing_options():
+def get_listing_options(db: Session = Depends(get_db)):
+    categories = (
+        db.query(Category)
+        .filter(Category.is_active == True)
+        .order_by(Category.name)
+        .all()
+    )
+
     return {
-        "categories": [c.value for c in ListingCategory],
+        "categories": [
+            {
+                "id": str(category.id),
+                "name": category.name,
+                "slug": category.slug,
+            }
+            for category in categories
+        ],
+        "genders": [g.value for g in Gender],
         "conditions": [c.value for c in ListingCondition],
         "sizes": [s.value for s in ListingSize],
-        "sections": [s.value for s in ListingSection],
+        "colors": [c.value for c in ListingColor],
         "statuses": [s.value for s in ListingStatus],
     }
 

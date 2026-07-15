@@ -28,7 +28,7 @@ function ProductDetail() {
                 console.error(err);
                 setError('Listing not found');
             })
-            .finally(() => setLoading(false));
+            .finally(() => setLoading(false)); 
     }, [id]);
 
     useEffect(() => {
@@ -108,14 +108,19 @@ function ProductDetail() {
                     {/* RIGHT SIDE: INFO & BUTTON */}
                     <div className="space-y-8">
                         <div className="space-y-3 pb-6 border-b border-neutral-100">
-                            <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block">Collection / {listing.category?.replace('_', ' ')}</span>
+                            <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block">Collection / {listing.gender} / {listing.category_name}</span>
                             <h1 className="text-2xl sm:text-3xl font-light text-black uppercase">{listing.title}</h1>
                             <p className="text-xl font-light text-neutral-900">NPR {Number(listing.price).toLocaleString()}</p>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] uppercase tracking-widest border px-2 py-1">
+                                    {listing.seller_type === "thrift" ? "Thrift" : "Surplus"}
+                                </span>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-y-4 gap-x-8 py-6 border-t border-b border-neutral-100 text-xs">
                             <div><span className="text-[10px] text-neutral-400 uppercase block mb-0.5">Size</span><span className="font-normal uppercase text-black">{listing.size?.replace('_', ' ')}</span></div>
-                            {listing.section === "thrift" && (
+                            {listing.seller_type === "thrift" && (
                                 <div>
                                     <span className="text-[10px] text-neutral-400 uppercase block mb-0.5">
                                         Condition

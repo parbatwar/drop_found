@@ -1,10 +1,10 @@
 from fastapi import HTTPException
-from app.models.seller import SellerProfile
-from app.models.enums import UserRole, VerificationStatus
+from app.models.seller.seller import SellerProfile
+from app.models.enums.enums import UserRole, VerificationStatus
 from app.utils.slug import generate_slug
 
-from app.models.user import User
-from app.models.follow import Follow
+from app.models.user.user import User
+from app.models.seller.follow import Follow
 
 
 class SellerService:
@@ -56,6 +56,7 @@ class SellerService:
             existing_profile.slug = new_slug
             existing_profile.bio = data.bio
             existing_profile.location = data.location
+            existing_profile.avatar_url = data.avatar_url
             existing_profile.seller_type = data.seller_type
             existing_profile.verification_status = VerificationStatus.pending
 
@@ -74,12 +75,62 @@ class SellerService:
             slug=slug,
             bio=data.bio,
             location=data.location,
+            avatar_url=data.avatar_url,
             seller_type=data.seller_type,
         )
 
         db.add(seller)
         db.commit()
         db.refresh(seller)
+        return seller
+
+    @staticmethod
+    def update_profile(current_user, data, db):
+        seller = (
+            db.query(SellerProfile)
+            .filter(SellerProfile.user_id == current_user.id)
+            .first()
+        )
+
+        if not seller:
+            raise HTTPException(
+                status_code=404,
+                detail="Seller profile not found",
+            )
+
+        if data.shop_name and data.shop_name != seller.shop_name:
+            slug = generate_slug(data.shop_name)
+
+            existing = (
+                db.query(SellerProfile)
+                .filter(
+                    SellerProfile.slug == slug,
+                    SellerProfile.id != seller.id,
+                )
+                .first()
+            )
+
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Shop name already taken",
+                )
+
+            seller.shop_name = data.shop_name
+            seller.slug = slug
+
+        if data.bio is not None:
+            seller.bio = data.bio
+
+        if data.location is not None:
+            seller.location = data.location
+
+        if data.avatar_url is not None:
+            seller.avatar_url = data.avatar_url
+
+        db.commit()
+        db.refresh(seller)
+
         return seller
 
     @staticmethod

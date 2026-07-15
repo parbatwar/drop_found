@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_role
-from app.models.user import UserRole
+from app.models.user.user import UserRole
 from app.database import get_db
 from app.schemas.seller import SellerResponse, ReviewSellerRequest
 from app.services.admin_service import AdminService

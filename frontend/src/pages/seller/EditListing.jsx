@@ -20,7 +20,8 @@ function EditListing() {
         price: '',
         quantity: 1,
         condition: '',
-        category: '',
+        category_id: '',
+        gender: '',
         size: '',
         status: '',
     });
@@ -52,7 +53,8 @@ function EditListing() {
                     price: listing.price ?? '',
                     quantity: listing.quantity ?? 1,
                     condition: listing.condition || '',
-                    category: listing.category || '',
+                    category_id: listing.category_id || '',
+                    gender: listing.gender || '',
                     size: listing.size || '',
                     status: listing.status || '',
                 });
@@ -146,15 +148,25 @@ function EditListing() {
                 description: formData.description.trim() || null,
                 price: parseFloat(formData.price),
                 quantity: Number(formData.quantity),
-                category: formData.category || null,
-                condition: seller?.seller_type === 'thrift' ? formData.condition || null : null,
+
+                category_id: formData.category_id,
+                gender: formData.gender,
+
+                condition:
+                    seller?.seller_type === "thrift"
+                        ? formData.condition || null
+                        : null,
+
                 size: formData.size || null,
-                status: formData.status || null,
+                status: formData.status,
+
                 images: consolidatedImages.map((url, index) => ({
                     image_url: url,
                     display_order: index,
                 })),
             };
+
+            console.log(payload)
 
             await updateListing(id, payload);
             navigate('/seller/listings');
@@ -325,16 +337,16 @@ function EditListing() {
                                 Category *
                             </label>
                             <select
-                                name="category"
-                                value={formData.category}
+                                name="category_id"
+                                value={formData.category_id}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none cursor-pointer capitalize"
                                 required
                             >
                                 <option value="">Select</option>
                                 {options?.categories.map((cat) => (
-                                    <option key={cat} value={cat}>
-                                        {cat.replaceAll('_', ' ')}
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
                                     </option>
                                 ))}
                             </select>
@@ -354,6 +366,25 @@ function EditListing() {
                                 required
                                 className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
                             />
+                        </div>
+
+                        <div>
+                            <label>Gender *</label>
+
+                            <select
+                                name="gender"
+                                value={formData.gender}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">Select</option>
+
+                                {options?.genders.map((gender) => (
+                                    <option key={gender} value={gender}>
+                                        {gender}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

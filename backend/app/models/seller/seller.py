@@ -3,7 +3,7 @@ from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
-from app.models.enums import SellerType, SocialPlatform, VerificationStatus
+from app.models.enums.enums import SellerType, SocialPlatform, VerificationStatus
 import uuid
 
 
@@ -22,7 +22,7 @@ class SellerProfile(Base):
     location = Column(String(255))
     seller_type = Column(Enum(SellerType, native_enum=False), nullable=False)
     avatar_url = Column(String(255))
-    # id_document_url = Column(String(255))
+
     verification_status = Column(
         Enum(VerificationStatus, native_enum=False),
         default=VerificationStatus.pending.value,

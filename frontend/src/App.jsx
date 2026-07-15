@@ -14,15 +14,20 @@ import Browse from './pages/Browse';
 
 // Admin Pages
 import AdminSellers from './pages/admin/AdminSellers';
+import AdminCategories from './pages/admin/Categories';
 
 // Seller Pages
 import SellerApply from './pages/seller/SellerApply';
 import SellerDashboard from './pages/seller/SellerDashboard';
-import SellerProfile from './pages/seller/SellerProfile';
 import Listings from './pages/seller/Listings';
 import CreateListing from './pages/seller/CreateListing';
 import EditListing from './pages/seller/EditListing';
 import SellerOrders from './pages/seller/Orders';
+import SellerShop from './pages/seller/SellerShop';
+import SellerEditShop from './pages/seller/SellerEditShop';
+
+// Shop Pages
+import SellerProfile from './pages/shop/SellerProfile';
 
 // Order Pages
 import MyOrders from './pages/orders/MyOrders';
@@ -66,16 +71,14 @@ function App() {
         {/* 3. PROTECTED MERCHANT OPERATIONS LAYER (Seller Control)  */}
         {/* ========================================================= */}
         <Route element={<ProtectedRoute allowedRoles={['seller']} />}>
-            {/* 
-               For a quick prototype MVP, you can swap out <Layout /> for a dedicated 
-               <SellerLayout /> later if you want a clean seller dashboard view! 
-            */}
             <Route element={<Layout />}>
                 <Route path="/seller/dashboard" element={<SellerDashboard />} />
                 <Route path="/seller/listings" element={<Listings />} />
                 <Route path="/seller/listings/new" element={<CreateListing />} />
                 <Route path="/seller/listings/:id/edit" element={<EditListing />} />
                 <Route path="/seller/orders" element={<SellerOrders />} />
+                <Route path="/seller/shop" element={<SellerShop />} />
+                <Route path="/seller/shop/edit" element={<SellerEditShop />} />
             </Route>
         </Route>
 
@@ -90,6 +93,7 @@ function App() {
                     </div>
                 } />
                 <Route path="/admin/sellers" element={<AdminSellers />} />
+                <Route path="/admin/categories" element={<AdminCategories />} />
             </Route>
         </Route>
 
