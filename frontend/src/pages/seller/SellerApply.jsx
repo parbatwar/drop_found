@@ -1,4 +1,4 @@
-// src/pages/SellerApply.jsx
+// src/pages/seller/SellerApply.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applySeller, getMySellerProfile } from '../../api/seller';
@@ -22,12 +22,20 @@ function SellerApply() {
     const [fetchingOptions, setFetchingOptions] = useState(true);
     const [isReapplying, setIsReapplying] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
 
-    // Run systemic account existence and meta verification options on mount
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+    // Helper function to capitalize seller types
+    const capitalizeSellerType = (type) => {
+        if (!type) return '';
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    };
+
     useEffect(() => {
         const initializationSequence = async () => {
             try {
-                // 1. Check if they already have a seller profile
                 let existingRejectedProfile = null;
 
                 try {
@@ -35,27 +43,22 @@ function SellerApply() {
                     const status = profileCheck.data?.verification_status;
 
                     if (status === 'pending' || status === 'approved') {
-                        // Already pending review or already approved — nothing to do here
                         navigate('/seller/dashboard', { replace: true });
                         return;
                     }
 
                     if (status === 'rejected') {
-                        // Previously rejected — let them see the form again, pre-filled
                         existingRejectedProfile = profileCheck.data;
                         setIsReapplying(true);
                     }
                 } catch (profileErr) {
-                    // An error here likely means 404 (Not Found), which means they are clear to apply!
-                    console.log("No existing seller profile detected. Proceeding with application configuration.");
+                    console.log("No existing seller profile detected.");
                 }
 
-                // 2. Fetch enum options
                 const optionsRes = await getSellerOptions();
                 const types = optionsRes.data?.seller_types || [];
                 setSellerTypes(types);
 
-                // 3. Pre-fill form — either with previous rejected values, or a sensible default
                 if (existingRejectedProfile) {
                     setFormData({
                         shop_name: existingRejectedProfile.shop_name || '',
@@ -64,11 +67,14 @@ function SellerApply() {
                         seller_type: existingRejectedProfile.seller_type || (types[0] || ''),
                         avatar_url: existingRejectedProfile.avatar_url || '',
                     });
+                    if (existingRejectedProfile.avatar_url) {
+                        setPreviewUrl(existingRejectedProfile.avatar_url);
+                    }
                 } else if (types.length > 0) {
                     setFormData(prev => ({ ...prev, seller_type: types[0] }));
                 }
             } catch (err) {
-                console.error("Initialization failure within seller pipeline:", err);
+                console.error("Initialization failure:", err);
                 setError("Could not load backend configurations safely.");
             } finally {
                 setFetchingOptions(false);
@@ -87,17 +93,39 @@ function SellerApply() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Check file type
+        if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
+            setError('Unsupported format. Please upload PNG, JPG, or WebP.');
+            e.target.value = '';
+            return;
+        }
+
+        // Check file size
+        if (file.size > MAX_FILE_SIZE) {
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+            setError(`File too large (${sizeInMB}MB). Maximum size is 2MB.`);
+            e.target.value = '';
+            return;
+        }
+
+        setError('');
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setPreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
+
         try {
             setUploadingLogo(true);
-
             const url = await uploadToCloudinary(file);
-
             setFormData(prev => ({
                 ...prev,
                 avatar_url: url,
             }));
         } catch (err) {
-            setError('Failed to upload logo.');
+            setError('Failed to upload logo. Please try again.');
+            setPreviewUrl(null);
         } finally {
             setUploadingLogo(false);
         }
@@ -113,7 +141,7 @@ function SellerApply() {
                 shop_name: formData.shop_name.trim(),
                 bio: formData.bio.trim() || null,
                 location: formData.location.trim() || null,
-                seller_type: formData.seller_type,
+                seller_type: formData.seller_type, // This stays lowercase for backend
                 avatar_url: formData.avatar_url || null,
             };
 
@@ -132,7 +160,7 @@ function SellerApply() {
     if (fetchingOptions) {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
+                <div className="text-[10px] tracking-[0.4em] uppercase text-gray-400 animate-pulse">
                     Verifying Merchant Profile Status...
                 </div>
             </div>
@@ -140,135 +168,206 @@ function SellerApply() {
     }
 
     return (
-        <div className="bg-white min-h-screen text-neutral-900 py-16 md:py-24">
-            <div className="max-w-xl mx-auto px-4 sm:px-6">
+        <div className="bg-white min-h-screen">
+            <div className="max-w-5xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-16">
                 
-                {/* Header Layout */}
-                <div className="space-y-3 mb-10 border-b border-neutral-100 pb-6">
-                    <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 font-medium block">
-                        Open a Shop
+                {/* Header */}
+                <div className="max-w-2xl mb-12">
+                    <span className="text-[10px] tracking-[0.3em] uppercase text-gray-400 font-medium block mb-3">
+                        Become a Seller
                     </span>
-                    <h1 className="text-3xl font-light tracking-[0.08em] text-black uppercase">
-                        {isReapplying ? 'Reapply as a Seller' : 'Seller Application'}
+                    <h1 className="text-4xl md:text-5xl font-light tracking-tight text-black leading-tight">
+                        {isReapplying ? 'Reapply as a Seller' : 'Open Your Shop'}
                     </h1>
+                    <p className="text-sm text-gray-400 mt-4 leading-relaxed max-w-md">
+                        {isReapplying 
+                            ? 'Update your shop details and resubmit your application to start selling.'
+                            : 'Join Nepal\'s premier thrift and surplus marketplace. Start selling your curated pieces today.'}
+                    </p>
                 </div>
 
-                {/* Reapplication Notice */}
-                {isReapplying && !error && (
-                    <div className="bg-neutral-50 border-l-2 border-neutral-400 text-neutral-800 px-4 py-3 text-xs tracking-wide mb-8 uppercase">
-                        Your previous application was not approved. You can update the details below and resubmit.
-                    </div>
-                )}
-                
-                {/* Clean Status Interventions */}
-                {error && (
-                    <div className="bg-neutral-50 border-l-2 border-black text-neutral-800 px-4 py-3 text-xs tracking-wide mb-8 uppercase">
-                        <span className="font-medium text-black">Status:</span> {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Shop Name */}
-                    <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                            Shop Name *
-                        </label>
-                        <input
-                            type="text"
-                            name="shop_name"
-                            value={formData.shop_name}
-                            onChange={handleChange}
-                            placeholder="e.g., Kathmandu Vintage Hub"
-                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
-                            required
-                        />
-                    </div>
-
-                    {/* Dynamic Seller Type Dropdown Selector */}
-                    <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                            Seller Type *
-                        </label>
-                        <select
-                            name="seller_type"
-                            value={formData.seller_type}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none appearance-none cursor-pointer capitalize"
-                            style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
-                        >
-                            {sellerTypes.map((type) => (
-                                <option key={type} value={type}>
-                                    {type}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Location */}
-                    <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                            Location Hub
-                        </label>
-                        <input
-                            type="text"
-                            name="location"
-                            value={formData.location}
-                            onChange={handleChange}
-                            placeholder="e.g., Jhamsikhel, Lalitpur"
-                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
-                        />
-                    </div>
-
-                    {/* Bio */}
-                    <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                            Shop Bio
-                        </label>
-                        <textarea
-                            name="bio"
-                            value={formData.bio}
-                            onChange={handleChange}
-                            placeholder="Tell us about your collection style..."
-                            rows={4}
-                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none resize-none"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-2">
-                            Shop Logo
-                        </label>
-
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="block w-full text-sm text-neutral-600"
-                        />
-
-                        {uploadingLogo && (
-                            <p className="text-xs text-neutral-500 mt-2">
-                                Uploading...
-                            </p>
+                {/* Notices */}
+                {(isReapplying || error) && (
+                    <div className="max-w-2xl mb-10">
+                        {isReapplying && !error && (
+                            <div className="bg-gray-50 px-5 py-4 text-sm text-gray-600 border-l-2 border-gray-400">
+                                Your previous application was not approved. Please update your details below and resubmit.
+                            </div>
                         )}
-
-                        {formData.avatar_url && (
-                            <img
-                                src={formData.avatar_url}
-                                alt="Shop Logo"
-                                className="mt-4 h-24 w-24 rounded-full object-cover border border-neutral-200"
-                            />
+                        {error && !error.includes('too large') && !error.includes('format') && (
+                            <div className="bg-red-50 px-5 py-4 text-sm text-red-600 border-l-2 border-red-400">
+                                {error}
+                            </div>
                         )}
                     </div>
+                )}
 
-                    {/* Submit Handle Action */}
-                    <div className="pt-4">
+                <form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
+                        {/* Left Column - Form Fields */}
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* Shop Name */}
+                            <div>
+                                <label className="block text-[10px] tracking-[0.2em] uppercase text-gray-500 font-medium mb-2">
+                                    Shop Name <span className="text-gray-300">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="shop_name"
+                                    value={formData.shop_name}
+                                    onChange={handleChange}
+                                    placeholder="e.g., Kathmandu Vintage Hub"
+                                    className="w-full border-b border-gray-200 px-0 py-3 text-sm text-black placeholder:text-gray-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                    required
+                                />
+                            </div>
+
+                            {/* Seller Type - With Capitalized Display */}
+                            <div>
+                                <label className="block text-[10px] tracking-[0.2em] uppercase text-gray-500 font-medium mb-2">
+                                    Seller Type <span className="text-gray-300">*</span>
+                                </label>
+                                <select
+                                    name="seller_type"
+                                    value={formData.seller_type}
+                                    onChange={handleChange}
+                                    className="w-full border-b border-gray-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent"
+                                >
+                                    {sellerTypes.map((type) => (
+                                        <option key={type} value={type}>
+                                            {capitalizeSellerType(type)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Location */}
+                            <div>
+                                <label className="block text-[10px] tracking-[0.2em] uppercase text-gray-500 font-medium mb-2">
+                                    Location
+                                </label>
+                                <input
+                                    type="text"
+                                    name="location"
+                                    value={formData.location}
+                                    onChange={handleChange}
+                                    placeholder="e.g., Jhamsikhel, Lalitpur"
+                                    className="w-full border-b border-gray-200 px-0 py-3 text-sm text-black placeholder:text-gray-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                />
+                            </div>
+
+                            {/* Bio */}
+                            <div>
+                                <label className="block text-[10px] tracking-[0.2em] uppercase text-gray-500 font-medium mb-2">
+                                    Shop Bio
+                                </label>
+                                <textarea
+                                    name="bio"
+                                    value={formData.bio}
+                                    onChange={handleChange}
+                                    placeholder="Tell us about your collection style..."
+                                    rows={4}
+                                    className="w-full border-b border-gray-200 px-0 py-3 text-sm text-black placeholder:text-gray-300 focus:border-black outline-none transition-colors duration-300 resize-none bg-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Right Column - Logo Upload */}
+                        <div className="lg:col-span-1">
+                            <label className="block text-[10px] tracking-[0.2em] uppercase text-gray-500 font-medium mb-4">
+                                Shop Logo
+                            </label>
+                            
+                            <div className="flex flex-col items-center">
+                                {/* Upload Area */}
+                                <div className={`w-full aspect-square bg-gray-50 border-2 overflow-hidden flex flex-col items-center justify-center relative transition-colors duration-300 group ${
+                                    error?.includes('too large') || error?.includes('format') 
+                                        ? 'border-red-400 bg-red-50' 
+                                        : 'border-gray-200 hover:border-gray-400'
+                                }`}>
+                                    {previewUrl ? (
+                                        <img
+                                            src={previewUrl}
+                                            alt="Shop Logo Preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <>
+                                            <svg className={`w-10 h-10 mb-3 ${
+                                                error?.includes('too large') || error?.includes('format') 
+                                                    ? 'text-red-400' 
+                                                    : 'text-gray-300'
+                                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <p className="text-[11px] text-gray-400 text-center px-4 leading-relaxed">
+                                                Click to upload<br />shop logo
+                                            </p>
+                                            <p className="text-[10px] text-gray-300 mt-2">
+                                                PNG · JPG · WebP · Max 2MB
+                                            </p>
+                                            <p className="text-[9px] text-gray-300 mt-1">
+                                                Any size works · Square recommended
+                                            </p>
+                                            {(error?.includes('too large') || error?.includes('format')) && (
+                                                <p className="text-[10px] text-red-500 mt-2 font-medium">
+                                                    ⚠️ {error}
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
+                                    
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                                        onChange={handleLogoUpload}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    />
+                                    
+                                    {uploadingLogo && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                            <div className="text-white text-[10px] tracking-[0.2em] uppercase">
+                                                Uploading...
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Upload Status */}
+                                <div className="mt-4 text-center">
+                                    {previewUrl ? (
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[11px] text-gray-600">✓ Uploaded</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPreviewUrl(null);
+                                                    setFormData(prev => ({ ...prev, avatar_url: '' }));
+                                                    setError('');
+                                                }}
+                                                className="text-[11px] text-gray-400 hover:text-black transition-colors"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[10px] text-gray-300">
+                                            Max 2MB · Any dimension accepted
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="mt-12 pt-8 border-t border-gray-100">
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-black text-white px-6 py-3.5 text-xs tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors duration-300 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                            className="w-full max-w-md mx-auto block bg-black text-white px-8 py-4 text-[11px] tracking-[0.25em] uppercase hover:bg-gray-800 transition-colors duration-300 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Submitting Application...' : (isReapplying ? 'Resubmit Application' : 'Submit Application')}
+                            {loading ? 'Submitting...' : (isReapplying ? 'Resubmit Application' : 'Submit Application')}
                         </button>
                     </div>
                 </form>
