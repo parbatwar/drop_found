@@ -1,126 +1,311 @@
+// pages/Profile.jsx
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { updateProfile } from "../api/user";
 
+// SVG Icons
+const Icons = {
+    User: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+    ),
+    Edit: ({ className = "w-4 h-4" }) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+    ),
+    Logout: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+    ),
+    Check: ({ className = "w-4 h-4" }) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+    ),
+    X: ({ className = "w-4 h-4" }) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    ),
+};
+
 function Profile() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-  });
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const [isEditing, setIsEditing] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [formData, setFormData] = useState({
+        first_name: "",
+        last_name: "",
+        phone: "",
+    });
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        first_name: user.first_name || "",
-        last_name: user.last_name || "",
-        phone: user.phone || "",
-      });
-    }
-  }, [user]);
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                first_name: user.first_name || "",
+                last_name: user.last_name || "",
+                phone: user.phone || "",
+            });
+        }
+    }, [user]);
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await updateProfile(formData);
-      setIsEditing(false);
-    } catch (err) {
-      alert(err.response?.data?.detail || "Failed to update profile.");
-    } finally {
-      setSaving(false);
-    }
-  };
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            await updateProfile(formData);
+            setIsEditing(false);
+            // Refresh user data or show success message
+        } catch (err) {
+            alert(err.response?.data?.detail || "Failed to update profile.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
-  if (!user) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    const handleLogout = async () => {
+        await logout();
+        navigate("/");
+    };
 
-  return (
-    <main className="max-w-5xl mx-auto px-6 py-20">
-      <div className="grid lg:grid-cols-12 gap-16">
-        {/* Sidebar */}
-        <aside className="lg:col-span-4">
-          <div className="flex flex-col items-center text-center">
-            <div className="w-24 h-24 rounded-full bg-neutral-50 flex items-center justify-center text-xl font-light text-neutral-400 border border-neutral-100">
-              {user.first_name?.[0]}{user.last_name?.[0]}
-            </div>
-            <h2 className="mt-6 text-lg font-light">{user.first_name} {user.last_name}</h2>
-            <p className="text-[11px] tracking-[0.2em] uppercase text-neutral-400 mt-1">{user.email}</p>
-
-            <div className="mt-10 w-full flex flex-col gap-3">
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="w-full py-3 text-[10px] tracking-[0.2em] uppercase border border-neutral-200 hover:border-black transition-colors"
-              >
-                {isEditing ? "Cancel" : "Edit Profile"}
-              </button>
-              {user.role === "seller" && (
-                <Link to="/seller/dashboard" className="w-full py-3 text-[10px] tracking-[0.2em] uppercase border border-neutral-200 hover:border-black transition-colors text-center">
-                  Dashboard
-                </Link>
-              )}
-              <button onClick={() => { logout(); navigate("/"); }} className="py-3 text-[10px] tracking-[0.2em] uppercase text-neutral-400 hover:text-red-500 transition-colors">
-                Logout
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        {/* Content */}
-        <section className="lg:col-span-8">
-          <h1 className="text-2xl font-light uppercase tracking-[0.1em] mb-12">Account Settings</h1>
-
-          {isEditing ? (
-            <form onSubmit={handleSave} className="space-y-10">
-              <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
-                <Input label="First Name" value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} />
-                <Input label="Last Name" value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} />
-                <Input label="Phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-                <div className="border-b border-neutral-100 pb-2">
-                  <label className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 block mb-2">Email</label>
-                  <span className="text-sm text-neutral-400">{user.email}</span>
+    if (!user) {
+        return (
+            <div className="bg-white min-h-screen flex items-center justify-center">
+                <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
+                    Loading Profile...
                 </div>
-              </div>
-              <button disabled={saving} className="bg-black text-white px-12 py-3 text-[10px] tracking-[0.3em] uppercase hover:bg-neutral-800 transition-colors">
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </form>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-x-12 gap-y-10">
-              <Info label="First Name" value={user.first_name} />
-              <Info label="Last Name" value={user.last_name} />
-              <Info label="Email" value={user.email} />
-              <Info label="Phone" value={user.phone || "Not provided"} />
-              <Info label="Role" value={user.role} />
-              <Info label="Verified" value={user.is_email_verified ? "Yes" : "No"} />
             </div>
-          )}
-        </section>
-      </div>
-    </main>
-  );
+        );
+    }
+
+    // Get initials for avatar
+    const getInitials = () => {
+        if (!user) return '?';
+        const first = user.first_name?.charAt(0) || '';
+        const last = user.last_name?.charAt(0) || '';
+        return (first + last).toUpperCase() || '?';
+    };
+
+    const isSeller = user.role === "seller" || user.role === "admin";
+
+    return (
+        <div className="bg-white min-h-screen py-12 md:py-16">
+            <div className="max-w-5xl mx-auto px-4 sm:px-8 lg:px-12">
+                
+                {/* Header */}
+                <div className="mb-10 border-b border-neutral-100 pb-6">
+                    <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">
+                        Account
+                    </span>
+                    <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">
+                        My Profile
+                    </h1>
+                    <p className="text-sm text-neutral-500 mt-2">
+                        Manage your personal information and preferences.
+                    </p>
+                </div>
+
+                <div className="grid lg:grid-cols-12 gap-12 lg:gap-16">
+                    
+                    {/* Sidebar */}
+                    <aside className="lg:col-span-4">
+                        <div className="border border-neutral-100 p-6 md:p-8 sticky top-24">
+                            <div className="flex flex-col items-center text-center">
+                                {/* Avatar */}
+                                <div className="w-24 h-24 rounded-full bg-neutral-100 flex items-center justify-center text-2xl font-light text-neutral-500 border border-neutral-200">
+                                    {getInitials()}
+                                </div>
+                                
+                                <h2 className="mt-5 text-lg font-light">
+                                    {user.first_name} {user.last_name}
+                                </h2>
+                                <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mt-1">
+                                    {user.email}
+                                </p>
+                                
+                                {isSeller && (
+                                    <span className="mt-2 text-[9px] tracking-[0.2em] uppercase bg-black text-white px-3 py-1">
+                                        Seller
+                                    </span>
+                                )}
+
+                                <div className="mt-8 w-full space-y-2 border-t border-neutral-100 pt-6">
+                                    <button
+                                        onClick={() => setIsEditing(!isEditing)}
+                                        className="w-full flex items-center justify-center gap-2 py-3 text-[10px] tracking-[0.2em] uppercase border border-neutral-200 hover:border-black transition-colors duration-300"
+                                    >
+                                        <Icons.Edit className="w-3.5 h-3.5" />
+                                        {isEditing ? "Cancel" : "Edit Profile"}
+                                    </button>
+                                    
+                                    {isSeller && (
+                                        <Link 
+                                            to="/seller/dashboard" 
+                                            className="w-full flex items-center justify-center gap-2 py-3 text-[10px] tracking-[0.2em] uppercase border border-neutral-200 hover:border-black transition-colors duration-300 text-center"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            Dashboard
+                                        </Link>
+                                    )}
+                                    
+                                    <button 
+                                        onClick={handleLogout} 
+                                        className="w-full flex items-center justify-center gap-2 py-3 text-[10px] tracking-[0.2em] uppercase text-neutral-400 hover:text-red-500 transition-colors duration-300"
+                                    >
+                                        <Icons.Logout className="w-3.5 h-3.5" />
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    {/* Main Content */}
+                    <section className="lg:col-span-8">
+                        <h2 className="text-sm font-light uppercase tracking-[0.2em] text-neutral-400 mb-8">
+                            {isEditing ? 'Edit Account Details' : 'Account Details'}
+                        </h2>
+
+                        {isEditing ? (
+                            <form onSubmit={handleSave} className="space-y-8">
+                                <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div>
+                                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                            First Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.first_name}
+                                            onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                                            className="w-full border-b border-neutral-200 px-0 py-2.5 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                            placeholder="First name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                            Last Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.last_name}
+                                            onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                                            className="w-full border-b border-neutral-200 px-0 py-2.5 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                            placeholder="Last name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                            Phone
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                            className="w-full border-b border-neutral-200 px-0 py-2.5 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                            placeholder="Phone number"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                            Email
+                                        </label>
+                                        <p className="text-sm text-neutral-400 py-2.5 border-b border-neutral-100">
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3 pt-4 border-t border-neutral-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(false)}
+                                        className="border border-neutral-200 px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:border-black hover:bg-black hover:text-white transition-all duration-300"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="bg-black text-white px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-neutral-800 transition-colors duration-300 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                                    >
+                                        {saving ? "Saving..." : "Save Changes"}
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
+                                <div className="border-b border-neutral-100 pb-4">
+                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                        First Name
+                                    </p>
+                                    <p className="text-sm text-neutral-700">
+                                        {user.first_name || '-'}
+                                    </p>
+                                </div>
+                                <div className="border-b border-neutral-100 pb-4">
+                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                        Last Name
+                                    </p>
+                                    <p className="text-sm text-neutral-700">
+                                        {user.last_name || '-'}
+                                    </p>
+                                </div>
+                                <div className="border-b border-neutral-100 pb-4">
+                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                        Email
+                                    </p>
+                                    <p className="text-sm text-neutral-700">
+                                        {user.email}
+                                    </p>
+                                </div>
+                                <div className="border-b border-neutral-100 pb-4">
+                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                        Phone
+                                    </p>
+                                    <p className="text-sm text-neutral-700">
+                                        {user.phone || 'Not provided'}
+                                    </p>
+                                </div>
+                                <div className="border-b border-neutral-100 pb-4">
+                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                        Role
+                                    </p>
+                                    <p className="text-sm text-neutral-700 capitalize">
+                                        {user.role || 'Buyer'}
+                                    </p>
+                                </div>
+                                <div className="border-b border-neutral-100 pb-4">
+                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                        Email Verified
+                                    </p>
+                                    <p className="text-sm text-neutral-700 flex items-center gap-2">
+                                        {user.is_email_verified ? (
+                                            <>
+                                                <span className="text-green-600">Yes</span>
+                                                <Icons.Check className="w-4 h-4 text-green-600" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="text-amber-600">No</span>
+                                                <span className="text-[10px] text-neutral-400">(Verify your email)</span>
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                </div>
+            </div>
+        </div>
+    );
 }
-
-const Info = ({ label, value }) => (
-  <div className="border-b border-neutral-100 pb-4">
-    <p className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 mb-2">{label}</p>
-    <p className="text-sm font-light text-neutral-700">{value}</p>
-  </div>
-);
-
-const Input = ({ label, value, onChange }) => (
-  <div className="border-b border-neutral-200">
-    <label className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 block mb-2">{label}</label>
-    <input
-      value={value}
-      onChange={onChange}
-      className="w-full py-2 outline-none text-sm font-light text-neutral-700 placeholder-neutral-300"
-    />
-  </div>
-);
 
 export default Profile;

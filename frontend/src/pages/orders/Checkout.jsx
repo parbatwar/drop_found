@@ -1,39 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { createOrder } from '../../api/orders';
+import { checkoutCart, quickBuy } from '../../api/orders';
+import { getDeliveryFee } from '../../api/meta';
 import { useAuth } from '../../context/AuthContext';
+import { Icons } from '../../components/Icons';
 
 function Checkout() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user } = useAuth(); 
+    const { user } = useAuth();
+
     const listing = location.state?.listing;
+    const quantity = location.state?.quantity || 1;
+    const isQuickBuy = location.state?.quickBuy === true;
 
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
+    const [deliveryFee, setDeliveryFee] = useState(0);
 
-    const deliveryFee = 100.00; 
-
-    // Autofill with user's account phone number if it exists
     useEffect(() => {
         if (user?.phone) {
             setPhone(user.phone);
         }
     }, [user]);
 
-    if (!listing) {
+    useEffect(() => {
+        getDeliveryFee()
+            .then((res) => setDeliveryFee(res.data.delivery_fee))
+            .catch((err) => console.error('Failed to fetch delivery fee:', err));
+    }, []);
+
+    if (isQuickBuy && !listing) {
         return (
-            <div className="max-w-md mx-auto py-20 text-center space-y-4">
-                <p className="text-sm text-neutral-400 font-light">No checkout item selected.</p>
-                <Link to="/" className="text-xs uppercase tracking-widest underline">Return to shop</Link>
+            <div className="bg-white min-h-screen flex items-center justify-center px-4">
+                <div className="text-center">
+                    <div className="text-4xl font-light text-neutral-200 mb-4">🛒</div>
+                    <p className="text-sm text-neutral-400 mb-6">No checkout item selected.</p>
+                    <Link
+                        to="/"
+                        className="inline-block border border-black px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-300"
+                    >
+                        Return to Shop
+                    </Link>
+                </div>
             </div>
         );
     }
 
-    const totalAmount = parseFloat(listing.price) + deliveryFee;
+    const itemSubtotal = isQuickBuy ? parseFloat(listing.price) * quantity : null;
+    const total = isQuickBuy ? itemSubtotal + deliveryFee : null;
 
     const handleSubmitOrder = async (e) => {
         e.preventDefault();
@@ -41,123 +59,192 @@ function Checkout() {
         setProcessing(true);
 
         try {
-            await createOrder({
-                listing_id: listing.id,
-                receiver_phone: phone,
-                delivery_address: address,
-                payment_method: paymentMethod,
-                delivery_fee: deliveryFee
-            });
-            navigate('/orders');
+            let result;
+            if (isQuickBuy) {
+                result = await quickBuy({
+                    listing_id: listing.id,
+                    quantity: quantity,
+                    receiver_phone: phone,
+                    delivery_address: address,
+                    payment_method: paymentMethod,
+                });
+            } else {
+                result = await checkoutCart({
+                    receiver_phone: phone,
+                    delivery_address: address,
+                    payment_method: paymentMethod,
+                });
+            }
+            navigate('/orders', { state: { justPlaced: result.data } });
         } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to complete transaction checkout.');
+            setError(err.response?.data?.detail || 'Failed to complete checkout.');
         } finally {
             setProcessing(false);
         }
     };
 
+    const paymentMethods = [
+        { id: 'esewa', label: 'eSewa', icon: Icons.Wallet },
+        { id: 'khalti', label: 'Khalti', icon: Icons.CreditCard },
+        { id: 'cod', label: 'Cash on Delivery', icon: Icons.Truck },
+    ];
+
     return (
-        <div className="bg-white min-h-screen text-neutral-900 antialiased py-12 lg:py-20">
-            <div className="max-w-5xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-                
-                {/* Form Processing Column */}
-                <form onSubmit={handleSubmitOrder} className="lg:col-span-7 space-y-8">
-                    
-                    {/* Shipping Address Forms */}
-                    <div className="space-y-4">
-                        <h2 className="text-xs font-semibold tracking-[0.2em] uppercase text-neutral-400">Shipping Details</h2>
-                        
-                        {error && <p className="text-xs text-red-600 font-light">{error}</p>}
+        <div className="bg-white min-h-screen py-12 md:py-16">
+            <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-12">
 
-                        <div className="space-y-1.5">
-                            <label className="block text-[10px] text-neutral-400 uppercase tracking-widest">Receiver Phone Number</label>
-                            <input
-                                type="tel"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                placeholder="e.g. 98XXXXXXXX"
-                                required
-                                className="w-full border border-neutral-200 px-3 py-2.5 text-xs focus:border-black outline-none font-light rounded-sm bg-neutral-50/20"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="block text-[10px] text-neutral-400 uppercase tracking-widest">Full Delivery Address</label>
-                            <input
-                                type="text"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                placeholder="Street name, Area landmark, City"
-                                required
-                                className="w-full border border-neutral-200 px-3 py-2.5 text-xs focus:border-black outline-none font-light rounded-sm bg-neutral-50/20"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Payment Gateways */}
-                    <div className="space-y-3">
-                        <h2 className="text-xs font-semibold tracking-[0.2em] uppercase text-neutral-400">Payment Options</h2>
-                        <div className="grid grid-cols-3 gap-3">
-                            {['esewa', 'khalti', 'cod'].map((method) => (
-                                <button
-                                    key={method}
-                                    type="button"
-                                    onClick={() => setPaymentMethod(method)}
-                                    className={`py-3 text-[10px] uppercase tracking-widest border font-medium transition-all rounded-sm ${
-                                        paymentMethod === method 
-                                            ? 'border-black bg-black text-white shadow-sm' 
-                                            : 'border-neutral-200 text-neutral-400 hover:text-neutral-900 hover:border-neutral-300'
-                                    }`}
-                                >
-                                    {method === 'cod' ? 'COD' : method}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="w-full bg-black text-white py-4 text-xs tracking-[0.25em] uppercase hover:bg-neutral-800 disabled:opacity-40 transition-colors duration-300 rounded-sm"
-                    >
-                        {processing ? 'Processing Order...' : 'Confirm and Place Order'}
-                    </button>
-                </form>
-
-                {/* Fixed Summary Layout Summary Card */}
-                <div className="lg:col-span-5 bg-neutral-50 p-6 border border-neutral-100 rounded-sm space-y-6 lg:sticky lg:top-6">
-                    <h2 className="text-xs font-semibold tracking-[0.2em] uppercase text-neutral-400 border-b pb-3">Order Invoice Summary</h2>
-                    
-                    <div className="flex gap-4 items-center">
-                        <div className="w-16 h-16 bg-white overflow-hidden border border-neutral-200/60 p-1 flex-shrink-0">
-                            {listing.images?.[0] && (
-                                <img src={listing.images[0].image_url} alt="" className="w-full h-full object-contain" />
-                            )}
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-xs font-medium uppercase truncate text-black">{listing.title}</p>
-                            <p className="text-[10px] tracking-wider text-neutral-400 uppercase mt-0.5">
-                                Size {listing.size?.replace('_', ' ')} &middot; {listing.condition?.replace('_', ' ')}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-neutral-200/60 pt-4 space-y-2.5 text-xs font-light">
-                        <div className="flex justify-between text-neutral-500">
-                            <span>Item Price</span>
-                            <span className="text-neutral-900">NPR {Number(listing.price).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-neutral-500">
-                            <span>Logistics Flat Fee</span>
-                            <span className="text-neutral-900">NPR {deliveryFee.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between border-t border-neutral-200/80 pt-3 font-normal text-black text-sm">
-                            <span className="font-light">Total Estimated Cost</span>
-                            <span className="font-semibold">NPR {totalAmount.toLocaleString()}</span>
-                        </div>
-                    </div>
+                <div className="mb-10 border-b border-neutral-100 pb-6">
+                    <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">
+                        Checkout
+                    </span>
+                    <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">
+                        Complete Your Order
+                    </h1>
+                    <p className="text-sm text-neutral-500 mt-2">
+                        Review your {isQuickBuy ? 'item' : 'cart'} and provide delivery details.
+                    </p>
                 </div>
 
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+
+                    <div className="lg:col-span-7">
+                        <form onSubmit={handleSubmitOrder} className="space-y-8">
+
+                            <div className="space-y-5">
+                                <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
+                                    Shipping Details
+                                </h2>
+
+                                {error && (
+                                    <div className="bg-red-50 border-l-2 border-red-400 px-4 py-3 text-sm text-red-600">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                        Phone Number <span className="text-neutral-300">*</span>
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="e.g., 98XXXXXXXX"
+                                        required
+                                        className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                        Delivery Address <span className="text-neutral-300">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={address}
+                                        onChange={(e) => setAddress(e.target.value)}
+                                        placeholder="Street name, Area, City"
+                                        required
+                                        className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
+                                    Payment Method <span className="text-neutral-300">*</span>
+                                </h2>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {paymentMethods.map((method) => {
+                                        const Icon = method.icon;
+                                        return (
+                                            <button
+                                                key={method.id}
+                                                type="button"
+                                                onClick={() => setPaymentMethod(method.id)}
+                                                className={`flex flex-col items-center justify-center gap-1.5 py-4 px-3 text-[10px] uppercase tracking-wider border transition-all duration-300 ${
+                                                    paymentMethod === method.id
+                                                        ? 'border-black bg-black text-white'
+                                                        : 'border-neutral-200 text-neutral-400 hover:text-black hover:border-neutral-300'
+                                                }`}
+                                            >
+                                                <Icon className={`w-5 h-5 ${
+                                                    paymentMethod === method.id ? 'text-white' : 'text-neutral-400'
+                                                }`} />
+                                                {method.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-neutral-100">
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full bg-black text-white py-4 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors duration-300 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                                >
+                                    {processing ? 'Processing Order...' : 'Confirm & Place Order'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div className="lg:col-span-5">
+                        <div className="border border-neutral-100 p-6 md:p-8 lg:sticky lg:top-24">
+                            <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium pb-4 border-b border-neutral-100">
+                                Order Summary
+                            </h2>
+
+                            {isQuickBuy ? (
+                                <>
+                                    <div className="flex gap-4 pt-4 pb-4 border-b border-neutral-100">
+                                        <div className="w-20 h-20 flex-shrink-0 bg-neutral-50 border border-neutral-100 overflow-hidden">
+                                            {listing.images?.[0] && (
+                                                <img
+                                                    src={listing.images[0].image_url}
+                                                    alt={listing.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-light text-neutral-800 truncate">
+                                                {listing.title}
+                                            </p>
+                                            <p className="text-[9px] text-neutral-400 uppercase tracking-wider mt-1">
+                                                Qty: {quantity}
+                                            </p>
+                                            <p className="text-sm font-medium text-neutral-900 mt-1">
+                                                NPR {Number(listing.price).toLocaleString()} each
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2.5 pt-4 text-sm">
+                                        <div className="flex justify-between text-neutral-500">
+                                            <span>Subtotal ({quantity} item{quantity > 1 ? 's' : ''})</span>
+                                            <span className="text-neutral-900">NPR {itemSubtotal.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-neutral-500">
+                                            <span>Delivery Fee</span>
+                                            <span className="text-neutral-900">NPR {deliveryFee.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between pt-3 border-t border-neutral-100 text-base">
+                                            <span className="font-light text-neutral-600">Total</span>
+                                            <span className="font-medium text-black">NPR {total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-sm text-neutral-500 pt-4">
+                                    Delivery fee (NPR {deliveryFee.toLocaleString()}) applies per seller in your cart.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     );

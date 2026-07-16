@@ -31,6 +31,7 @@ import SellerProfile from './pages/shop/SellerProfile';
 // Order Pages
 import MyOrders from './pages/orders/MyOrders';
 import Checkout from './pages/orders/Checkout';
+import Cart from './pages/orders/Cart';
 import Wishlist from './pages/Wishlist';
 
 // Product/Listing Pages
@@ -62,6 +63,7 @@ function App() {
                 <Route path="/apply" element={<SellerApply />} />
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/wishlist" element={<Wishlist />} />
             </Route>
         </Route>

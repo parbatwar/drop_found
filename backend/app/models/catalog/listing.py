@@ -77,7 +77,8 @@ class Listing(Base):
         cascade="all, delete-orphan",
     )
 
-    orders = relationship("Order", back_populates="listing")
+    order_items = relationship("OrderItem", back_populates="listing")
+    cart_items = relationship("CartItem", back_populates="listing")
     wishlists = relationship("Wishlist", back_populates="listing")
     reviews = relationship("Review", back_populates="listing")
 

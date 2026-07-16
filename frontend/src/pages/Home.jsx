@@ -125,69 +125,71 @@ function Home() {
 
     return (
         <div className="bg-white min-h-screen text-neutral-900">
-            {/* Hero Section */}
-            <section className="py-16 md:py-24 border-b border-neutral-100">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+            {/* Hero Section - Full Width Premium Editorial */}
+            <section className="w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 w-full">
+                    
+                    {/* Thrift Half */}
+                    <Link 
+                        to="/thrift" 
+                        className="group relative overflow-hidden h-[85vh] md:h-[95vh] bg-neutral-100"
+                    >
+                        <img 
+                            src="https://images.pexels.com/photos/6070170/pexels-photo-6070170.jpeg?_gl=1*143wv0j*_ga*ODI3MDMzMTU5LjE3ODQxMzAyODg.*_ga_8JE65Q40S6*czE3ODQxMzAyODckbzEkZzEkdDE3ODQxMzAzMzYkajExJGwwJGgw"
+                            alt="Thrift Collection"
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/50 transition-colors duration-700" />
                         
-                        {/* Hero Copy */}
-                        <div className="lg:col-span-5 space-y-6">
-                            <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 font-medium block">
-                                SS 26 — New Drops Weekly
+                        {/* Left Bottom Text Placement */}
+                        <div className="absolute bottom-12 left-8 md:bottom-16 md:left-12 text-white max-w-sm">
+                            <span className="text-[10px] tracking-[0.3em] uppercase font-light opacity-70 block mb-3">
+                                Collection
                             </span>
-                            <h1 className="text-4xl md:text-5xl font-light tracking-[0.08em] leading-[1.15] text-black">
-                                FIND IT.<br />WEAR IT.
-                            </h1>
-                            <p className="text-neutral-500 text-sm leading-relaxed max-w-sm">
-                                Nepal's online thrift and surplus marketplace. Hand-picked pieces 
-                                from independent sellers in Kathmandu, Patan, and beyond.
+                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.05em] uppercase">
+                                Thrift
+                            </h2>
+                            <div className="w-10 h-px bg-white/40 mt-3 mb-3" />
+                            <p className="text-sm font-light leading-relaxed opacity-80 max-w-xs">
+                                Pre-loved vintage & modern pieces. Each item tells a story.
                             </p>
-                            
-                            <div className="flex flex-wrap gap-3 pt-2">
-                                <Link
-                                    to="/thrift"
-                                    className="bg-black text-white px-7 py-3 text-xs tracking-[0.2em] uppercase hover:bg-neutral-800 transition-colors duration-300"
-                                >
-                                    Shop Thrift
-                                </Link>
-                                <Link
-                                    to="/surplus"
-                                    className="border border-neutral-200 px-7 py-3 text-xs tracking-[0.2em] uppercase hover:bg-black hover:text-white hover:border-black transition-colors duration-300"
-                                >
-                                    Shop Surplus
-                                </Link>
-                            </div>
-                            
-                            {/* Analytics Strip */}
-                            <div className="grid grid-cols-3 gap-4 pt-8 border-t border-neutral-100">
-                                <div>
-                                    <p className="text-xl font-light tracking-tight">50+</p>
-                                    <p className="text-[10px] text-neutral-400 tracking-wider uppercase mt-0.5">Thrift Shops</p>
-                                </div>
-                                <div>
-                                    <p className="text-xl font-light tracking-tight">20+</p>
-                                    <p className="text-[10px] text-neutral-400 tracking-wider uppercase mt-0.5">Surplus Hubs</p>
-                                </div>
-                                <div>
-                                    <p className="text-xl font-light tracking-tight">1.2K+</p>
-                                    <p className="text-[10px] text-neutral-400 tracking-wider uppercase mt-0.5">Live Items</p>
-                                </div>
-                            </div>
+                            <span className="inline-block mt-5 text-[11px] tracking-[0.25em] uppercase text-white/80 hover:text-white transition-colors duration-300 border-b border-white/30 hover:border-white pb-0.5">
+                                Explore Thrift →
+                            </span>
                         </div>
+                    </Link>
+
+                    {/* Surplus Half */}
+                    <Link 
+                        to="/surplus" 
+                        className="group relative overflow-hidden h-[85vh] md:h-[95vh] bg-neutral-100"
+                    >
+                        <img 
+                            src="https://images.pexels.com/photos/15722837/pexels-photo-15722837.jpeg?_gl=1*jzdztu*_ga*ODI3MDMzMTU5LjE3ODQxMzAyODg.*_ga_8JE65Q40S6*czE3ODQxMzAyODckbzEkZzEkdDE3ODQxMzA1MDckajEwJGwwJGgw"
+                            alt="Surplus Collection"
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/50 transition-colors duration-700" />
                         
-
-                        {/* Hero Image Context */}
-                        <div className="lg:col-span-7 pl-0 lg:pl-8">
-                            <div className="aspect-[16/10] overflow-hidden bg-neutral-50 border border-neutral-100 rounded-sm">
-                                <img
-                                    src="https://images.unsplash.com/photo-1540221652346-e5dd6b50f3e7?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                                    alt="High-fidelity minimalist premium editorial campaign portrait"
-                                    className="w-full h-full object-cover transition-all duration-700 ease-out"
-                                />
-                            </div>
+                        {/* Left Bottom Text Placement */}
+                        <div className="absolute bottom-12 left-8 md:bottom-16 md:left-12 text-white max-w-sm">
+                            <span className="text-[10px] tracking-[0.3em] uppercase font-light opacity-70 block mb-3">
+                                Collection
+                            </span>
+                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.05em] uppercase">
+                                Surplus
+                            </h2>
+                            <div className="w-10 h-px bg-white/40 mt-3 mb-3" />
+                            <p className="text-sm font-light leading-relaxed opacity-80 max-w-xs">
+                                Premium deadstock & excess inventory. Unworn, tagged, and ready.
+                            </p>
+                            <span className="inline-block mt-5 text-[11px] tracking-[0.25em] uppercase text-white/80 hover:text-white transition-colors duration-300 border-b border-white/30 hover:border-white pb-0.5">
+                                Explore Surplus →
+                            </span>
                         </div>
+                    </Link>
 
-                    </div>
                 </div>
             </section>
 

@@ -111,8 +111,7 @@ class SellerService:
         if data.location is not None:
             seller.location = data.location
 
-        if data.avatar_url is not None:
-            seller.avatar_url = data.avatar_url
+        seller.avatar_url = data.avatar_url
 
         db.commit()
         db.refresh(seller)

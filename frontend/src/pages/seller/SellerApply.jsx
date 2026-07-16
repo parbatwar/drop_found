@@ -172,7 +172,7 @@ function SellerApply() {
             <div className="max-w-5xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-16">
                 
                 {/* Header */}
-                <div className="max-w-2xl mb-12">
+                <div className="max-w-2xl border-b border-neutral-100 pb-6 mb-12">
                     <span className="text-[10px] tracking-[0.3em] uppercase text-gray-400 font-medium block mb-3">
                         Become a Seller
                     </span>

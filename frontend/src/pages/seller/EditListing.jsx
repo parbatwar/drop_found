@@ -1,9 +1,12 @@
+// src/pages/seller/EditListing.jsx
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getMySellerProfile } from '../../api/seller';
 import { getListing, updateListing } from '../../api/listings';
 import { getListingOptions } from '../../api/meta';
+import { Icons } from '../../components/Icons';
 import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
+
 
 function EditListing() {
     const navigate = useNavigate();
@@ -26,9 +29,8 @@ function EditListing() {
         status: '',
     });
 
-    // Image pipeline state
-    const [existingImages, setExistingImages] = useState([]); // Database items: { id, image_url, display_order }
-    const [newImages, setNewImages] = useState([]); // Upload queue items: { file, previewUrl }
+    const [existingImages, setExistingImages] = useState([]);
+    const [newImages, setNewImages] = useState([]);
     const [uploadingImages, setUploadingImages] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -80,15 +82,13 @@ function EditListing() {
         });
     };
 
-    // Append newly selected files to upload queue with explicit length calculations
     const handleImageChange = (e) => {
         setError('');
         const files = Array.from(e.target.files);
         
-        // Comprehensive check of existing DB records + files currently queued + newly dropped items
         const totalImages = existingImages.length + newImages.length + files.length;
         if (totalImages > 6) {
-            setError('Maximum of 6 total images allowed for this product collection entry.');
+            setError('Maximum of 6 total images allowed.');
             return;
         }
 
@@ -99,7 +99,6 @@ function EditListing() {
         setNewImages((prev) => [...prev, ...mappedImages]);
     };
 
-    // Remove local image before upload process begins
     const removeNewImageLocal = (indexToRemove) => {
         setNewImages((prev) => {
             const updated = prev.filter((_, idx) => idx !== indexToRemove);
@@ -108,7 +107,6 @@ function EditListing() {
         });
     };
 
-    // Remove active image record from database tracking arrays
     const removeExistingImage = (indexToRemove) => {
         setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
     };
@@ -118,7 +116,7 @@ function EditListing() {
         setError('');
 
         if (existingImages.length === 0 && newImages.length === 0) {
-            setError('Please upload at least one image asset for your product collection.');
+            setError('Please upload at least one image.');
             return;
         }
 
@@ -128,16 +126,12 @@ function EditListing() {
             let newlyUploadedUrls = [];
             if (newImages.length > 0) {
                 setUploadingImages(true);
-                
-                // Concurrently fire all direct image storage API operations at once
                 newlyUploadedUrls = await Promise.all(
                     newImages.map((img) => uploadToCloudinary(img.file))
                 );
-                
                 setUploadingImages(false);
             }
 
-            // Remap database assets combined with freshly completed pipelines
             const consolidatedImages = [
                 ...existingImages.map((img) => img.image_url),
                 ...newlyUploadedUrls
@@ -148,31 +142,22 @@ function EditListing() {
                 description: formData.description.trim() || null,
                 price: parseFloat(formData.price),
                 quantity: Number(formData.quantity),
-
                 category_id: formData.category_id,
                 gender: formData.gender,
-
-                condition:
-                    seller?.seller_type === "thrift"
-                        ? formData.condition || null
-                        : null,
-
+                condition: seller?.seller_type === "thrift" ? formData.condition || null : null,
                 size: formData.size || null,
                 status: formData.status,
-
                 images: consolidatedImages.map((url, index) => ({
                     image_url: url,
                     display_order: index,
                 })),
             };
 
-            console.log(payload)
-
             await updateListing(id, payload);
             navigate('/seller/listings');
         } catch (err) {
-            console.error('Update listing process aborted:', err);
-            setError(err.response?.data?.detail || 'Failed to successfully publish updated record to repository.');
+            console.error('Update listing error:', err);
+            setError(err.response?.data?.detail || 'Failed to update listing.');
             setUploadingImages(false);
         } finally {
             setSubmitting(false);
@@ -190,84 +175,121 @@ function EditListing() {
     }
 
     return (
-        <div className="bg-white min-h-screen text-neutral-900 py-16 md:py-24">
-            <div className="max-w-xl mx-auto px-4 sm:px-6">
+        <div className="bg-white min-h-screen py-12 md:py-16">
+            <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12">
                 
-                {/* Header Block */}
-                <div className="space-y-3 mb-12 border-b border-neutral-100 pb-6">
-                    <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 font-medium block">
-                        Studio / Inventory Control
-                    </span>
-                    <h1 className="text-3xl font-light tracking-[0.08em] text-black uppercase">
-                        Edit Listing
-                    </h1>
+                {/* Header with Status Toggle */}
+                <div className="mb-10 border-b border-neutral-100 pb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div>
+                        <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">
+                            Studio
+                        </span>
+                        <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">
+                            Edit Listing
+                        </h1>
+                        <p className="text-sm text-neutral-500 mt-2">
+                            Update your product details and imagery.
+                        </p>
+                    </div>
+                    
+                    {/* Status Toggle - Right Side */}
+                    <div className="flex-shrink-0">
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ 
+                                    ...prev, 
+                                    status: prev.status === 'active' ? 'inactive' : 'active' 
+                                }))}
+                                className={`relative w-12 h-6 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                                    formData.status === 'active' ? 'bg-green-600' : 'bg-neutral-300'
+                                }`}
+                            >
+                                <span 
+                                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
+                                        formData.status === 'active' ? 'translate-x-6' : 'translate-x-0'
+                                    }`}
+                                />
+                            </button>
+                            <span className={`text-sm font-medium ${
+                                formData.status === 'active' ? 'text-green-600' : 'text-neutral-400'
+                            }`}>
+                                {formData.status === 'active' ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                        <p className="text-[9px] text-neutral-400 mt-1 text-right">
+                            {formData.status === 'active' ? 'Visible to customers' : 'Hidden from customers'}
+                        </p>
+                    </div>
                 </div>
 
-                {/* Status Interventions */}
+                {/* Error Message */}
                 {error && (
-                    <div className="bg-neutral-50 border-l-2 border-black text-neutral-800 px-4 py-3 text-xs tracking-wide mb-8 uppercase">
-                        <span className="font-medium text-black">Error:</span> {error}
+                    <div className="mb-8 bg-red-50 border-l-2 border-red-400 px-5 py-4 text-sm text-red-600 whitespace-pre-line">
+                        {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     
-                    {/* Minimalist Grid Gallery Uploader */}
+                    {/* Image Upload Section */}
                     <div>
-                        <div className="flex justify-between items-center mb-3">
-                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500">
-                                Collection Gallery Visuals *
+                        <div className="flex items-center justify-between mb-3">
+                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
+                                Product Images <span className="text-neutral-300">*</span>
                             </label>
-                            <span className="text-[9px] text-neutral-400 tracking-wider uppercase">
-                                {existingImages.length + newImages.length} / 6 Images
+                            <span className="text-[10px] text-neutral-400">
+                                {existingImages.length + newImages.length} / 6
                             </span>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-3">
-                            {/* Render Active Database Images */}
+                            {/* Existing Images */}
                             {existingImages.map((img, index) => (
-                                <div key={`db-${index}`} className="relative aspect-[3/4] bg-neutral-50 border border-neutral-100 group overflow-hidden rounded-sm">
+                                <div key={`db-${index}`} className="relative aspect-square bg-neutral-50 border border-neutral-200 overflow-hidden group">
                                     <img 
                                         src={img.image_url} 
-                                        alt="Current variant" 
+                                        alt={`Product ${index + 1}`} 
                                         className="w-full h-full object-cover"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => removeExistingImage(index)}
-                                        className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white text-[10px] uppercase tracking-widest font-light"
+                                        className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                     >
-                                        Remove
+                                        <Icons.X className="w-3 h-3" />
                                     </button>
                                 </div>
                             ))}
 
-                            {/* Render New Upload Queue Previews */}
+                            {/* New Images */}
                             {newImages.map((img, index) => (
-                                <div key={`new-${index}`} className="relative aspect-[3/4] bg-neutral-50 border border-neutral-100 group overflow-hidden rounded-sm">
+                                <div key={`new-${index}`} className="relative aspect-square bg-neutral-50 border-2 border-neutral-200 overflow-hidden group">
                                     <img 
                                         src={img.previewUrl} 
-                                        alt="Upload preview" 
-                                        className="w-full h-full object-cover border-2 border-neutral-200"
+                                        alt={`Upload ${index + 1}`} 
+                                        className="w-full h-full object-cover"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => removeNewImageLocal(index)}
-                                        className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white text-[10px] uppercase tracking-widest font-light"
+                                        className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                     >
-                                        Remove
+                                        <Icons.X className="w-3 h-3" />
                                     </button>
                                 </div>
                             ))}
 
-                            {/* Trigger Block */}
+                            {/* Add Image Button */}
                             {(existingImages.length + newImages.length) < 6 && (
                                 <div 
                                     onClick={() => fileInputRef.current.click()}
-                                    className="aspect-[3/4] border border-dashed border-neutral-200 hover:border-black flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 p-4 text-center bg-neutral-50 rounded-sm"
+                                    className="aspect-square border-2 border-dashed border-neutral-200 hover:border-black flex flex-col items-center justify-center cursor-pointer transition-colors duration-300 bg-neutral-50"
                                 >
-                                    <span className="text-xl font-light text-neutral-400">+</span>
-                                    <span className="text-[9px] tracking-widest uppercase text-neutral-400 mt-1">Add Image</span>
+                                    <Icons.Upload className="w-6 h-6 text-neutral-300" />
+                                    <span className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mt-2">
+                                        Add Image
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -284,8 +306,8 @@ function EditListing() {
 
                     {/* Title */}
                     <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                            Product Title *
+                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                            Product Title <span className="text-neutral-300">*</span>
                         </label>
                         <input
                             type="text"
@@ -293,31 +315,31 @@ function EditListing() {
                             value={formData.title}
                             onChange={handleChange}
                             placeholder="e.g., Raw Denim Boxy Jacket"
-                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none placeholder-neutral-300"
+                            className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
                             required
                         />
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                            Archival Description
+                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                            Description
                         </label>
                         <textarea
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
-                            placeholder="Detail structural tailoring, composition weights, historical provenance..."
+                            placeholder="Detail the fabric, fit, condition, and story behind this piece..."
                             rows={4}
-                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none resize-none placeholder-neutral-300"
+                            className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 resize-none bg-transparent"
                         />
                     </div>
 
-                    {/* Price and Category Layout Split */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Price, Category, Quantity Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                                Valuation (NPR) *
+                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                Price (NPR) <span className="text-neutral-300">*</span>
                             </label>
                             <input
                                 type="number"
@@ -325,7 +347,7 @@ function EditListing() {
                                 value={formData.price}
                                 onChange={handleChange}
                                 placeholder="0.00"
-                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none placeholder-neutral-300"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
                                 required
                                 min="0"
                                 step="0.01"
@@ -333,17 +355,17 @@ function EditListing() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                                Category *
+                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                Category <span className="text-neutral-300">*</span>
                             </label>
                             <select
                                 name="category_id"
                                 value={formData.category_id}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none cursor-pointer capitalize"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent"
                                 required
                             >
-                                <option value="">Select</option>
+                                <option value="">Select Category</option>
                                 {options?.categories.map((cat) => (
                                     <option key={cat.id} value={cat.id}>
                                         {cat.name}
@@ -353,79 +375,57 @@ function EditListing() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                                Quantity *
+                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                Quantity <span className="text-neutral-300">*</span>
                             </label>
-
                             <input
                                 type="number"
                                 name="quantity"
                                 value={formData.quantity}
                                 onChange={handleChange}
+                                min="1"
                                 step="1"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
                                 required
-                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none"
                             />
                         </div>
+                    </div>
 
+                    {/* Gender & Size Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label>Gender *</label>
-
+                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                Gender <span className="text-neutral-300">*</span>
+                            </label>
                             <select
                                 name="gender"
                                 value={formData.gender}
                                 onChange={handleChange}
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent capitalize"
                                 required
                             >
-                                <option value="">Select</option>
-
+                                <option value="">Select Gender</option>
                                 {options?.genders.map((gender) => (
-                                    <option key={gender} value={gender}>
+                                    <option key={gender} value={gender} className="capitalize">
                                         {gender}
                                     </option>
                                 ))}
                             </select>
                         </div>
-                    </div>
 
-                    {/* Condition Split Rule */}
-                    <div className="grid grid-cols-2 gap-4">
-                        {seller?.seller_type === 'thrift' && (
-                            <div>
-                                <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                                    Condition Grade *
-                                </label>
-                                <select
-                                    name="condition"
-                                    value={formData.condition}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none cursor-pointer capitalize"
-                                    required
-                                >
-                                    <option value="">Select Condition</option>
-                                    {options?.conditions.map((cond) => (
-                                        <option key={cond} value={cond}>
-                                            {cond.replaceAll('_', ' ')}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        {/* Size Selection */}
                         <div>
-                            <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                                Measurement Size
+                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                Size
                             </label>
                             <select
                                 name="size"
                                 value={formData.size}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none cursor-pointer uppercase"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent capitalize"
                             >
-                                <option value="">None</option>
+                                <option value="">Select Size</option>
                                 {options?.sizes.map((sz) => (
-                                    <option key={sz} value={sz}>
+                                    <option key={sz} value={sz} className="uppercase">
                                         {sz.replaceAll('_', ' ')}
                                     </option>
                                 ))}
@@ -433,30 +433,41 @@ function EditListing() {
                         </div>
                     </div>
 
-                    {/* Status Management Selection Block */}
-                    <div>
-                        <label className="block text-[10px] tracking-widest uppercase font-medium text-neutral-500 mb-1.5">
-                            Listing Visibility Lifecycle Status
-                        </label>
-                        <select
-                            name="status"
-                            value={formData.status}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2.5 bg-white border border-neutral-200 text-sm text-black rounded-sm focus:border-black focus:outline-none cursor-pointer uppercase"
-                        >
-                            <option value="active">Active (Visible)</option>
-                            <option value="inactive">Inactive (Hidden)</option>
-                        </select>
+                    {/* Condition (Thrift only) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {seller?.seller_type === 'thrift' && (
+                            <div>
+                                <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
+                                    Condition <span className="text-neutral-300">*</span>
+                                </label>
+                                <select
+                                    name="condition"
+                                    value={formData.condition}
+                                    onChange={handleChange}
+                                    className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent"
+                                    required
+                                >
+                                    <option value="">Select Condition</option>
+                                    {options?.conditions.map((cond) => (
+                                        <option key={cond} value={cond} className="capitalize">
+                                            {cond.replaceAll('_', ' ')}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Action Controls */}
-                    <div className="pt-4">
+                    {/* Submit Button */}
+                    <div className="pt-6 border-t border-neutral-100">
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full bg-black text-white px-6 py-3.5 text-xs tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors duration-300 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed rounded-sm"
+                            className="w-full bg-black text-white px-6 py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors duration-300 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
                         >
-                            {uploadingImages ? 'Uploading Assets...' : submitting ? 'Publishing Record...' : 'Save Changes'}
+                            {uploadingImages ? 'Uploading Images...' : 
+                             submitting ? 'Saving...' : 
+                             'Save Changes'}
                         </button>
                     </div>
                 </form>

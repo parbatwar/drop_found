@@ -4,18 +4,18 @@ from datetime import datetime
 from app.models.enums.enums import OrderStatus, PaymentMethod
 
 
-class OrderCreate(BaseModel):
-    listing_id: UUID
+# ── Cart checkout request (what buyer submits) ──
+class CheckoutRequest(BaseModel):
     receiver_phone: str
     delivery_address: str
     payment_method: PaymentMethod
-    delivery_fee: float = 100.00
 
 
 class OrderUpdate(BaseModel):
     status: OrderStatus
 
 
+# ── Nested response pieces ──
 class OrderListingImage(BaseModel):
     image_url: str
 
@@ -23,11 +23,21 @@ class OrderListingImage(BaseModel):
         from_attributes = True
 
 
-class OrderListing(BaseModel):
+class OrderItemListing(BaseModel):
     id: UUID
     title: str
-    price: float
     images: list[OrderListingImage] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class OrderItemResponse(BaseModel):
+    id: UUID
+    listing_id: UUID
+    quantity: int
+    price_at_purchase: float
+    listing: OrderItemListing
 
     class Config:
         from_attributes = True
@@ -51,25 +61,48 @@ class ReviewMini(BaseModel):
         from_attributes = True
 
 
+# ── Main order response — one per seller ──
 class OrderResponse(BaseModel):
     id: UUID
     buyer_id: UUID
     seller_id: UUID
-    listing_id: UUID
+    order_group_id: UUID | None
 
     buyer: OrderBuyer
-    listing: OrderListing
-
+    items: list[OrderItemResponse] = []
     review: ReviewMini | None = None
 
     status: OrderStatus
+    subtotal: float
+    delivery_fee: float
     total_amount: float
+
     receiver_phone: str
     delivery_address: str
-    delivery_fee: float
     payment_method: PaymentMethod
+
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+# ── Order group response — the whole checkout, all sellers ──
+class OrderGroupResponse(BaseModel):
+    id: UUID
+    buyer_id: UUID
+    total_amount: float
+    orders: list[OrderResponse] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class QuickBuyRequest(BaseModel):
+    listing_id: UUID
+    quantity: int = 1
+    receiver_phone: str
+    delivery_address: str
+    payment_method: PaymentMethod

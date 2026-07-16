@@ -11,6 +11,7 @@ from app.models.enums.listing_enum import (
 )
 from app.models.enums.enums import SellerType
 from app.models.enums.listing_enum import Gender, ListingColor
+from app.utils.order import get_delivery_fee
 
 router = APIRouter(prefix="/meta", tags=["meta"])
 
@@ -46,3 +47,8 @@ def get_seller_options():
     return {
         "seller_types": [s.value for s in SellerType],
     }
+
+
+@router.get("/delivery-fee")
+def get_current_delivery_fee(db: Session = Depends(get_db)):
+    return {"delivery_fee": float(get_delivery_fee(db))}
