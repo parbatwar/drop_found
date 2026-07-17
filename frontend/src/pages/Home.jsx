@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { getListings } from '../api/listings';
 import { getSellers, getMySellerProfile } from '../api/seller';
 import { useAuth } from '../context/AuthContext';
+import ListingGrid from '../components/listings/ListingGrid';
+import ListingCard from '../components/listings/ListingCard';
 
 function Home() {
     const { user } = useAuth();
@@ -250,36 +252,15 @@ function Home() {
                     </div>
 
                     {loading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {[...Array(8)].map((_, i) => <SkeletonCard key={i} aspect="aspect-[3/4]" />)}
-                        </div>
+                        <ListingGrid.Loading count={8} />
                     ) : listings.length === 0 ? (
                         <p className="text-xs tracking-wider text-neutral-400 py-4">No drops found this week.</p>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <ListingGrid>
                             {listings.slice(0, 8).map((item) => (
-                                <Link key={item.id} to={`/product/${item.id}`} className="group block">
-                                    <div className="aspect-[3/4] bg-neutral-50 border border-neutral-100 overflow-hidden mb-3 relative">
-                                        {item.images?.[0] ? (
-                                            <img
-                                                src={item.images[0].image_url}
-                                                alt={item.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform cubic-bezier(0.4, 0, 0.2, 1) duration-500"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-neutral-100" />
-                                        )}
-                                        {item.section && (
-                                            <span className="absolute bottom-3 left-3 px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-medium shadow-sm bg-white text-black border border-neutral-100">
-                                                {item.section}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <h3 className="text-xs tracking-wide text-neutral-600 truncate group-hover:text-black transition-colors">{item.title}</h3>
-                                    <p className="text-xs font-medium text-neutral-900 mt-1">NPR {Number(item.price).toLocaleString()}</p>
-                                </Link>
+                                <ListingCard key={item.id} listing={item} />
                             ))}
-                        </div>
+                        </ListingGrid>
                     )}
                 </div>
             </section>

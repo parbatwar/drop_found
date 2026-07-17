@@ -7,4 +7,5 @@ from app.models.social.review import Review
 from app.models.social.wishlist import Wishlist
 from app.models.seller.follow import Follow
 from app.models.social.notification import Notification
+from app.models.social.announcement import Announcement
 from app.models.settings.platform_setting import PlatformSetting

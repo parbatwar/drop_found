@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.core.dependencies import get_current_user_optional
 from app.database import get_db
+from app.models.enums.enums import SellerType
 from app.models.enums.listing_enum import ListingSize, Gender, ListingColor
 from app.models.user.user import User
 from app.schemas.listing import (
@@ -35,6 +36,7 @@ def get_listings(
     gender: Gender | None = None,
     size: ListingSize | None = None,
     color: ListingColor | None = None,
+    seller_type: SellerType | None = None,
     sort: str = "newest",
     db: Session = Depends(get_db),
 ):
@@ -45,6 +47,7 @@ def get_listings(
         gender=gender,
         size=size,
         color=color,
+        seller_type=seller_type,
         sort=sort,
     )
 

@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from app.models.seller.seller import SellerProfile
 from app.models.enums.listing_enum import ListingStatus
 from app.models.catalog.listing import Listing
 from app.models.catalog.listing_image import ListingImage
@@ -66,29 +67,32 @@ class ListingService:
         gender=None,
         size=None,
         color=None,
+        seller_type=None,
         sort="newest",
     ):
-        query = db.query(Listing).filter(Listing.status == ListingStatus.active)
+        query = (
+            db.query(Listing)
+            .join(Listing.seller)
+            .filter(Listing.status == ListingStatus.active)
+        )
 
-        # Search by title
         if search:
             query = query.filter(Listing.title.ilike(f"%{search}%"))
 
-        # Filter by category
         if category_id:
             query = query.filter(Listing.category_id == category_id)
 
-        # Filter by gender
         if gender:
             query = query.filter(Listing.gender == gender)
 
-        # Filter by size
         if size:
             query = query.filter(Listing.size == size)
 
-        # Filter by color
         if color:
             query = query.filter(Listing.color == color)
+
+        if seller_type:
+            query = query.filter(SellerProfile.seller_type == seller_type)
 
         # Sorting
         if sort == "price_asc":

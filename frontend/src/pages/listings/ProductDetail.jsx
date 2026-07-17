@@ -344,20 +344,51 @@ function ProductDetail() {
                         <div className="space-y-3 pt-4">
                             {canBuy ? (
                                 <>
-                                    <button
-                                        onClick={handleBuyNow}
-                                        className="w-full bg-black text-white py-4 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors"
-                                    >
-                                        Buy Now
-                                    </button>
+                                    {/* Quantity Selector */}
+                                    <div className="flex items-center gap-4 py-1">
+                                        <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+                                            Quantity
+                                        </label>
+                                        <div className="flex items-center border border-neutral-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                                                className="w-8 h-8 flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                                            >
+                                                −
+                                            </button>
+                                            <span className="w-10 text-center text-sm">{quantity}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setQuantity((q) => Math.min(listing.quantity, q + 1))}
+                                                className="w-8 h-8 flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                        {listing.quantity <= 3 && (
+                                            <span className="text-[9px] text-amber-600 uppercase tracking-wider">
+                                                Only {listing.quantity} left
+                                            </span>
+                                        )}
+                                    </div>
 
-                                    <button
-                                        onClick={handleAddToCart}
-                                        disabled={addingToCart}
-                                        className="w-full border border-black py-4 text-[11px] tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-colors"
-                                    >
-                                        {addingToCart ? "Adding..." : "Add to Cart"}
-                                    </button>
+                                    {/* Buy Now & Add to Cart */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handleBuyNow}
+                                            className="bg-black text-white py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors"
+                                        >
+                                            Buy Now
+                                        </button>
+                                        <button
+                                            onClick={handleAddToCart}
+                                            disabled={addingToCart}
+                                            className="border border-black py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {addingToCart ? "Adding..." : "Add to Cart"}
+                                        </button>
+                                    </div>
                                 </>
                             ) : (
                                 <div className="w-full border border-neutral-200 py-4 text-center text-[11px] text-neutral-400 uppercase tracking-[0.25em] bg-neutral-50">
@@ -367,31 +398,7 @@ function ProductDetail() {
                                 </div>
                             )}
 
-                            {listing.quantity > 1 && (
-                                <div className="flex items-center gap-4 py-2">
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
-                                        Quantity
-                                    </label>
-                                    <div className="flex items-center border border-neutral-200">
-                                        <button
-                                            type="button"
-                                            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                                            className="w-8 h-8 flex items-center justify-center hover:bg-neutral-50"
-                                        >
-                                            −
-                                        </button>
-                                        <span className="w-10 text-center text-sm">{quantity}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => setQuantity((q) => Math.min(listing.quantity, q + 1))}
-                                            className="w-8 h-8 flex items-center justify-center hover:bg-neutral-50"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
+                            {/* Wishlist Button */}
                             <button
                                 onClick={handleWishlist}
                                 className="w-full flex items-center justify-center gap-2 border border-neutral-200 py-3 text-[10px] uppercase tracking-[0.2em] hover:border-black transition-colors"

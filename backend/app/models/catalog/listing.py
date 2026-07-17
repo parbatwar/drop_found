@@ -87,5 +87,9 @@ class Listing(Base):
         return self.category.name
 
     @property
+    def shop_name(self):
+        return self.seller.shop_name if self.seller else None
+
+    @property
     def seller_type(self):
         return self.seller.seller_type if self.seller else None

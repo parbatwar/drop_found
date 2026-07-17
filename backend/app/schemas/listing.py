@@ -80,6 +80,7 @@ class ListingResponse(BaseModel):
     category_id: UUID
     category_name: str
 
+    shop_name: str
     seller_type: SellerType
 
     gender: Gender

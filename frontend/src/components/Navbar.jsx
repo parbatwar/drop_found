@@ -2,11 +2,13 @@
 import { useAuth } from '../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
+import { useAnnouncement } from '../hooks/useAnnouncement';
 
 function Navbar() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { announcements, loading } = useAnnouncement();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -14,10 +16,10 @@ function Navbar() {
 
     // Streamlined core navigation links
     const navLinks = [
-        { name: 'Sale', path: '/category/sale' },
-        { name: 'Men', path: '/category/men' },
-        { name: 'Women', path: '/category/women' },
-        { name: 'Unisex', path: '/category/unisex' },
+        { name: 'Men', path: '/men' },
+        { name: 'Women', path: '/women' },
+        { name: 'Kids', path: '/kids' },
+        { name: 'Unisex', path: '/unisex' },
     ];
 
     // Handle scroll effect
@@ -52,8 +54,38 @@ function Navbar() {
         navigate('/login');
     };
 
+        const getMarqueeContent = () => {
+        if (loading) {
+            return "Loading announcements...";
+        }
+        if (announcements.length === 0) {
+            return "★ SALE — UP TO 50% OFF • FREE SHIPPING • NEW DROPS EVERY WEEK";
+        }
+        // Join all announcements with bullet separators
+        return announcements.map(a => a.content).join(' • ');
+    };
+
+    const marqueeText = getMarqueeContent();
+
     return (
         <>
+            {/* Black Announcement Banner - Only show if announcements exist or use default */}
+            {announcements.length > 0 && (
+                <div className="bg-black py-1.5 overflow-hidden">
+                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-center">
+                            <div className="overflow-hidden whitespace-nowrap">
+                                <div className="inline-block animate-marquee">
+                                    <span className="text-[10px] tracking-[0.2em] uppercase text-white/80 font-light mx-4">
+                                        {announcements.map(a => a.content).join(' • ')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Primary Navigation - with subtle scroll effect */}
             <nav className={`sticky top-0 z-50 transition-all duration-300 ${
                 isScrolled 
@@ -78,7 +110,7 @@ function Navbar() {
                             </svg>
                         </button>
 
-                        {/* Logo - subtle weight change */}
+                        {/* Logo */}
                         <Link 
                             to="/" 
                             className="text-lg font-light tracking-[0.3em] uppercase text-black hover:opacity-70 transition-opacity select-none mx-auto md:mx-0"
@@ -218,9 +250,9 @@ function Navbar() {
                 </div>
             </nav>
 
-            {/* Mobile Navigation Drawer - refined */}
+            {/* Mobile Navigation Drawer */}
             {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-x-0 top-14 bg-white border-b border-neutral-100 h-screen z-40 px-6 py-8 overflow-y-auto animate-fade-in">
+                <div className="md:hidden fixed inset-x-0 top-[76px] bg-white border-b border-neutral-100 h-screen z-40 px-6 py-8 overflow-y-auto animate-fade-in">
                     <div className="flex flex-col space-y-8">
                         {/* Collection Menu Blocks */}
                         <div className="flex flex-col space-y-5">
@@ -302,6 +334,46 @@ function Navbar() {
                     </div>
                 </div>
             )}
+
+            {/* CSS Animation */}
+            <style jsx>{`
+                @keyframes marquee {
+                    0% {
+                        transform: translateX(0);
+                    }
+                    100% {
+                        transform: translateX(-50%);
+                    }
+                }
+                .animate-marquee {
+                    animation: marquee 20s linear infinite;
+                    display: inline-block;
+                }
+                @keyframes slideDown {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-8px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
+                }
+                .animate-slideDown {
+                    animation: slideDown 0.2s ease-out;
+                }
+                .animate-fade-in {
+                    animation: fadeIn 0.2s ease-out;
+                }
+            `}</style>
         </>
     );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { getCart } from "../../api/cart";
 import { checkoutCart, quickBuy } from '../../api/orders';
 import { getDeliveryFee } from '../../api/meta';
 import { useAuth } from '../../context/AuthContext';
@@ -13,19 +14,28 @@ function Checkout() {
     const listing = location.state?.listing;
     const quantity = location.state?.quantity || 1;
     const isQuickBuy = location.state?.quickBuy === true;
-
+    
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
     const [deliveryFee, setDeliveryFee] = useState(0);
+    const [cart, setCart] = useState(null);
 
     useEffect(() => {
         if (user?.phone) {
             setPhone(user.phone);
         }
     }, [user]);
+
+    useEffect(() => {
+    if (!isQuickBuy) {
+        getCart()
+            .then((res) => setCart(res.data))
+            .catch(console.error);
+    }
+}, [isQuickBuy]);
 
     useEffect(() => {
         getDeliveryFee()
@@ -237,9 +247,50 @@ function Checkout() {
                                     </div>
                                 </>
                             ) : (
-                                <p className="text-sm text-neutral-500 pt-4">
-                                    Delivery fee (NPR {deliveryFee.toLocaleString()}) applies per seller in your cart.
-                                </p>
+                                <>
+                                    <div className="space-y-4 pt-4">
+                                        {cart?.items?.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="flex gap-3 border-b border-neutral-100 pb-3"
+                                            >
+                                                <img
+                                                    src={item.image_url}
+                                                    alt={item.title}
+                                                    className="w-16 h-16 object-cover border"
+                                                />
+
+                                                <div className="flex-1">
+                                                    <p className="text-sm">{item.title}</p>
+                                                    <p className="text-xs text-neutral-500">
+                                                        Qty: {item.quantity}
+                                                    </p>
+                                                </div>
+
+                                                <p className="text-sm font-medium">
+                                                    NPR {item.line_total.toLocaleString()}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="space-y-2 pt-4">
+                                        <div className="flex justify-between">
+                                            <span>Subtotal</span>
+                                            <span>NPR {(cart?.subtotal ?? 0).toLocaleString()}</span>
+                                        </div>
+
+                                        <div className="flex justify-between">
+                                            <span>Delivery</span>
+                                            <span>NPR {(cart?.delivery_fee ?? 0).toLocaleString()}</span>
+                                        </div>
+
+                                        <div className="flex justify-between border-t pt-3 font-medium">
+                                            <span>Total</span>
+                                            <span>NPR {(cart?.total ?? 0).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>

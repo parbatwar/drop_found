@@ -10,11 +10,11 @@ import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
-import Browse from './pages/Browse';
 
 // Admin Pages
 import AdminSellers from './pages/admin/AdminSellers';
 import AdminCategories from './pages/admin/Categories';
+import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 
 // Seller Pages
 import SellerApply from './pages/seller/SellerApply';
@@ -26,7 +26,14 @@ import SellerOrders from './pages/seller/Orders';
 import SellerEdit from './pages/seller/SellerEdit';
 
 // Shop Pages
+import Browse from './pages/listings/Browse';
 import SellerProfile from './pages/shop/SellerProfile';
+import Thrift from './pages/shop/thrift/Thrift';
+import Surplus from './pages/shop/surplus/Surplus';
+import Men from './pages/listings/Men';
+import Women from './pages/listings/Women';
+import Kids from './pages/listings/Kids';
+import Unisex from './pages/listings/Unisex';
 
 // Order Pages
 import MyOrders from './pages/orders/MyOrders';
@@ -52,6 +59,15 @@ function App() {
             <Route path="/shop/:slug" element={<SellerProfile />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/browse" element={<Browse />} />
+            {/* Category Pages */}
+            <Route path="/thrift" element={<Thrift />} />
+            <Route path="/surplus" element={<Surplus />} />
+            
+            {/* Gender Pages */}
+            <Route path="/men" element={<Men />} />
+            <Route path="/women" element={<Women />} />
+            <Route path="/kids" element={<Kids />} />
+            <Route path="/unisex" element={<Unisex />} />
         </Route>
 
         {/* ========================================================= */}
@@ -94,6 +110,7 @@ function App() {
                 } />
                 <Route path="/admin/sellers" element={<AdminSellers />} />
                 <Route path="/admin/categories" element={<AdminCategories />} />
+                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
             </Route>
         </Route>
 

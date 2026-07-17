@@ -11,6 +11,7 @@ from app.models.enums.listing_enum import (
 )
 from app.models.enums.enums import SellerType
 from app.models.enums.listing_enum import Gender, ListingColor
+from app.utils.category import get_active_category
 from app.utils.order import get_delivery_fee
 
 router = APIRouter(prefix="/meta", tags=["meta"])
