@@ -21,7 +21,6 @@
  *   onClose={() => setIsFilterOpen(false)}
  * />
  */
-
 // components/listings/ListingFilters.jsx
 function ListingFilters({ categories, filters, onFilterChange, onClearFilters, onClose, showSellerTypeFilter = false }) {
     const sizes = [
@@ -41,6 +40,14 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
         { label: "Unisex", value: "unisex" },
     ];
 
+    // ✅ Updated: Use 'retailer' instead of 'brand_new'
+    const sellerTypes = [
+        { label: "All", value: "" },
+        { label: "Thrift", value: "thrift" },
+        { label: "Brand New", value: "retailer" },
+    ];
+
+    // Colors (uncommented if needed)
     // const colors = [
     //     { label: "Black", value: "black" },
     //     { label: "White", value: "white" },
@@ -53,12 +60,6 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
     //     { label: "Navy", value: "navy" },
     //     { label: "Other", value: "other" },
     // ];
-
-    const sellerTypes = [
-        { label: "All", value: "" },
-        { label: "Thrift", value: "thrift" },
-        { label: "Surplus", value: "surplus" },
-    ];
 
     return (
         <>
@@ -93,12 +94,15 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                                 className="w-full border-b border-neutral-200 py-2.5 pl-8 text-sm focus:border-black outline-none transition-colors bg-transparent" 
                                 value={filters.search} 
                                 onChange={(e) => onFilterChange('search', e.target.value)} 
-                                placeholder="Search items..." 
+                                placeholder="Search by product name..." 
                             />
                             <svg className="w-4 h-4 text-neutral-400 absolute left-0 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
+                        <p className="text-[9px] text-neutral-400 mt-1.5">
+                            Searches product titles only
+                        </p>
                     </div>
 
                     {/* ✅ Seller Type Filter - Only show on gender pages */}
@@ -223,7 +227,7 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                         </div>
                     </div>
 
-                    {/* Color 
+                    {/* Color - Uncommented if you want to use it 
                     <div>
                         <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
                             Color

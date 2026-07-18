@@ -7,7 +7,6 @@ import { getListingOptions } from '../../api/meta';
 import { Icons } from '../../components/Icons';
 import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
 
-
 function CreateListing() {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
@@ -25,12 +24,15 @@ function CreateListing() {
         category_id: '',
         gender: '',
         size: '',
+        is_surplus: false,
     });
 
     const [images, setImages] = useState([]);
     const [uploadingImages, setUploadingImages] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    const isRetailer = seller?.seller_type === 'retailer';
 
     useEffect(() => {
         Promise.all([
@@ -49,9 +51,10 @@ function CreateListing() {
     }, []);
 
     const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value,
+            [name]: type === 'checkbox' ? checked : value,
         });
     };
 
@@ -82,6 +85,13 @@ function CreateListing() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // ✅ Prevent duplicate submissions
+        if (submitting) {
+            console.log('⚠️ Already submitting, skipping...');
+            return;
+        }
+
         setError('');
 
         if (images.length === 0) {
@@ -101,20 +111,27 @@ function CreateListing() {
             setUploadingImages(false);
 
             const payload = {
-                ...formData,
                 title: formData.title.trim(),
                 description: formData.description.trim() || null,
                 price: parseFloat(formData.price),
                 quantity: Number(formData.quantity),
                 condition: formData.condition || null,
+                category_id: formData.category_id,
+                gender: formData.gender,
                 size: formData.size || null,
+                is_surplus: formData.is_surplus || false,
                 images: imageUrlsList.map((url, index) => ({
                     image_url: url,
                     display_order: index,
                 })),
             };
 
-            await createListing(payload);
+            console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
+
+            // ✅ Only call createListing ONCE
+            const response = await createListing(payload);
+            console.log('✅ Response:', response.data);
+
             navigate('/seller/listings');
         } catch (err) {
             console.error("Full error:", err.response?.data);
@@ -374,6 +391,40 @@ function CreateListing() {
                             </select>
                         </div>
                     </div>
+
+                    {/* ✅ Retailer-Only Fields - Surplus */}
+                    {isRetailer && (
+                        <div className="border-t border-neutral-100 pt-6">
+                            <h3 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-4">
+                                Inventory Tags
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Surplus Toggle */}
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ 
+                                            ...prev, 
+                                            is_surplus: !prev.is_surplus 
+                                        }))}
+                                        className={`relative w-10 h-5 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                                            formData.is_surplus ? 'bg-amber-600' : 'bg-neutral-300'
+                                        }`}
+                                    >
+                                        <span 
+                                            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${
+                                                formData.is_surplus ? 'translate-x-5' : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+                                    <div>
+                                        <span className="text-sm font-medium text-neutral-700">Surplus</span>
+                                        <p className="text-[9px] text-neutral-400">Overstock, excess inventory</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Submit Button */}
                     <div className="pt-6 border-t border-neutral-100">

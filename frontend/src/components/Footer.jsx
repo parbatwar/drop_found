@@ -11,8 +11,8 @@ function Footer() {
                     <div className="col-span-2 md:col-span-1">
                         <h3 className="text-xl font-light tracking-[0.2em] mb-4">Drop Found</h3>
                         <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-                            Nepal's online thrift and surplus clothing marketplace. Pre-loved pieces,
-                            hand-picked by independent sellers.
+                            Nepal's online clothing marketplace. Pre-loved pieces
+                            and brand new fashion.
                         </p>
                         <div className="flex items-center space-x-4 mt-4">
                             {/* Social Icons */}
@@ -65,8 +65,8 @@ function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/surplus" className="hover:text-black transition-colors">
-                                    Surplus
+                                <Link to="/brand-new" className="hover:text-black transition-colors">
+                                    Brand New
                                 </Link>
                             </li>
                             <li>

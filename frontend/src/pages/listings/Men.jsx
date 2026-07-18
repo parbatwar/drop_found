@@ -2,7 +2,7 @@
  * Men - Page component for displaying men's collection
  * 
  * A wrapper component that renders ListingsPage with gender="men".
- * This page shows all men's clothing items from both thrift and surplus sellers.
+ * This page shows all men's clothing items from both thrift and retail shop sellers.
  * 
  * @example
  * // Route: /men
@@ -17,7 +17,7 @@ function Men() {
         <ListingsPage
             gender="men"
             title="Men's Collection"
-            description="Curated menswear from thrift and surplus sellers. From vintage classics to modern essentials."
+            description="Curated menswear. From vintage classics to modern essentials."
         />
     );
 }

@@ -2,7 +2,7 @@
  * Kids - Page component for displaying kids' collection
  * 
  * A wrapper component that renders ListingsPage with gender="kids".
- * This page shows all children's clothing items from both thrift and surplus sellers.
+ * This page shows all children's clothing items from both thrift and retail shop sellers.
  * 
  * @example
  * // Route: /kids

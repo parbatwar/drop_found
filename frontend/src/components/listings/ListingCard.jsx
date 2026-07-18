@@ -1,37 +1,41 @@
-/**
- * ListingCard - Component for displaying a single product listing card
- * 
- * Renders a product card with image, title, price, and seller type.
- * Used within ListingGrid to display individual listings.
- * Includes hover effects and status overlay for inactive items.
- * 
- * @param {Object} props
- * @param {Object} props.listing - The listing data object
- * @param {number} props.listing.id - Unique listing ID
- * @param {string} props.listing.title - Product title
- * @param {number} props.listing.price - Product price
- * @param {string} props.listing.seller_type - 'thrift' or 'surplus'
- * @param {Array} props.listing.images - Array of image objects
- * @param {string} props.listing.status - 'active' or 'inactive'
- * 
- * @example
- * <ListingCard listing={listingData} />
- */
-
-
 // components/listings/ListingCard.jsx
 import { Link } from 'react-router-dom';
 
 function ListingCard({ listing }) {
-    // Get the first image or use null
     const imageUrl = listing.images?.[0]?.image_url || null;
-    
-    // Format price with proper currency display
     const formattedPrice = Number(listing.price).toLocaleString();
-    
-    // Determine if item is available
     const isAvailable = listing.status === 'active' && listing.quantity > 0;
     const isLowStock = listing.quantity <= 3 && listing.quantity > 0;
+
+    // ✅ Determine the tag to display
+    const getTag = () => {
+        // Only show tags for:
+        // 1. Thrift items (always show "Thrift")
+        // 2. Surplus items (show "Surplus")
+        if (listing.seller_type === 'thrift') {
+            return 'Thrift';
+        }
+        if (listing.seller_type === 'retailer') {
+            if (listing.is_surplus) return 'Surplus';
+            return null; // Regular retailer - show nothing
+        }
+        return null;
+    };
+
+    const tag = getTag();
+
+    // ✅ Get tag styling
+    const getTagStyles = () => {
+        if (listing.seller_type === 'retailer') {
+            if (listing.is_surplus) {
+                return 'text-amber-600 border-amber-200 bg-amber-50';
+            }
+        }
+        if (listing.seller_type === 'thrift') {
+            return 'text-neutral-400 border-neutral-200';
+        }
+        return '';
+    };
 
     return (
         <Link to={`/product/${listing.id}`} className="group block">
@@ -73,26 +77,25 @@ function ListingCard({ listing }) {
 
             {/* Content */}
             <div className="mt-2.5 space-y-0.5">
-                {/* Shop Name */}
                 {listing.shop_name && (
                     <p className="text-[9px] uppercase tracking-wider text-neutral-400 truncate">
                         {listing.shop_name}
                     </p>
                 )}
 
-                {/* Product Title */}
                 <h3 className="text-sm font-light text-neutral-800 group-hover:text-black transition-colors duration-200 truncate">
                     {listing.title}
                 </h3>
 
-                {/* Price & Seller Type */}
                 <div className="flex items-center justify-between pt-0.5">
                     <p className="text-sm font-medium text-neutral-900">
                         NPR {formattedPrice}
                     </p>
-                    <span className="text-[8px] uppercase tracking-wider text-neutral-400 border border-neutral-200 px-1.5 py-0.5 rounded">
-                        {listing.seller_type || 'Item'}
-                    </span>
+                    {tag && (
+                        <span className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${getTagStyles()}`}>
+                            {tag}
+                        </span>
+                    )}
                 </div>
             </div>
         </Link>

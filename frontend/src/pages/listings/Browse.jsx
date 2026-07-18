@@ -184,10 +184,10 @@ function Browse() {
                             Shop Thrift
                         </Link>
                         <Link
-                            to="/surplus"
+                            to="/brand-new"
                             className="border border-neutral-300 px-8 py-2.5 text-[10px] tracking-[0.2em] uppercase hover:bg-black hover:text-white hover:border-black transition-all duration-300"
                         >
-                            Shop Surplus
+                            Shop Brand New
                         </Link>
                     </div>
                 </div>

@@ -6,7 +6,7 @@
  * Supports filtering by category, gender, size, color, search, and sorting.
  * 
  * @param {Object} props
- * @param {string} props.sellerType - 'thrift' or 'surplus' - filters listings by seller type
+ * @param {string} props.sellerType - 'thrift' or 'retailer' - filters listings by seller type
  * @param {string} props.title - Page title displayed in the hero section
  * @param {string} props.description - Page description displayed in the hero section
  * @param {string} [props.gender] - Optional gender filter (men/women/unisex)
@@ -121,9 +121,9 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-16">
                     <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">
                         {filters.seller_type === 'thrift' ? 'Thrift' : 
-                         filters.seller_type === 'surplus' ? 'Surplus' : 
+                         filters.seller_type === 'retailer' ? 'Retailer' : 
                          sellerType === 'thrift' ? 'Thrift' : 
-                         sellerType === 'surplus' ? 'Surplus' : 'Collection'}
+                         sellerType === 'retailer' ? 'Retailer' : 'Collection'}
                     </span>
                     <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">
                         {title}

@@ -29,7 +29,7 @@ import SellerEdit from './pages/seller/SellerEdit';
 import Browse from './pages/listings/Browse';
 import SellerProfile from './pages/shop/SellerProfile';
 import Thrift from './pages/shop/thrift/Thrift';
-import Surplus from './pages/shop/surplus/Surplus';
+import Retailer from './pages/shop/retailer/Retailer';
 import Men from './pages/listings/Men';
 import Women from './pages/listings/Women';
 import Kids from './pages/listings/Kids';
@@ -61,7 +61,7 @@ function App() {
             <Route path="/browse" element={<Browse />} />
             {/* Category Pages */}
             <Route path="/thrift" element={<Thrift />} />
-            <Route path="/surplus" element={<Surplus />} />
+            <Route path="/brand-new" element={<Retailer />} />
             
             {/* Gender Pages */}
             <Route path="/men" element={<Men />} />

@@ -8,8 +8,8 @@ class UserRole(str, enum.Enum):
 
 
 class SellerType(str, enum.Enum):
+    retailer = "retailer"
     thrift = "thrift"
-    surplus = "surplus"
 
 
 class VerificationStatus(str, enum.Enum):

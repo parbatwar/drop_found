@@ -185,20 +185,7 @@ function ProductDetail() {
 
     return (
         <div className="bg-white min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-20">
-                
-                {/* Breadcrumb */}
-                <div className="mb-8">
-                    <nav className="flex items-center gap-2 text-[10px] text-neutral-400 uppercase tracking-wider">
-                        <Link to="/" className="hover:text-black transition-colors">Home</Link>
-                        <span>/</span>
-                        <Link to={`/${listing.seller_type}`} className="hover:text-black transition-colors">
-                            {listing.seller_type === 'thrift' ? 'Thrift' : 'Surplus'}
-                        </Link>
-                        <span>/</span>
-                        <span className="text-neutral-600">{listing.title}</span>
-                    </nav>
-                </div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-14">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
                     
@@ -301,7 +288,7 @@ function ProductDetail() {
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex flex-wrap gap-2">
                                 <span className="text-[10px] uppercase tracking-widest border border-neutral-200 px-3 py-1">
-                                    {listing.seller_type === "thrift" ? "Thrift" : "Surplus"}
+                                    {listing.seller_type === "thrift" ? "Thrift" : "Retailer"}
                                 </span>
                                 {listing.status === "active" && (
                                     <span className="text-[10px] uppercase tracking-widest bg-green-50 text-green-700 px-3 py-1 border border-green-200">

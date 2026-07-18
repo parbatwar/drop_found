@@ -2,7 +2,7 @@
  * Women - Page component for displaying women's collection
  * 
  * A wrapper component that renders ListingsPage with gender="women".
- * This page shows all women's clothing items from both thrift and surplus sellers.
+ * This page shows all women's clothing items from both thrift and retail shop sellers.
  * 
  * @example
  * // Route: /women
@@ -17,7 +17,7 @@ function Women() {
         <ListingsPage
             gender="women"
             title="Women's Collection"
-            description="Curated womenswear from thrift and surplus sellers. Discover timeless pieces and contemporary finds."
+            description="Curated womenswear. Discover timeless pieces and contemporary finds."
         />
     );
 }

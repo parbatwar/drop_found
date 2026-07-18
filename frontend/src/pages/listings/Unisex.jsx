@@ -2,7 +2,7 @@
  * Unisex - Page component for displaying unisex collection
  * 
  * A wrapper component that renders ListingsPage with gender="unisex".
- * This page shows all unisex clothing items from both thrift and surplus sellers.
+ * This page shows all unisex clothing items from both thrift and retail sellers.
  * 
  * @example
  * // Route: /unisex

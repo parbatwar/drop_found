@@ -40,6 +40,7 @@ class ListingService:
             condition=data.condition,
             color=data.color,
             is_on_sale=data.is_on_sale,
+            is_surplus=data.is_surplus,
             seller_id=seller.id,
         )
         db.add(listing)
@@ -319,4 +320,3 @@ class ListingService:
         db.delete(image)
         db.commit()
         return {"detail": "Image deleted"}
-

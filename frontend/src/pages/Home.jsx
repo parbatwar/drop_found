@@ -162,14 +162,14 @@ function Home() {
                         </div>
                     </Link>
 
-                    {/* Surplus Half */}
+                    {/* Brand New Half */}
                     <Link 
-                        to="/surplus" 
+                        to="/brand-new" 
                         className="group relative overflow-hidden h-[85vh] md:h-[95vh] bg-neutral-100"
                     >
                         <img 
                             src="https://images.pexels.com/photos/15722837/pexels-photo-15722837.jpeg?_gl=1*jzdztu*_ga*ODI3MDMzMTU5LjE3ODQxMzAyODg.*_ga_8JE65Q40S6*czE3ODQxMzAyODckbzEkZzEkdDE3ODQxMzA1MDckajEwJGwwJGgw"
-                            alt="Surplus Collection"
+                            alt="Brand New Collection"
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/50 transition-colors duration-700" />
@@ -180,14 +180,14 @@ function Home() {
                                 Collection
                             </span>
                             <h2 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.05em] uppercase">
-                                Surplus
+                                Brand New
                             </h2>
                             <div className="w-10 h-px bg-white/40 mt-3 mb-3" />
                             <p className="text-sm font-light leading-relaxed opacity-80 max-w-xs">
-                                Premium deadstock & excess inventory. Unworn, tagged, and ready.
+                                Shop authentic brand new clothing from trusted brands and verified sellers.
                             </p>
                             <span className="inline-block mt-5 text-[11px] tracking-[0.25em] uppercase text-white/80 hover:text-white transition-colors duration-300 border-b border-white/30 hover:border-white pb-0.5">
-                                Explore Surplus →
+                                Explore Brand New →
                             </span>
                         </div>
                     </Link>

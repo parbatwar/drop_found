@@ -59,6 +59,7 @@ class Listing(Base):
     )
 
     is_on_sale = Column(Boolean, nullable=False, default=False)
+    is_surplus = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(

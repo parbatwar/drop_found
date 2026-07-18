@@ -7,7 +7,6 @@ import { getListingOptions } from '../../api/meta';
 import { Icons } from '../../components/Icons';
 import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
 
-
 function EditListing() {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -27,6 +26,7 @@ function EditListing() {
         gender: '',
         size: '',
         status: '',
+        is_surplus: false,
     });
 
     const [existingImages, setExistingImages] = useState([]);
@@ -34,6 +34,8 @@ function EditListing() {
     const [uploadingImages, setUploadingImages] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    const isRetailer = seller?.seller_type === 'retailer';
 
     useEffect(() => {
         const loadData = async () => {
@@ -59,6 +61,7 @@ function EditListing() {
                     gender: listing.gender || '',
                     size: listing.size || '',
                     status: listing.status || '',
+                    is_surplus: listing.is_surplus || false,
                 });
 
                 if (listing.images) {
@@ -76,9 +79,10 @@ function EditListing() {
     }, [id]);
 
     const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value,
+            [name]: type === 'checkbox' ? checked : value,
         });
     };
 
@@ -113,6 +117,13 @@ function EditListing() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // ✅ Prevent duplicate submissions
+        if (submitting) {
+            console.log('⚠️ Already submitting, skipping...');
+            return;
+        }
+
         setError('');
 
         if (existingImages.length === 0 && newImages.length === 0) {
@@ -147,6 +158,7 @@ function EditListing() {
                 condition: seller?.seller_type === "thrift" ? formData.condition || null : null,
                 size: formData.size || null,
                 status: formData.status,
+                is_surplus: formData.is_surplus || false,
                 images: consolidatedImages.map((url, index) => ({
                     image_url: url,
                     display_order: index,
@@ -421,11 +433,11 @@ function EditListing() {
                                 name="size"
                                 value={formData.size}
                                 onChange={handleChange}
-                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent capitalize"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent uppercase"
                             >
                                 <option value="">Select Size</option>
                                 {options?.sizes.map((sz) => (
-                                    <option key={sz} value={sz} className="uppercase">
+                                    <option key={sz} value={sz}>
                                         {sz.replaceAll('_', ' ')}
                                     </option>
                                 ))}
@@ -457,6 +469,40 @@ function EditListing() {
                             </div>
                         )}
                     </div>
+
+                    {/* ✅ Retailer-Only Fields - Surplus */}
+                    {isRetailer && (
+                        <div className="border-t border-neutral-100 pt-6">
+                            <h3 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-4">
+                                Inventory Tags
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Surplus Toggle */}
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ 
+                                            ...prev, 
+                                            is_surplus: !prev.is_surplus 
+                                        }))}
+                                        className={`relative w-10 h-5 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                                            formData.is_surplus ? 'bg-amber-600' : 'bg-neutral-300'
+                                        }`}
+                                    >
+                                        <span 
+                                            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${
+                                                formData.is_surplus ? 'translate-x-5' : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+                                    <div>
+                                        <span className="text-sm font-medium text-neutral-700">Surplus</span>
+                                        <p className="text-[9px] text-neutral-400">Overstock, excess inventory</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Submit Button */}
                     <div className="pt-6 border-t border-neutral-100">

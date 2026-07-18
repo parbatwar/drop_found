@@ -231,24 +231,20 @@ function SellerProfile() {
                                 </p>
                             </button>
                         </div>
-                        {totalReviews > 0 && (
-                            <>
-                                <div>
-                                    <p className="text-lg font-light">{totalReviews}</p>
-                                    <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                                        {totalReviews === 1 ? 'Review' : 'Reviews'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-lg font-light">{averageRating.toFixed(1)}</span>
-                                    </div>
-                                    <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                                        {renderStars(averageRating)}
-                                    </p>
-                                </div>
-                            </>
-                        )}
+                        <div>
+                            <p className="text-lg font-light">{totalReviews}</p>
+                            <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                {totalReviews === 1 ? 'Review' : 'Reviews'}
+                            </p>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg font-light">{averageRating.toFixed(1)}</span>
+                            </div>
+                            <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                {renderStars(averageRating)}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

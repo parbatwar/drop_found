@@ -182,7 +182,7 @@ function SellerApply() {
                     <p className="text-sm text-gray-400 mt-4 leading-relaxed max-w-md">
                         {isReapplying 
                             ? 'Update your shop details and resubmit your application to start selling.'
-                            : 'Join Nepal\'s premier thrift and surplus marketplace. Start selling your curated pieces today.'}
+                            : 'Join Nepal\'s premier clothing marketplace. Start selling your curated pieces today.'}
                     </p>
                 </div>
 
