@@ -45,13 +45,6 @@ class FollowService:
         return follow
 
     @staticmethod
-    def get_my_following(current_user, db):
-        """
-        Get the list of sellers that the current user is following.
-        """
-        return db.query(Follow).filter(Follow.buyer_id == current_user.id).all()
-
-    @staticmethod
     def unfollow_seller(seller_id, current_user, db):
         follow = (
             db.query(Follow)
@@ -72,5 +65,20 @@ class FollowService:
         return {"detail": "Successfully unfollowed the seller"}
 
     @staticmethod
+    def get_my_following(current_user, db):
+        """
+        Get the list of sellers that the current user is following.
+        """
+        return db.query(Follow).filter(Follow.buyer_id == current_user.id).all()
+
+    @staticmethod
     def get_seller_followers(seller_id, db):
         return db.query(Follow).filter(Follow.seller_id == seller_id).all()
+
+    @staticmethod
+    def get_seller_followers_with_details(seller_id, db):
+        """
+        Get followers with user details.
+        """
+        follows = db.query(Follow).filter(Follow.seller_id == seller_id).all()
+        return follows  # The relationship will load user data

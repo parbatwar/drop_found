@@ -128,7 +128,13 @@ class SellerService:
         )
 
         for seller in sellers:
+
+            followers_count = (
+                db.query(Follow).filter(Follow.seller_id == seller.id).count()
+            )
             rating_stats = ReviewService.get_seller_rating_stats(seller.id, db)
+
+            seller.followers_count = followers_count
             seller.average_rating = rating_stats["average_rating"]
             seller.total_reviews = rating_stats["total_reviews"]
 
@@ -139,8 +145,12 @@ class SellerService:
         """Get the current user's seller profile with stats."""
         seller = get_verified_seller(current_user, db)
 
+        followers_count = db.query(Follow).filter(Follow.seller_id == seller.id).count()
+
         # Add rating stats
         rating_stats = ReviewService.get_seller_rating_stats(seller.id, db)
+
+        seller.followers_count = followers_count
         seller.average_rating = rating_stats["average_rating"]
         seller.total_reviews = rating_stats["total_reviews"]
 
@@ -157,8 +167,12 @@ class SellerService:
         if not seller:
             raise HTTPException(status_code=404, detail="Seller Profile not found")
 
+        followers_count = db.query(Follow).filter(Follow.seller_id == seller.id).count()
+
         # Add rating stats
         rating_stats = ReviewService.get_seller_rating_stats(seller.id, db)
+
+        seller.followers_count = followers_count
         seller.average_rating = rating_stats["average_rating"]
         seller.total_reviews = rating_stats["total_reviews"]
 

@@ -7,6 +7,7 @@ import { followSeller, unfollowSeller } from '../../api/follow';
 import { useAuth } from '../../context/AuthContext';
 import { useSellerReviews } from '../../hooks/useReview';
 import { Icons } from '../../components/Icons';
+import FollowersModal from '../../components/FollowersModal';
 
 function SellerProfile() {
     const { slug } = useParams();
@@ -18,6 +19,7 @@ function SellerProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isFollowing, setIsFollowing] = useState(false);
+    const [showFollowersModal, setShowFollowersModal] = useState(false);
 
     // Fetch seller reviews
     const {
@@ -86,17 +88,14 @@ function SellerProfile() {
         
         for (let i = 1; i <= 5; i++) {
             if (i <= fullStars) {
-                // Full star
                 stars.push(
                     <span key={i} className="text-amber-500 text-sm">★</span>
                 );
             } else if (i === fullStars + 1 && hasHalfStar) {
-                // Half star - use a simple half star approach
                 stars.push(
                     <span key={i} className="text-amber-500 text-sm">★</span>
                 );
             } else {
-                // Empty star
                 stars.push(
                     <span key={i} className="text-neutral-200 text-sm">★</span>
                 );
@@ -212,7 +211,6 @@ function SellerProfile() {
                         </p>
                     )}
 
-
                     {/* Stats with Rating */}
                     <div className="flex flex-wrap gap-8 mt-6 pt-6 border-t border-neutral-100">
                         <div>
@@ -220,21 +218,33 @@ function SellerProfile() {
                             <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Items</p>
                         </div>
                         <div>
-                            <p className="text-lg font-light">{seller.followers_count || 0}</p>
-                            <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Followers</p>
+                            <button
+                                onClick={() => setShowFollowersModal(true)}
+                                className="text-left hover:opacity-70 transition-opacity group"
+                            >
+                                <p className="text-lg font-light">
+                                    {seller.followers_count || 0}
+                                </p>
+                                <p className="text-[9px] text-neutral-400 uppercase tracking-wider flex items-center gap-1">
+                                    Followers
+                                    <span className="text-[8px] text-neutral-300">↗</span>
+                                </p>
+                            </button>
                         </div>
                         {totalReviews > 0 && (
                             <>
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-lg font-light">{averageRating.toFixed(1)}</span>
-                                    </div>
-                                    <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Rating</p>
-                                </div>
-                                <div>
                                     <p className="text-lg font-light">{totalReviews}</p>
                                     <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
                                         {totalReviews === 1 ? 'Review' : 'Reviews'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-light">{averageRating.toFixed(1)}</span>
+                                    </div>
+                                    <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                        {renderStars(averageRating)}
                                     </p>
                                 </div>
                             </>
@@ -390,6 +400,14 @@ function SellerProfile() {
                     )}
                 </div>
             </div>
+
+            {/* Followers Modal */}
+            <FollowersModal
+                isOpen={showFollowersModal}
+                onClose={() => setShowFollowersModal(false)}
+                sellerId={seller?.id}
+                sellerName={seller?.shop_name}
+            />
         </div>
     );
 }
