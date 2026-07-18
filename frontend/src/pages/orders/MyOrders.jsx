@@ -35,16 +35,30 @@ function MyOrders() {
             return;
         }
         try {
-            await createReview(selectedOrder.id, {
-                rating: reviewData.rating,
-                comment: reviewData.comment,
-            });
+            // Get listing_id from the first item in the order
+            const listingId = selectedOrder.items?.[0]?.listing_id;
+            
+            if (!listingId) {
+                alert("Unable to find product for review");
+                return;
+            }
+            
+            await createReview(
+                selectedOrder.id,        // order_id
+                listingId,              // listing_id
+                {
+                    rating: reviewData.rating,
+                    comment: reviewData.comment,
+                }
+            );
+            
             setShowReviewModal(false);
             setSelectedOrder(null);
             setHoveredRating(0);
             setReviewData({ rating: 0, comment: "" });
-            loadOrders();
+            loadOrders(); // Refresh to update the review status
         } catch (err) {
+            console.error('Review submission error:', err);
             alert(err.response?.data?.detail || "Failed to submit review");
         }
     };
@@ -97,42 +111,36 @@ function MyOrders() {
         return configs[status] || configs.pending;
     };
 
-    // ✅ Get the first item from order (for display)
+    // Helper functions for order display
     const getFirstItem = (order) => {
         if (!order.items || order.items.length === 0) return null;
         return order.items[0];
     };
 
-    // ✅ Get listing from the first item
     const getListing = (order) => {
         const item = getFirstItem(order);
         return item?.listing || {};
     };
 
-    // ✅ Get image URL
     const getImageUrl = (order) => {
         const listing = getListing(order);
         return listing.images?.[0]?.image_url || null;
     };
 
-    // ✅ Get title
     const getTitle = (order) => {
         const listing = getListing(order);
         return listing.title || 'Product';
     };
 
-    // ✅ Get price (use total_amount from order)
     const getPrice = (order) => {
         return order.total_amount || 0;
     };
 
-    // ✅ Get quantity
     const getQuantity = (order) => {
         const item = getFirstItem(order);
         return item?.quantity || 1;
     };
 
-    // ✅ Get item count
     const getItemCount = (order) => {
         return order.items?.length || 0;
     };
@@ -308,7 +316,7 @@ function MyOrders() {
                             Write a Review
                         </h3>
                         <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-6">
-                            {getTitle(selectedOrder) || 'Product'}
+                            {selectedOrder ? getTitle(selectedOrder) : 'Product'}
                         </p>
                         
                         {/* Rating Stars */}

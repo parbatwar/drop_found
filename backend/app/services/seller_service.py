@@ -3,6 +3,7 @@ from app.models.catalog.listing import Listing
 from app.models.seller.seller import SellerProfile
 from app.models.enums.enums import UserRole, VerificationStatus
 from app.models.social.review import Review
+from app.services.review_service import ReviewService
 from app.utils.seller import get_verified_seller
 from app.utils.slug import generate_slug
 
@@ -120,17 +121,29 @@ class SellerService:
 
     @staticmethod
     def get_all_sellers(db):
-        """Get all approved sellers."""
-        return (
+        sellers = (
             db.query(SellerProfile)
             .filter(SellerProfile.verification_status == "approved")
             .all()
         )
 
+        for seller in sellers:
+            rating_stats = ReviewService.get_seller_rating_stats(seller.id, db)
+            seller.average_rating = rating_stats["average_rating"]
+            seller.total_reviews = rating_stats["total_reviews"]
+
+        return sellers
+
     @staticmethod
     def get_my_seller_profile(current_user, db):
         """Get the current user's seller profile with stats."""
         seller = get_verified_seller(current_user, db)
+
+        # Add rating stats
+        rating_stats = ReviewService.get_seller_rating_stats(seller.id, db)
+        seller.average_rating = rating_stats["average_rating"]
+        seller.total_reviews = rating_stats["total_reviews"]
+
         return seller
 
     @staticmethod
@@ -143,6 +156,11 @@ class SellerService:
 
         if not seller:
             raise HTTPException(status_code=404, detail="Seller Profile not found")
+
+        # Add rating stats
+        rating_stats = ReviewService.get_seller_rating_stats(seller.id, db)
+        seller.average_rating = rating_stats["average_rating"]
+        seller.total_reviews = rating_stats["total_reviews"]
 
         seller.is_following = False
 

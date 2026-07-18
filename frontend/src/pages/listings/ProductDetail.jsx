@@ -5,6 +5,7 @@ import { getListing } from '../../api/listings';
 import { useAuth } from '../../context/AuthContext';
 import { addToCart } from "../../api/cart";
 import { addToWishlist, removeFromWishlist } from "../../api/wishlist";
+import { useListingReviews } from '../../hooks/useReview';
 import { Icons } from '../../components/Icons';
 
 function ProductDetail() {
@@ -21,6 +22,16 @@ function ProductDetail() {
     const [quantity, setQuantity] = useState(1);
 
     const canBuy = listing && listing.status === "active" && listing.quantity > 0;
+
+    // Fetch product reviews
+    const {
+        reviews,
+        averageRating,
+        totalReviews,
+        loading: reviewsLoading,
+        hasMore,
+        loadMore,
+    } = useListingReviews(id, 5);
 
     useEffect(() => {
         getListing(id)
@@ -121,6 +132,23 @@ function ProductDetail() {
             return words[0].charAt(0).toUpperCase();
         }
         return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+    };
+
+    // Render stars for rating
+    const renderStars = (rating) => {
+        const stars = [];
+        const roundedRating = Math.round(rating);
+        for (let i = 1; i <= 5; i++) {
+            stars.push(
+                <span 
+                    key={i} 
+                    className={`text-sm ${i <= roundedRating ? 'text-amber-500' : 'text-neutral-200'}`}
+                >
+                    ★
+                </span>
+            );
+        }
+        return stars;
     };
 
     if (loading) {
@@ -267,22 +295,40 @@ function ProductDetail() {
                                 NPR {Number(listing.price).toLocaleString()}
                             </p>
                         </div>
+                    
 
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-2">
-                            <span className="text-[10px] uppercase tracking-widest border border-neutral-200 px-3 py-1">
-                                {listing.seller_type === "thrift" ? "Thrift" : "Surplus"}
-                            </span>
-                            {listing.status === "active" && (
-                                <span className="text-[10px] uppercase tracking-widest bg-green-50 text-green-700 px-3 py-1 border border-green-200">
-                                    In Stock
+                        {/* Tags & Reviews */}
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap gap-2">
+                                <span className="text-[10px] uppercase tracking-widest border border-neutral-200 px-3 py-1">
+                                    {listing.seller_type === "thrift" ? "Thrift" : "Surplus"}
                                 </span>
-                            )}
-                            {listing.quantity <= 3 && listing.quantity > 0 && (
-                                <span className="text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-3 py-1 border border-amber-200">
-                                    Only {listing.quantity} left
+                                {listing.status === "active" && (
+                                    <span className="text-[10px] uppercase tracking-widest bg-green-50 text-green-700 px-3 py-1 border border-green-200">
+                                        In Stock
+                                    </span>
+                                )}
+                                {listing.quantity <= 3 && listing.quantity > 0 && (
+                                    <span className="text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-3 py-1 border border-amber-200">
+                                        Only {listing.quantity} left
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Reviews - Right aligned */}
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                                {totalReviews > 0 && (
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center">
+                                            {renderStars(averageRating)}
+                                        </div>
+                                        <span className="text-sm font-light">{averageRating.toFixed(1)}</span>
+                                    </div>
+                                )}
+                                <span className="text-[10px] text-neutral-400">
+                                    ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
                                 </span>
-                            )}
+                            </div>
                         </div>
 
                         {/* Details Grid */}
@@ -408,7 +454,83 @@ function ProductDetail() {
                             </button>
                         </div>
                     </div>
+                </div>
 
+                {/* Reviews Section */}
+                <div className="mt-16 border-t border-neutral-100 pt-10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-light uppercase tracking-[0.2em] text-neutral-400">
+                            Customer Reviews
+                        </h2>
+                    </div>
+
+                    {reviewsLoading ? (
+                        <div className="flex justify-center py-8">
+                            <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
+                                Loading Reviews...
+                            </div>
+                        </div>
+                    ) : reviews.length === 0 ? (
+                        <div className="border border-neutral-200 bg-neutral-50 p-12 text-center">
+                            <p className="text-sm text-neutral-400 uppercase tracking-wider">
+                                No reviews yet
+                            </p>
+                            <p className="text-[10px] text-neutral-300 mt-1">
+                                Be the first to leave a review
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-6">
+                                {reviews.map((review) => (
+                                    <div key={review.id} className="border-b border-neutral-100 pb-6 last:border-0">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-medium text-neutral-600">
+                                                        {review.buyer?.first_name?.[0] || '?'}
+                                                        {review.buyer?.last_name?.[0] || ''}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-neutral-800">
+                                                            {review.buyer?.first_name || 'Anonymous'}
+                                                        </p>
+                                                        <div className="flex items-center gap-1 mt-0.5">
+                                                            {renderStars(review.rating)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {review.comment && (
+                                                    <p className="text-sm text-neutral-600 mt-2 ml-11 leading-relaxed">
+                                                        {review.comment}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <span className="text-[9px] text-neutral-400 flex-shrink-0 ml-4">
+                                                {new Date(review.created_at).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric'
+                                                })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Load More Button */}
+                            {hasMore && (
+                                <div className="mt-8 text-center">
+                                    <button
+                                        onClick={loadMore}
+                                        className="border border-neutral-200 px-8 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:border-black hover:bg-black hover:text-white transition-all duration-300"
+                                    >
+                                        Load More Reviews
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
         </div>

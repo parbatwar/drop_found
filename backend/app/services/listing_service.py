@@ -4,6 +4,8 @@ from app.models.enums.listing_enum import ListingStatus
 from app.models.catalog.listing import Listing
 from app.models.catalog.listing_image import ListingImage
 from app.models.social.wishlist import Wishlist
+from app.models.user.user import User
+from app.services.review_service import ReviewService
 from app.utils.seller import (
     get_verified_seller,
     validate_listing_owner,
@@ -69,6 +71,8 @@ class ListingService:
         color=None,
         seller_type=None,
         sort="newest",
+        limit: int = 20,
+        offset: int = 0,
     ):
         query = (
             db.query(Listing)
@@ -104,7 +108,15 @@ class ListingService:
         else:
             query = query.order_by(Listing.created_at.desc())
 
-        return query.all()
+        listings = query.offset(offset).limit(limit).all()
+
+        # Add rating stats to each listing
+        for listing in listings:
+            rating_stats = ReviewService.get_listing_rating_stats(listing.id, db)
+            listing.average_rating = rating_stats["average_rating"]
+            listing.total_reviews = rating_stats["total_reviews"]
+
+        return listings
 
     @staticmethod
     def get_my_listings(current_user, db):
@@ -126,6 +138,13 @@ class ListingService:
 
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
+
+        # Get rating stats
+        rating_stats = ReviewService.get_listing_rating_stats(listing_id, db)
+
+        # Add rating fields to listing
+        listing.average_rating = rating_stats["average_rating"]
+        listing.total_reviews = rating_stats["total_reviews"]
 
         listing.is_wishlisted = False
 
@@ -237,7 +256,7 @@ class ListingService:
 
     @staticmethod
     def get_seller_listings(seller_id: str, db):
-        return (
+        listings = (
             db.query(Listing)
             .filter(
                 Listing.seller_id == seller_id,
@@ -246,6 +265,13 @@ class ListingService:
             .order_by(Listing.created_at.desc())
             .all()
         )
+
+        for listing in listings:
+            rating_stats = ReviewService.get_listing_rating_stats(listing.id, db)
+            listing.average_rating = rating_stats["average_rating"]
+            listing.total_reviews = rating_stats["total_reviews"]
+
+        return listings
 
     @staticmethod
     def add_image(listing_id, data, current_user, db):
@@ -293,3 +319,4 @@ class ListingService:
         db.delete(image)
         db.commit()
         return {"detail": "Image deleted"}
+

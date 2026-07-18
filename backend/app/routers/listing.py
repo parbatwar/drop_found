@@ -1,6 +1,6 @@
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
@@ -38,8 +38,11 @@ def get_listings(
     color: ListingColor | None = None,
     seller_type: SellerType | None = None,
     sort: str = "newest",
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
+    """Get listings with pagination and rating stats."""
     return ListingService.get_listings(
         db=db,
         search=search,
@@ -49,6 +52,8 @@ def get_listings(
         color=color,
         seller_type=seller_type,
         sort=sort,
+        limit=limit,
+        offset=offset,
     )
 
 

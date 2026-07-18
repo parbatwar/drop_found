@@ -5,36 +5,8 @@ import { getSeller } from '../../api/seller';
 import { getSellerListings } from '../../api/listings';
 import { followSeller, unfollowSeller } from '../../api/follow';
 import { useAuth } from '../../context/AuthContext';
-
-// SVG Icons
-const Icons = {
-    Location: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-    ),
-    Grid: ({ className = "w-5 h-5" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-        </svg>
-    ),
-    Package: ({ className = "w-5 h-5" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-    ),
-    Users: ({ className = "w-5 h-5" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-    ),
-    Verified: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-    ),
-};
+import { useSellerReviews } from '../../hooks/useReview';
+import { Icons } from '../../components/Icons';
 
 function SellerProfile() {
     const { slug } = useParams();
@@ -46,6 +18,16 @@ function SellerProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isFollowing, setIsFollowing] = useState(false);
+
+    // Fetch seller reviews
+    const {
+        reviews,
+        averageRating,
+        totalReviews,
+        loading: reviewsLoading,
+        hasMore,
+        loadMore,
+    } = useSellerReviews(seller?.id, 5);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -87,7 +69,6 @@ function SellerProfile() {
         }
     };
 
-    // Get initials for placeholder
     const getInitials = (name) => {
         if (!name) return '?';
         const words = name.trim().split(' ');
@@ -95,6 +76,33 @@ function SellerProfile() {
             return words[0].charAt(0).toUpperCase();
         }
         return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+    };
+
+    // Render stars for rating
+    const renderStars = (rating) => {
+        const stars = [];
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        
+        for (let i = 1; i <= 5; i++) {
+            if (i <= fullStars) {
+                // Full star
+                stars.push(
+                    <span key={i} className="text-amber-500 text-sm">★</span>
+                );
+            } else if (i === fullStars + 1 && hasHalfStar) {
+                // Half star - use a simple half star approach
+                stars.push(
+                    <span key={i} className="text-amber-500 text-sm">★</span>
+                );
+            } else {
+                // Empty star
+                stars.push(
+                    <span key={i} className="text-neutral-200 text-sm">★</span>
+                );
+            }
+        }
+        return stars;
     };
 
     if (loading) {
@@ -204,8 +212,9 @@ function SellerProfile() {
                         </p>
                     )}
 
-                    {/* Stats */}
-                    <div className="flex gap-8 mt-6 pt-6 border-t border-neutral-100">
+
+                    {/* Stats with Rating */}
+                    <div className="flex flex-wrap gap-8 mt-6 pt-6 border-t border-neutral-100">
                         <div>
                             <p className="text-lg font-light">{listings.length}</p>
                             <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Items</p>
@@ -214,10 +223,22 @@ function SellerProfile() {
                             <p className="text-lg font-light">{seller.followers_count || 0}</p>
                             <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Followers</p>
                         </div>
-                        <div>
-                            <p className="text-lg font-light">{seller.following_count || 0}</p>
-                            <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Following</p>
-                        </div>
+                        {totalReviews > 0 && (
+                            <>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-light">{averageRating.toFixed(1)}</span>
+                                    </div>
+                                    <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Rating</p>
+                                </div>
+                                <div>
+                                    <p className="text-lg font-light">{totalReviews}</p>
+                                    <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                        {totalReviews === 1 ? 'Review' : 'Reviews'}
+                                    </p>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -286,6 +307,86 @@ function SellerProfile() {
                                 </Link>
                             ))}
                         </div>
+                    )}
+                </div>
+
+                {/* Reviews Section */}
+                <div className="mt-16 border-t border-neutral-100 pt-10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-light uppercase tracking-[0.2em] text-neutral-400">
+                            Customer Reviews
+                        </h2>
+                        <span className="text-[10px] text-neutral-400">
+                            {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
+                        </span>
+                    </div>
+
+                    {reviewsLoading ? (
+                        <div className="flex justify-center py-8">
+                            <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
+                                Loading Reviews...
+                            </div>
+                        </div>
+                    ) : reviews.length === 0 ? (
+                        <div className="border border-neutral-200 bg-neutral-50 p-12 text-center">
+                            <p className="text-sm text-neutral-400 uppercase tracking-wider">
+                                No reviews yet
+                            </p>
+                            <p className="text-[10px] text-neutral-300 mt-1">
+                                Be the first to leave a review
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-6">
+                                {reviews.map((review) => (
+                                    <div key={review.id} className="border-b border-neutral-100 pb-6 last:border-0">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-medium text-neutral-600">
+                                                        {review.buyer?.first_name?.[0] || '?'}
+                                                        {review.buyer?.last_name?.[0] || ''}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-neutral-800">
+                                                            {review.buyer?.first_name || 'Anonymous'}
+                                                        </p>
+                                                        <div className="flex items-center gap-1 mt-0.5">
+                                                            {renderStars(review.rating)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {review.comment && (
+                                                    <p className="text-sm text-neutral-600 mt-2 ml-11 leading-relaxed">
+                                                        {review.comment}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <span className="text-[9px] text-neutral-400 flex-shrink-0 ml-4">
+                                                {new Date(review.created_at).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric'
+                                                })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Load More Button */}
+                            {hasMore && (
+                                <div className="mt-8 text-center">
+                                    <button
+                                        onClick={loadMore}
+                                        className="border border-neutral-200 px-8 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:border-black hover:bg-black hover:text-white transition-all duration-300"
+                                    >
+                                        Load More Reviews
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

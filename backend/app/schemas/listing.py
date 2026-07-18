@@ -91,6 +91,8 @@ class ListingResponse(BaseModel):
 
     is_on_sale: bool
     is_wishlisted: bool = False
+    average_rating: float = 0.0  # Average rating for this listing
+    total_reviews: int = 0  # Total reviews for this listing
 
     images: List[ListingImageResponse] = []
 

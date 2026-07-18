@@ -26,14 +26,11 @@ class Review(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
     buyer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     seller_id = Column(
         UUID(as_uuid=True), ForeignKey("seller_profiles.id"), nullable=False
     )
-    listing_id = Column(
-        UUID(as_uuid=True), ForeignKey("listings.id"), nullable=False, unique=True
-    )
+    listing_id = Column(UUID(as_uuid=True), ForeignKey("listings.id"), nullable=False)
     order_id = Column(
         UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False, unique=True
     )

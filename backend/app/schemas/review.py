@@ -37,3 +37,14 @@ class ReviewResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ReviewsResponse(BaseModel):
+    """Response for listing reviews with pagination"""
+
+    reviews: list[ReviewResponse]
+    average_rating: float
+    total_reviews: int
+    page: int
+    limit: int
+    total_pages: int

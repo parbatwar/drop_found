@@ -32,10 +32,14 @@ class SellerResponse(BaseModel):
     location: str | None = None
     avatar_url: str | None = None
 
+    seller_type: SellerType
+    followers_count: int = 0
+    average_rating: float = 0.0  # Overall seller rating
+    total_reviews: int = 0  # Total reviews for this seller
+
     is_following: bool = False
     verification_status: VerificationStatus
     verified_at: datetime | None = None
-    seller_type: SellerType
     created_at: datetime
     updated_at: datetime
 
