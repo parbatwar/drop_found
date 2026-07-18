@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getMySellerProfile } from '../../api/seller';
 import { getSellerListings } from '../../api/listings';
+import { getSellerOrders } from '../../api/orders';
 import { Icons } from '../../components/Icons';
 
 function SellerDashboard() {
@@ -15,27 +16,60 @@ function SellerDashboard() {
         totalProducts: 0,
         activeListings: 0,
         totalOrders: 0,
-        totalViews: 0
+        itemsSold: 0,
+        totalViews: 0,
+        followers: 0,
+        rating: 0,
+        reviews: 0
     });
 
     useEffect(() => {
         const loadSellerData = async () => {
             try {
+                // Get seller profile
                 const sellerRes = await getMySellerProfile();
-                setSeller(sellerRes.data);
+                const sellerData = sellerRes.data;
+                setSeller(sellerData);
 
-                const listingsRes = await getSellerListings();
+                // Get seller listings
+                const listingsRes = await getSellerListings(sellerData.id);
                 const listingsData = listingsRes.data || [];
                 setListings(listingsData);
 
-                const active = listingsData.filter(item => item.status === 'active' || item.status === 'published').length;
+                // Get seller orders
+                let ordersData = [];
+                let itemsSold = 0;
+                try {
+                    const ordersRes = await getSellerOrders();
+                    ordersData = ordersRes.data || [];
+                    
+                    // ✅ Calculate items sold from delivered orders
+                    const deliveredOrders = ordersData.filter(o => o.status === 'delivered');
+                    itemsSold = deliveredOrders.reduce((total, order) => {
+                        // Sum quantities from all items in the order
+                        const orderItems = order.items || [];
+                        const orderTotal = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                        return total + orderTotal;
+                    }, 0);
+                } catch (err) {
+                    console.error('Failed to fetch orders:', err);
+                }
+
+                // Calculate stats
+                const active = listingsData.filter(
+                    item => item.status === 'active' || item.status === 'published'
+                ).length;
                 const total = listingsData.length;
-                
+                const pendingOrders = ordersData.filter(o => o.status === 'pending').length;
+
                 setStats({
                     totalProducts: total,
                     activeListings: active,
-                    totalOrders: 0,
-                    totalViews: listingsData.reduce((sum, item) => sum + (item.views || 0), 0)
+                    totalOrders: pendingOrders,
+                    itemsSold: itemsSold,
+                    followers: sellerData.followers_count || 0,
+                    rating: sellerData.average_rating || 0,
+                    reviews: sellerData.total_reviews || 0
                 });
             } catch (error) {
                 console.error('Failed to load seller data:', error);
@@ -47,6 +81,23 @@ function SellerDashboard() {
         loadSellerData();
     }, []);
 
+    // Render stars for rating
+    const renderStars = (rating) => {
+        const stars = [];
+        const roundedRating = Math.round(rating);
+        for (let i = 1; i <= 5; i++) {
+            stars.push(
+                <span 
+                    key={i} 
+                    className={`text-sm ${i <= roundedRating ? 'text-amber-500' : 'text-neutral-200'}`}
+                >
+                    ★
+                </span>
+            );
+        }
+        return stars;
+    };
+
     const actionItems = [
         { id: 1, name: 'Add Product', path: '/seller/listings/new', icon: Icons.Plus },
         { id: 2, name: 'Manage Products', path: '/seller/listings', icon: Icons.Grid },
@@ -56,7 +107,8 @@ function SellerDashboard() {
     const futureActions = [
         { id: 4, name: 'Analytics', icon: Icons.Store },
         { id: 5, name: 'Promotions', icon: Icons.Store },
-        { id: 6, name: 'Settings', icon: Icons.Store },
+        { id: 6, name: 'Sales', icon: Icons.Store },
+        { id: 7, name: 'Settings', icon: Icons.Store },
     ];
 
     if (loading) {
@@ -134,28 +186,17 @@ function SellerDashboard() {
                                 <div className="border-t border-neutral-100 pt-4">
                                     <div className="grid grid-cols-3 gap-2 text-center">
                                         <div>
-                                            <p className="text-lg font-light">{seller.followers_count || 0}</p>
+                                            <p className="text-lg font-light">{stats.followers}</p>
                                             <p className="text-[8px] text-neutral-400 uppercase tracking-wider">Followers</p>
                                         </div>
                                         <div>
                                             <div className="flex items-center justify-center gap-1">
-                                                <span className="text-sm font-light">{seller.average_rating?.toFixed(1) || '0'}</span>
+                                                <span className="text-sm font-light">{stats.rating.toFixed(1)}</span>
                                             </div>
-                                            <p className="text-[8px] text-neutral-400 uppercase tracking-wider">                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <span
-                                                            key={star}
-                                                            className={`text-xs ${
-                                                                star <= Math.round(seller.average_rating || 0)
-                                                                    ? 'text-amber-500'
-                                                                    : 'text-neutral-200'
-                                                            }`}
-                                                        >
-                                                            ★
-                                                        </span>
-                                                    ))}</p>
+                                            <p className="text-[8px] text-neutral-400 uppercase tracking-wider">{renderStars(stats.rating)}</p>
                                         </div>
                                         <div>
-                                            <p className="text-lg font-light">{seller.total_reviews || 0}</p>
+                                            <p className="text-lg font-light">{stats.reviews}</p>
                                             <p className="text-[8px] text-neutral-400 uppercase tracking-wider">Reviews</p>
                                         </div>
                                     </div>
@@ -195,7 +236,6 @@ function SellerDashboard() {
 
                 {/* Right Column - Actions (2/3) */}
                 <div className="md:col-span-2 space-y-8">
-
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-200 mb-12">
                         <div className="bg-white p-6">
@@ -208,15 +248,14 @@ function SellerDashboard() {
                         </div>
                         <div className="bg-white p-6">
                             <p className="text-2xl md:text-3xl font-light">{stats.totalOrders}</p>
-                            <p className="text-[10px] text-neutral-400 uppercase tracking-wider mt-1">Total Orders</p>
+                            <p className="text-[10px] text-neutral-400 uppercase tracking-wider mt-1">Pending Orders</p>
                         </div>
                         <div className="bg-white p-6">
-                            <p className="text-2xl md:text-3xl font-light">{stats.totalViews}</p>
-                            <p className="text-[10px] text-neutral-400 uppercase tracking-wider mt-1">Total Views</p>
+                            <p className="text-2xl md:text-3xl font-light">{stats.itemsSold}</p>
+                            <p className="text-[10px] text-neutral-400 uppercase tracking-wider mt-1">Items Sold</p>
                         </div>
                     </div>
-
-
+                    
                     {/* Active Actions */}
                     <div>
                         <h3 className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-medium mb-4">
