@@ -53,6 +53,7 @@ function SellerOrders() {
     const loadOrders = async () => {
         try {
             const res = await getSellerOrders();
+            console.log('📦 Seller orders response:', JSON.stringify(res.data, null, 2)); // Debug
             setOrders(res.data);
         } catch (err) {
             console.error(err);
@@ -110,6 +111,35 @@ function SellerOrders() {
     const getInitials = (firstName, lastName) => {
         if (!firstName && !lastName) return '?';
         return ((firstName?.charAt(0) || '') + (lastName?.charAt(0) || '')).toUpperCase() || '?';
+    };
+
+    // ✅ Helper: Get first item from order
+    const getFirstItem = (order) => {
+        if (!order.items || order.items.length === 0) return null;
+        return order.items[0];
+    };
+
+    // ✅ Helper: Get listing from first item
+    const getListing = (order) => {
+        const item = getFirstItem(order);
+        return item?.listing || {};
+    };
+
+    // ✅ Helper: Get image URL
+    const getImageUrl = (order) => {
+        const listing = getListing(order);
+        return listing.images?.[0]?.image_url || null;
+    };
+
+    // ✅ Helper: Get title
+    const getTitle = (order) => {
+        const listing = getListing(order);
+        return listing.title || 'Product';
+    };
+
+    // ✅ Helper: Get item count
+    const getItemCount = (order) => {
+        return order.items?.length || 0;
     };
 
     if (loading) {
@@ -193,6 +223,10 @@ function SellerOrders() {
                             <tbody className="divide-y divide-neutral-100">
                                 {orders.map((order) => {
                                     const statusConfig = getStatusConfig(order.status);
+                                    const imageUrl = getImageUrl(order);
+                                    const title = getTitle(order);
+                                    const itemCount = getItemCount(order);
+                                    
                                     return (
                                         <tr
                                             key={order.id}
@@ -202,10 +236,10 @@ function SellerOrders() {
                                             <td className="py-5 pr-4">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-14 h-16 bg-neutral-100 overflow-hidden flex-shrink-0">
-                                                        {order.listing?.images?.[0]?.image_url ? (
+                                                        {imageUrl ? (
                                                             <img
-                                                                src={order.listing.images[0].image_url}
-                                                                alt={order.listing?.title}
+                                                                src={imageUrl}
+                                                                alt={title}
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
@@ -216,10 +250,15 @@ function SellerOrders() {
                                                     </div>
                                                     <div>
                                                         <p className="text-xs font-medium text-neutral-800 line-clamp-2">
-                                                            {order.listing?.title || 'Product'}
+                                                            {title}
+                                                            {itemCount > 1 && (
+                                                                <span className="text-neutral-400 text-[9px] ml-1">
+                                                                    +{itemCount - 1} more
+                                                                </span>
+                                                            )}
                                                         </p>
                                                         <p className="text-[9px] text-neutral-400 uppercase tracking-wider mt-0.5">
-                                                            {order.listing?.seller_type || 'Item'}
+                                                            {order.items?.length || 0} item(s)
                                                         </p>
                                                     </div>
                                                 </div>

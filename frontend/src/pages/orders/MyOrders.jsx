@@ -3,35 +3,7 @@ import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom'; 
 import { getMyOrders } from "../../api/orders";
 import { createReview } from "../../api/reviews";
-
-// SVG Icons
-const Icons = {
-    Package: ({ className = "w-5 h-5" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-    ),
-    Star: ({ className = "w-5 h-5", filled = false }) => (
-        <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-        </svg>
-    ),
-    Check: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-    ),
-    Clock: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-    ),
-    X: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-    ),
-};
+import { Icons } from "../../components/Icons";
 
 function MyOrders() {
     const [orders, setOrders] = useState([]);
@@ -48,6 +20,7 @@ function MyOrders() {
     const loadOrders = async () => {
         try {
             const res = await getMyOrders();
+            console.log('📦 Orders response:', JSON.stringify(res.data, null, 2));
             setOrders(res.data);
         } catch (err) {
             console.error(err);
@@ -124,6 +97,46 @@ function MyOrders() {
         return configs[status] || configs.pending;
     };
 
+    // ✅ Get the first item from order (for display)
+    const getFirstItem = (order) => {
+        if (!order.items || order.items.length === 0) return null;
+        return order.items[0];
+    };
+
+    // ✅ Get listing from the first item
+    const getListing = (order) => {
+        const item = getFirstItem(order);
+        return item?.listing || {};
+    };
+
+    // ✅ Get image URL
+    const getImageUrl = (order) => {
+        const listing = getListing(order);
+        return listing.images?.[0]?.image_url || null;
+    };
+
+    // ✅ Get title
+    const getTitle = (order) => {
+        const listing = getListing(order);
+        return listing.title || 'Product';
+    };
+
+    // ✅ Get price (use total_amount from order)
+    const getPrice = (order) => {
+        return order.total_amount || 0;
+    };
+
+    // ✅ Get quantity
+    const getQuantity = (order) => {
+        const item = getFirstItem(order);
+        return item?.quantity || 1;
+    };
+
+    // ✅ Get item count
+    const getItemCount = (order) => {
+        return order.items?.length || 0;
+    };
+
     if (loading) {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center">
@@ -186,6 +199,12 @@ function MyOrders() {
                             const statusConfig = getStatusConfig(order.status);
                             const StatusIcon = statusConfig.icon;
                             
+                            const imageUrl = getImageUrl(order);
+                            const title = getTitle(order);
+                            const price = getPrice(order);
+                            const quantity = getQuantity(order);
+                            const itemCount = getItemCount(order);
+                            
                             return (
                                 <div 
                                     key={order.id} 
@@ -194,10 +213,10 @@ function MyOrders() {
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                                         {/* Product Image */}
                                         <div className="w-20 h-24 flex-shrink-0 overflow-hidden bg-neutral-50 border border-neutral-100">
-                                            {order.listing?.images?.[0]?.image_url ? (
+                                            {imageUrl ? (
                                                 <img 
-                                                    src={order.listing.images[0].image_url} 
-                                                    alt={order.listing?.title} 
+                                                    src={imageUrl} 
+                                                    alt={title} 
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
@@ -210,15 +229,25 @@ function MyOrders() {
                                         {/* Order Info */}
                                         <div className="flex-1 min-w-0">
                                             <h2 className="text-sm font-light text-neutral-800 truncate">
-                                                {order.listing?.title || "Product"}
+                                                {title}
+                                                {itemCount > 1 && (
+                                                    <span className="text-neutral-400 text-xs ml-1">
+                                                        +{itemCount - 1} more
+                                                    </span>
+                                                )}
                                             </h2>
                                             <div className="flex flex-wrap items-center gap-3 mt-1">
                                                 <p className="text-sm font-medium text-neutral-900">
-                                                    NPR {Number(order.total_amount).toLocaleString()}
+                                                    NPR {Number(price).toLocaleString()}
                                                 </p>
                                                 <span className="w-px h-3 bg-neutral-200"></span>
                                                 <p className="text-[10px] text-neutral-400 uppercase tracking-wider">
-                                                    {order.payment_method}
+                                                    Qty: {quantity}
+                                                    {itemCount > 1 && ` (${itemCount} items)`}
+                                                </p>
+                                                <span className="w-px h-3 bg-neutral-200"></span>
+                                                <p className="text-[10px] text-neutral-400 uppercase tracking-wider">
+                                                    {order.payment_method || 'N/A'}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2 mt-2">
@@ -279,7 +308,7 @@ function MyOrders() {
                             Write a Review
                         </h3>
                         <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-6">
-                            {selectedOrder?.listing?.title}
+                            {getTitle(selectedOrder) || 'Product'}
                         </p>
                         
                         {/* Rating Stars */}
@@ -351,4 +380,4 @@ function MyOrders() {
     );
 }
 
-export default MyOrders;``
+export default MyOrders;
