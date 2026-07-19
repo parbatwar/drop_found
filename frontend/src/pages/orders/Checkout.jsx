@@ -1,10 +1,18 @@
+// pages/orders/Checkout.jsx
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { getCart } from "../../api/cart";
 import { checkoutCart, quickBuy } from '../../api/orders';
-import { getDeliveryFee } from '../../api/meta';
 import { useAuth } from '../../context/AuthContext';
 import { Icons } from '../../components/Icons';
+
+// ✅ Helper function to calculate delivery fee
+const getDeliveryFee = (subtotal) => {
+    if (subtotal < 700) {
+        return 80;
+    }
+    return 120;
+};
 
 function Checkout() {
     const location = useLocation();
@@ -20,8 +28,8 @@ function Checkout() {
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
-    const [deliveryFee, setDeliveryFee] = useState(0);
     const [cart, setCart] = useState(null);
+    const [loadingCart, setLoadingCart] = useState(false);
 
     useEffect(() => {
         if (user?.phone) {
@@ -30,18 +38,19 @@ function Checkout() {
     }, [user]);
 
     useEffect(() => {
-    if (!isQuickBuy) {
-        getCart()
-            .then((res) => setCart(res.data))
-            .catch(console.error);
-    }
-}, [isQuickBuy]);
-
-    useEffect(() => {
-        getDeliveryFee()
-            .then((res) => setDeliveryFee(res.data.delivery_fee))
-            .catch((err) => console.error('Failed to fetch delivery fee:', err));
-    }, []);
+        if (!isQuickBuy) {
+            setLoadingCart(true);
+            getCart()
+                .then((res) => {
+                    setCart(res.data);
+                    console.log('📦 Cart data:', res.data);
+                })
+                .catch((err) => {
+                    console.error('Failed to fetch cart:', err);
+                })
+                .finally(() => setLoadingCart(false));
+        }
+    }, [isQuickBuy]);
 
     if (isQuickBuy && !listing) {
         return (
@@ -60,8 +69,11 @@ function Checkout() {
         );
     }
 
+    // ✅ Calculate Quick Buy totals
     const itemSubtotal = isQuickBuy ? parseFloat(listing.price) * quantity : null;
-    const total = isQuickBuy ? itemSubtotal + deliveryFee : null;
+    // ✅ Calculate delivery fee based on subtotal
+    const deliveryFee = isQuickBuy ? getDeliveryFee(itemSubtotal) : (cart?.delivery_fee || 0);
+    const total = isQuickBuy ? itemSubtotal + deliveryFee : (cart?.total || 0);
 
     const handleSubmitOrder = async (e) => {
         e.preventDefault();
@@ -87,6 +99,7 @@ function Checkout() {
             }
             navigate('/orders', { state: { justPlaced: result.data } });
         } catch (err) {
+            console.error('Checkout error:', err);
             setError(err.response?.data?.detail || 'Failed to complete checkout.');
         } finally {
             setProcessing(false);
@@ -158,6 +171,13 @@ function Checkout() {
                                         className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
                                     />
                                 </div>
+
+                                {/* ✅ Delivery fee info */}
+                                <div className="text-[9px] text-neutral-400 leading-relaxed bg-neutral-50 p-3 border border-neutral-100">
+                                    <p className="font-medium text-neutral-600">Delivery Fee: NPR {deliveryFee}</p>
+                                    <p className="mt-1">• Under NPR 700: NPR 80 delivery fee</p>
+                                    <p>• NPR 700 and above: NPR 120 delivery fee</p>
+                                </div>
                             </div>
 
                             <div className="space-y-4">
@@ -207,6 +227,7 @@ function Checkout() {
                             </h2>
 
                             {isQuickBuy ? (
+                                // ✅ Quick Buy Summary
                                 <>
                                     <div className="flex gap-4 pt-4 pb-4 border-b border-neutral-100">
                                         <div className="w-20 h-20 flex-shrink-0 bg-neutral-50 border border-neutral-100 overflow-hidden">
@@ -238,59 +259,91 @@ function Checkout() {
                                         </div>
                                         <div className="flex justify-between text-neutral-500">
                                             <span>Delivery Fee</span>
-                                            <span className="text-neutral-900">NPR {deliveryFee.toLocaleString()}</span>
+                                            <span className="text-neutral-900">NPR {deliveryFee}</span>
                                         </div>
                                         <div className="flex justify-between pt-3 border-t border-neutral-100 text-base">
                                             <span className="font-light text-neutral-600">Total</span>
                                             <span className="font-medium text-black">NPR {total.toLocaleString()}</span>
                                         </div>
                                     </div>
+
+                                    {/* ✅ Delivery fee info */}
+                                    <div className="mt-3 text-[9px] text-neutral-400 leading-relaxed bg-neutral-50 p-3 border border-neutral-100">
+                                        <p className="font-medium text-neutral-600">Delivery Fee: NPR {deliveryFee}</p>
+                                        <p className="mt-1">• Under NPR 700: NPR 80 delivery fee</p>
+                                        <p>• NPR 700 and above: NPR 120 delivery fee</p>
+                                    </div>
                                 </>
                             ) : (
-                                <>
-                                    <div className="space-y-4 pt-4">
-                                        {cart?.items?.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className="flex gap-3 border-b border-neutral-100 pb-3"
-                                            >
-                                                <img
-                                                    src={item.image_url}
-                                                    alt={item.title}
-                                                    className="w-16 h-16 object-cover border"
-                                                />
+                                // ✅ Cart Summary
+                                loadingCart ? (
+                                    <div className="py-8 text-center">
+                                        <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
+                                            Loading Cart...
+                                        </div>
+                                    </div>
+                                ) : cart?.items?.length === 0 ? (
+                                    <div className="py-8 text-center">
+                                        <p className="text-sm text-neutral-400">Your cart is empty</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Cart Items */}
+                                        <div className="space-y-4 pt-4">
+                                            {cart?.items?.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="flex gap-3 border-b border-neutral-100 pb-3 last:border-0"
+                                                >
+                                                    <img
+                                                        src={item.image_url}
+                                                        alt={item.title}
+                                                        className="w-16 h-16 object-cover border border-neutral-100"
+                                                    />
 
-                                                <div className="flex-1">
-                                                    <p className="text-sm">{item.title}</p>
-                                                    <p className="text-xs text-neutral-500">
-                                                        Qty: {item.quantity}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm truncate">{item.title}</p>
+                                                        <p className="text-xs text-neutral-500">
+                                                            Qty: {item.quantity}
+                                                        </p>
+                                                        <p className="text-xs font-medium">
+                                                            NPR {Number(item.price).toLocaleString()}
+                                                        </p>
+                                                    </div>
+
+                                                    <p className="text-sm font-medium">
+                                                        NPR {Number(item.line_total || item.price * item.quantity).toLocaleString()}
                                                     </p>
                                                 </div>
+                                            ))}
+                                        </div>
 
-                                                <p className="text-sm font-medium">
-                                                    NPR {item.line_total.toLocaleString()}
-                                                </p>
+                                        {/* Totals */}
+                                        <div className="space-y-2 pt-4 border-t border-neutral-100">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-neutral-500">Subtotal</span>
+                                                <span className="text-neutral-900">NPR {(cart?.subtotal ?? 0).toLocaleString()}</span>
                                             </div>
-                                        ))}
-                                    </div>
 
-                                    <div className="space-y-2 pt-4">
-                                        <div className="flex justify-between">
-                                            <span>Subtotal</span>
-                                            <span>NPR {(cart?.subtotal ?? 0).toLocaleString()}</span>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-neutral-500">Delivery Fee</span>
+                                                <span className="text-neutral-900">NPR {(cart?.delivery_fee ?? 0).toLocaleString()}</span>
+                                            </div>
+
+                                            <div className="flex justify-between pt-3 border-t border-neutral-100 text-base">
+                                                <span className="font-light text-neutral-600">Total</span>
+                                                <span className="font-medium text-black">NPR {(cart?.total ?? 0).toLocaleString()}</span>
+                                            </div>
                                         </div>
 
-                                        <div className="flex justify-between">
-                                            <span>Delivery</span>
-                                            <span>NPR {(cart?.delivery_fee ?? 0).toLocaleString()}</span>
+                                        {/* Delivery Fee Info */}
+                                        <div className="mt-4 text-[9px] text-neutral-400 leading-relaxed border-t border-neutral-100 pt-3">
+                                            <p>• Delivery fee calculated per seller's suborder</p>
+                                            <p>• Under NPR 700: NPR 80 delivery fee</p>
+                                            <p>• NPR 700 and above: NPR 120 delivery fee</p>
                                         </div>
-
-                                        <div className="flex justify-between border-t pt-3 font-medium">
-                                            <span>Total</span>
-                                            <span>NPR {(cart?.total ?? 0).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </>
+                                    </>
+                                )
                             )}
                         </div>
                     </div>

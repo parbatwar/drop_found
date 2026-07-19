@@ -1,45 +1,19 @@
 // pages/seller/SellerOrders.jsx
 import { useEffect, useState } from "react";
 import { getSellerOrders, updateOrderStatus } from "../../api/orders";
+import { Icons } from "../../components/Icons";
 
-// SVG Icons
-const Icons = {
-    Package: ({ className = "w-5 h-5" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-    ),
-    User: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-    ),
-    Phone: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-        </svg>
-    ),
-    Location: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-    ),
-    CreditCard: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-        </svg>
-    ),
-    Check: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-    ),
-    Clock: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-    ),
+// ✅ Order status constants
+const ORDER_STATUS = {
+    PENDING: 'pending',
+    ACCEPTED: 'accepted',
+    REJECTED: 'rejected',
+    READY_FOR_PICKUP: 'ready_for_pickup',
+    PICKED_UP: 'picked_up',
+    OUT_FOR_DELIVERY: 'out_for_delivery',
+    DELIVERED: 'delivered',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
 };
 
 function SellerOrders() {
@@ -53,7 +27,7 @@ function SellerOrders() {
     const loadOrders = async () => {
         try {
             const res = await getSellerOrders();
-            console.log('📦 Seller orders response:', JSON.stringify(res.data, null, 2)); // Debug
+            console.log('📦 Seller orders response:', JSON.stringify(res.data, null, 2));
             setOrders(res.data);
         } catch (err) {
             console.error(err);
@@ -72,6 +46,7 @@ function SellerOrders() {
         }
     };
 
+    // ✅ Updated status configs with new flow
     const getStatusConfig = (status) => {
         const configs = {
             pending: {
@@ -86,11 +61,35 @@ function SellerOrders() {
                 bg: "bg-blue-50",
                 border: "border-blue-200"
             },
+            ready_for_pickup: {
+                label: "Ready for Pickup",
+                color: "text-purple-600",
+                bg: "bg-purple-50",
+                border: "border-purple-200"
+            },
+            picked_up: {
+                label: "Picked Up",
+                color: "text-indigo-600",
+                bg: "bg-indigo-50",
+                border: "border-indigo-200"
+            },
+            out_for_delivery: {
+                label: "Out for Delivery",
+                color: "text-blue-600",
+                bg: "bg-blue-50",
+                border: "border-blue-200"
+            },
             delivered: {
                 label: "Delivered",
                 color: "text-green-600",
                 bg: "bg-green-50",
                 border: "border-green-200"
+            },
+            completed: {
+                label: "Completed",
+                color: "text-emerald-600",
+                bg: "bg-emerald-50",
+                border: "border-emerald-200"
             },
             rejected: {
                 label: "Rejected",
@@ -113,33 +112,45 @@ function SellerOrders() {
         return ((firstName?.charAt(0) || '') + (lastName?.charAt(0) || '')).toUpperCase() || '?';
     };
 
-    // ✅ Helper: Get first item from order
+    // Helper functions for order display
     const getFirstItem = (order) => {
         if (!order.items || order.items.length === 0) return null;
         return order.items[0];
     };
 
-    // ✅ Helper: Get listing from first item
     const getListing = (order) => {
         const item = getFirstItem(order);
         return item?.listing || {};
     };
 
-    // ✅ Helper: Get image URL
     const getImageUrl = (order) => {
         const listing = getListing(order);
         return listing.images?.[0]?.image_url || null;
     };
 
-    // ✅ Helper: Get title
     const getTitle = (order) => {
         const listing = getListing(order);
         return listing.title || 'Product';
     };
 
-    // ✅ Helper: Get item count
     const getItemCount = (order) => {
         return order.items?.length || 0;
+    };
+
+    // ✅ Check what actions seller can take
+    const getSellerActions = (status) => {
+        const actions = {
+            pending: ['accept', 'reject'],
+            accepted: ['ready_for_pickup', 'cancel'],
+            ready_for_pickup: [],
+            picked_up: [],
+            out_for_delivery: [],
+            delivered: [],
+            completed: [],
+            rejected: [],
+            cancelled: [],
+        };
+        return actions[status] || [];
     };
 
     if (loading) {
@@ -173,7 +184,7 @@ function SellerOrders() {
                         </span>
                         <span className="w-px h-3 bg-neutral-300"></span>
                         <span className="text-[10px] text-neutral-400 uppercase tracking-wider">
-                            {orders.filter(o => o.status === 'pending').length} Pending
+                            {orders.filter(o => o.status === ORDER_STATUS.PENDING).length} Pending
                         </span>
                     </div>
                 </div>
@@ -226,6 +237,7 @@ function SellerOrders() {
                                     const imageUrl = getImageUrl(order);
                                     const title = getTitle(order);
                                     const itemCount = getItemCount(order);
+                                    const actions = getSellerActions(order.status);
                                     
                                     return (
                                         <tr
@@ -303,47 +315,96 @@ function SellerOrders() {
                                             {/* Status */}
                                             <td className="py-5">
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[9px] uppercase tracking-wider font-medium rounded-full ${statusConfig.bg} ${statusConfig.color} border ${statusConfig.border}`}>
-                                                    {order.status === 'pending' && <Icons.Clock className="w-3 h-3" />}
-                                                    {order.status === 'delivered' && <Icons.Check className="w-3 h-3" />}
                                                     {statusConfig.label}
                                                 </span>
                                             </td>
 
-                                            {/* Actions */}
+                                            {/* ✅ Actions - Updated with new flow */}
                                             <td className="py-5">
                                                 <div className="flex justify-end gap-2 flex-wrap">
-                                                    {order.status === "pending" && (
-                                                        <>
-                                                            <button
-                                                                onClick={() => handleStatusUpdate(order.id, "accepted")}
-                                                                className="px-4 py-1.5 bg-black text-white text-[9px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-colors"
-                                                            >
-                                                                Accept
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleStatusUpdate(order.id, "rejected")}
-                                                                className="px-4 py-1.5 border border-neutral-300 text-[9px] uppercase tracking-[0.2em] hover:border-black hover:bg-black hover:text-white transition-colors"
-                                                            >
-                                                                Reject
-                                                            </button>
-                                                        </>
-                                                    )}
-
-                                                    {order.status === "accepted" && (
+                                                    {/* ✅ PENDING: Accept or Reject */}
+                                                    {actions.includes('accept') && (
                                                         <button
-                                                            onClick={() => handleStatusUpdate(order.id, "delivered")}
+                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.ACCEPTED)}
                                                             className="px-4 py-1.5 bg-black text-white text-[9px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-colors"
                                                         >
-                                                            Mark Delivered
+                                                            Accept
+                                                        </button>
+                                                    )}
+                                                    {actions.includes('reject') && (
+                                                        <button
+                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.REJECTED)}
+                                                            className="px-4 py-1.5 border border-neutral-300 text-[9px] uppercase tracking-[0.2em] hover:border-black hover:bg-black hover:text-white transition-colors"
+                                                        >
+                                                            Reject
                                                         </button>
                                                     )}
 
-                                                    {(order.status === "delivered" ||
-                                                        order.status === "rejected" ||
-                                                        order.status === "cancelled") && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-neutral-400 flex items-center gap-1">
-                                                            <Icons.Check className="w-3 h-3 text-neutral-400" />
+                                                    {/* ✅ ACCEPTED: Ready for Pickup or Cancel */}
+                                                    {actions.includes('ready_for_pickup') && (
+                                                        <button
+                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.READY_FOR_PICKUP)}
+                                                            className="px-4 py-1.5 bg-purple-600 text-white text-[9px] uppercase tracking-[0.2em] hover:bg-purple-700 transition-colors"
+                                                        >
+                                                            Ready for Pickup
+                                                        </button>
+                                                    )}
+                                                    {actions.includes('cancel') && (
+                                                        <button
+                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.CANCELLED)}
+                                                            className="px-4 py-1.5 border border-red-300 text-red-500 text-[9px] uppercase tracking-[0.2em] hover:bg-red-50 transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    )}
+
+                                                    {/* ✅ Status indicators for non-actionable statuses */}
+                                                    {order.status === ORDER_STATUS.READY_FOR_PICKUP && (
+                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-purple-600 flex items-center gap-1">
+                                                            <Icons.Package className="w-3 h-3" />
+                                                            Waiting for pickup
+                                                        </span>
+                                                    )}
+
+                                                    {order.status === ORDER_STATUS.PICKED_UP && (
+                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-indigo-600 flex items-center gap-1">
+                                                            <Icons.Truck className="w-3 h-3" />
+                                                            With delivery
+                                                        </span>
+                                                    )}
+
+                                                    {order.status === ORDER_STATUS.OUT_FOR_DELIVERY && (
+                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-blue-600 flex items-center gap-1">
+                                                            <Icons.Truck className="w-3 h-3" />
+                                                            Out for delivery
+                                                        </span>
+                                                    )}
+
+                                                    {order.status === ORDER_STATUS.DELIVERED && (
+                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-green-600 flex items-center gap-1">
+                                                            <Icons.Check className="w-3 h-3" />
+                                                            Delivered
+                                                        </span>
+                                                    )}
+
+                                                    {order.status === ORDER_STATUS.COMPLETED && (
+                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-emerald-600 flex items-center gap-1">
+                                                            <Icons.Check className="w-3 h-3" />
                                                             Completed
+                                                        </span>
+                                                    )}
+
+                                                    {order.status === ORDER_STATUS.REJECTED && (
+                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-red-600 flex items-center gap-1">
+                                                            <Icons.X className="w-3 h-3" />
+                                                            Rejected
+                                                        </span>
+                                                    )}
+
+                                                    {order.status === ORDER_STATUS.CANCELLED && (
+                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-neutral-400 flex items-center gap-1">
+                                                            <Icons.X className="w-3 h-3" />
+                                                            Cancelled
                                                         </span>
                                                     )}
                                                 </div>

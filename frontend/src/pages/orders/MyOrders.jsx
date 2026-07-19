@@ -1,9 +1,22 @@
-// pages/MyOrders.jsx
+// pages/orders/MyOrders.jsx
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom'; 
-import { getMyOrders } from "../../api/orders";
+import { getMyOrders, updateOrderStatus } from "../../api/orders";
 import { createReview } from "../../api/reviews";
 import { Icons } from "../../components/Icons";
+
+// ✅ Order status constants
+const ORDER_STATUS = {
+    PENDING: 'pending',
+    ACCEPTED: 'accepted',
+    REJECTED: 'rejected',
+    READY_FOR_PICKUP: 'ready_for_pickup',
+    PICKED_UP: 'picked_up',
+    OUT_FOR_DELIVERY: 'out_for_delivery',
+    DELIVERED: 'delivered',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+};
 
 function MyOrders() {
     const [orders, setOrders] = useState([]);
@@ -29,13 +42,22 @@ function MyOrders() {
         }
     };
 
+    const handleCancelOrder = async (orderId) => {
+        if (!confirm('Are you sure you want to cancel this order?')) return;
+        try {
+            await updateOrderStatus(orderId, { status: ORDER_STATUS.CANCELLED });
+            await loadOrders();
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Failed to cancel order');
+        }
+    };
+
     const handleSubmitReview = async () => {
         if (reviewData.rating === 0) {
             alert("Please select a rating");
             return;
         }
         try {
-            // Get listing_id from the first item in the order
             const listingId = selectedOrder.items?.[0]?.listing_id;
             
             if (!listingId) {
@@ -44,8 +66,8 @@ function MyOrders() {
             }
             
             await createReview(
-                selectedOrder.id,        // order_id
-                listingId,              // listing_id
+                selectedOrder.id,
+                listingId,
                 {
                     rating: reviewData.rating,
                     comment: reviewData.comment,
@@ -56,13 +78,14 @@ function MyOrders() {
             setSelectedOrder(null);
             setHoveredRating(0);
             setReviewData({ rating: 0, comment: "" });
-            loadOrders(); // Refresh to update the review status
+            loadOrders();
         } catch (err) {
             console.error('Review submission error:', err);
             alert(err.response?.data?.detail || "Failed to submit review");
         }
     };
 
+    // ✅ Updated status configs with new flow
     const getStatusConfig = (status) => {
         const configs = {
             pending: {
@@ -77,20 +100,41 @@ function MyOrders() {
                 color: "text-blue-600",
                 bg: "bg-blue-50",
                 border: "border-blue-200",
-                icon: null
+                icon: Icons.Check
             },
-            shipped: {
-                label: "Shipped",
+            ready_for_pickup: {
+                label: "Ready for Pickup",
                 color: "text-purple-600",
                 bg: "bg-purple-50",
                 border: "border-purple-200",
                 icon: Icons.Package
+            },
+            picked_up: {
+                label: "Picked Up",
+                color: "text-indigo-600",
+                bg: "bg-indigo-50",
+                border: "border-indigo-200",
+                icon: Icons.Truck
+            },
+            out_for_delivery: {
+                label: "Out for Delivery",
+                color: "text-blue-600",
+                bg: "bg-blue-50",
+                border: "border-blue-200",
+                icon: Icons.Truck
             },
             delivered: {
                 label: "Delivered",
                 color: "text-green-600",
                 bg: "bg-green-50",
                 border: "border-green-200",
+                icon: Icons.Check
+            },
+            completed: {
+                label: "Completed",
+                color: "text-emerald-600",
+                bg: "bg-emerald-50",
+                border: "border-emerald-200",
                 icon: Icons.Check
             },
             rejected: {
@@ -109,6 +153,16 @@ function MyOrders() {
             }
         };
         return configs[status] || configs.pending;
+    };
+
+    // ✅ Check if buyer can cancel
+    const canCancel = (status) => {
+        return status === ORDER_STATUS.PENDING || status === ORDER_STATUS.ACCEPTED;
+    };
+
+    // ✅ Check if buyer can review
+    const canReview = (status) => {
+        return status === ORDER_STATUS.DELIVERED || status === ORDER_STATUS.COMPLETED;
     };
 
     // Helper functions for order display
@@ -174,11 +228,11 @@ function MyOrders() {
                         <span className="text-[10px] text-neutral-400 uppercase tracking-wider">
                             {orders.length} Orders
                         </span>
-                        {orders.filter(o => o.status === 'pending').length > 0 && (
+                        {orders.filter(o => o.status === ORDER_STATUS.PENDING).length > 0 && (
                             <>
                                 <span className="w-px h-3 bg-neutral-300"></span>
                                 <span className="text-[10px] text-amber-600 uppercase tracking-wider">
-                                    {orders.filter(o => o.status === 'pending').length} Pending
+                                    {orders.filter(o => o.status === ORDER_STATUS.PENDING).length} Pending
                                 </span>
                             </>
                         )}
@@ -266,9 +320,20 @@ function MyOrders() {
                                             </div>
                                         </div>
 
-                                        {/* Review Section */}
+                                        {/* Actions */}
                                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                            {order.status === "delivered" && !order.review && (
+                                            {/* ✅ Cancel Button - Only if pending or accepted */}
+                                            {canCancel(order.status) && (
+                                                <button
+                                                    onClick={() => handleCancelOrder(order.id)}
+                                                    className="text-[10px] tracking-[0.2em] uppercase text-red-500 hover:text-red-600 transition-colors"
+                                                >
+                                                    Cancel Order
+                                                </button>
+                                            )}
+
+                                            {/* ✅ Write Review Button - Only if delivered or completed */}
+                                            {canReview(order.status) && !order.review && (
                                                 <button
                                                     onClick={() => {
                                                         setSelectedOrder(order);
@@ -280,6 +345,7 @@ function MyOrders() {
                                                 </button>
                                             )}
 
+                                            {/* Review Display */}
                                             {order.review && (
                                                 <div className="flex items-center gap-1">
                                                     <div className="flex">

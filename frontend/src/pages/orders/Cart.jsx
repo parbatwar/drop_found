@@ -24,14 +24,11 @@ function Cart() {
     const loadCart = async () => {
         try {
             const res = await getCart();
-
-            // console.log("Cart data:");
-            // console.log(res.data);
-            // console.log(JSON.stringify(res.data, null, 2));
-
+            console.log("📦 Cart data:", res.data);
             setCart(res.data);
         } catch (err) {
             console.error(err);
+            setError('Failed to load your cart.');
         } finally {
             setLoading(false);
         }
@@ -94,10 +91,39 @@ function Cart() {
 
     const items = cart?.items || [];
     const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-
     const subtotal = cart?.subtotal || 0;
-    const deliveryFee = cart?.delivery_fee || 0;
-    const total = cart?.total || 0;
+    
+    // ✅ Calculate delivery fee based on subtotal
+    const getDeliveryFee = (subtotal) => {
+        return subtotal < 700 ? 80 : 120;
+    };
+    
+    const deliveryFee = getDeliveryFee(subtotal);
+    const total = subtotal + deliveryFee;
+
+    // Group items by seller for display
+    const groupedItems = items.reduce((groups, item) => {
+        const sellerId = item.seller_id || item.listing?.seller_id || 'unknown';
+        if (!groups[sellerId]) {
+            groups[sellerId] = {
+                seller_id: sellerId,
+                shop_name: item.shop_name || item.listing?.shop_name || 'Shop',
+                items: [],
+                subtotal: 0
+            };
+        }
+        groups[sellerId].items.push(item);
+        groups[sellerId].subtotal += (item.price || item.listing?.price || 0) * (item.quantity || 0);
+        return groups;
+    }, {});
+
+    // Delivery fee info
+    const getDeliveryFeeInfo = (subtotal) => {
+        if (subtotal < 700) {
+            return { fee: 80, label: 'Under NPR 700' };
+        }
+        return { fee: 120, label: 'NPR 700 and above' };
+    };
 
     if (items.length === 0) {
         return (
@@ -170,100 +196,135 @@ function Cart() {
                     
                     {/* Cart Items */}
                     <div className="lg:col-span-8">
-                        <div className="space-y-4">
-                            {items.map((item) => {
-                                return (
-                                    <div 
-                                        key={item.id} 
-                                        className="flex gap-4 p-4 border border-neutral-100 hover:border-neutral-300 transition-colors duration-200"
-                                    >
-                                        {/* Product Image */}
-                                        <div className="w-24 h-28 flex-shrink-0 bg-neutral-50 border border-neutral-100 overflow-hidden">
-                                            {item.image_url ? (
-                                                <img
-                                                    src={item.image_url}
-                                                    alt={item.title}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[8px] uppercase tracking-wider">
-                                                    No Image
+                        {Object.values(groupedItems).map((group) => {
+                            const deliveryInfo = getDeliveryFeeInfo(group.subtotal);
+                            return (
+                                <div key={group.seller_id} className="mb-6">
+                                    {/* Seller Header */}
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <h3 className="text-xs font-medium text-neutral-700 uppercase tracking-wider">
+                                            {group.shop_name}
+                                        </h3>
+                                        <span className="text-[9px] text-neutral-400">
+                                            ({group.items.length} items)
+                                        </span>
+                                    </div>
+
+                                    {/* Group Items */}
+                                    <div className="space-y-3">
+                                        {group.items.map((item) => {
+                                            const imageUrl = item.image_url || item.listing?.images?.[0]?.image_url || null;
+                                            const title = item.title || item.listing?.title || 'Product';
+                                            const price = item.price || item.listing?.price || 0;
+                                            const size = item.size || item.listing?.size || null;
+                                            const sellerType = item.seller_type || item.listing?.seller_type || 'Item';
+                                            const listingId = item.listing_id || item.listing?.id || null;
+
+                                            return (
+                                                <div 
+                                                    key={item.id} 
+                                                    className="flex gap-4 p-4 border border-neutral-100 hover:border-neutral-300 transition-colors duration-200"
+                                                >
+                                                    {/* Product Image */}
+                                                    <div className="w-24 h-28 flex-shrink-0 bg-neutral-50 border border-neutral-100 overflow-hidden">
+                                                        {imageUrl ? (
+                                                            <img
+                                                                src={imageUrl}
+                                                                alt={title}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[8px] uppercase tracking-wider">
+                                                                No Image
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Product Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <Link 
+                                                            to={`/product/${listingId || item.id}`}
+                                                            className="text-sm font-light text-neutral-800 hover:text-black transition-colors"
+                                                        >
+                                                            {title}
+                                                        </Link>
+                                                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                            <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                                                {sellerType}
+                                                            </span>
+                                                            {size && (
+                                                                <>
+                                                                    <span className="w-px h-2 bg-neutral-300"></span>
+                                                                    <span className="text-[9px] text-neutral-400 uppercase">
+                                                                        Size {size.replace('_', ' ')}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm font-medium text-neutral-900 mt-2">
+                                                            NPR {Number(price).toLocaleString()}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Quantity & Actions */}
+                                                    <div className="flex flex-col items-end justify-between gap-2 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => handleRemoveItem(item.id)}
+                                                            className="text-neutral-400 hover:text-red-500 transition-colors"
+                                                            disabled={updating}
+                                                        >
+                                                            <Icons.X className="w-4 h-4" />
+                                                        </button>
+
+                                                        <div className="flex items-center border border-neutral-200">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                                                disabled={updating}
+                                                                className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50"
+                                                            >
+                                                                −
+                                                            </button>
+                                                            <span className="w-8 text-center text-xs">{item.quantity || 0}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                                                disabled={updating}
+                                                                className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
+                                            );
+                                        })}
+                                    </div>
 
-                                        {/* Product Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <Link
-                                                to={`/product/${item.listing_id}`}
-                                                className="text-sm font-light text-neutral-800 hover:text-black transition-colors"
-                                            >
-                                                {item.title}
-                                            </Link>
-
-                                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                                                <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                                                    {item.shop_name}
-                                                </span>
-                                            </div>
-
-                                            <p className="text-sm font-medium text-neutral-900 mt-2">
-                                                NPR {Number(item.price).toLocaleString()}
-                                            </p>
-
-                                            <p className="text-xs text-neutral-500 mt-1">
-                                                Qty: {item.quantity} × NPR {Number(item.price).toLocaleString()}
-                                            </p>
-
-                                            <p className="text-sm font-semibold text-black mt-1">
-                                                Total: NPR {Number(item.line_total).toLocaleString()}
-                                            </p>
-                                        </div>
-
-                                        {/* Quantity & Actions */}
-                                        <div className="flex flex-col items-end justify-between gap-2 flex-shrink-0">
-                                            <button
-                                                onClick={() => handleRemoveItem(item.id)}
-                                                className="text-neutral-400 hover:text-red-500 transition-colors"
-                                                disabled={updating}
-                                            >
-                                                <Icons.X className="w-4 h-4" />
-                                            </button>
-
-                                            <div className="flex items-center border border-neutral-200">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                                                    disabled={updating}
-                                                    className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50"
-                                                >
-                                                    −
-                                                </button>
-
-                                                <span className="w-8 text-center text-xs">
-                                                    {item.quantity}
-                                                </span>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                                                    disabled={updating}
-                                                    className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
+                                    {/* Group Subtotal & Delivery */}
+                                    <div className="mt-2 text-right">
+                                        <div className="flex items-center justify-end gap-4 text-sm">
+                                            <span className="text-neutral-500">
+                                                Subtotal: <span className="text-neutral-900">NPR {group.subtotal.toLocaleString()}</span>
+                                            </span>
+                                            <span className="text-neutral-400">|</span>
+                                            <span className="text-neutral-500">
+                                                Delivery: <span className="text-neutral-900">NPR {deliveryInfo.fee}</span>
+                                            </span>
+                                            <span className="text-[9px] text-neutral-400">
+                                                ({deliveryInfo.label})
+                                            </span>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                </div>
+                            );
+                        })}
 
                         {/* Clear Cart */}
                         <button
                             onClick={handleClearCart}
                             disabled={updating}
-                            className="mt-4 text-[10px] uppercase tracking-[0.2em] text-neutral-400 hover:text-red-500 transition-colors"
+                            className="mt-2 text-[10px] uppercase tracking-[0.2em] text-neutral-400 hover:text-red-500 transition-colors"
                         >
                             Clear Cart
                         </button>
@@ -289,6 +350,15 @@ function Cart() {
                                     <span className="font-light text-neutral-600">Total</span>
                                     <span className="font-medium text-black">NPR {total.toLocaleString()}</span>
                                 </div>
+                            </div>
+
+                            {/* Delivery Fee Info */}
+                            <div className="mt-3 text-[9px] text-neutral-400 leading-relaxed bg-neutral-50 p-3 border border-neutral-100">
+                                <p className="font-medium text-neutral-600">Delivery Fee Breakdown:</p>
+                                <p className="mt-1">• Calculated per seller's suborder</p>
+                                <p>• Under NPR 700: NPR 80 delivery fee</p>
+                                <p>• NPR 700 and above: NPR 120 delivery fee</p>
+                                <p className="mt-1 text-neutral-300">Items from different sellers are charged separately.</p>
                             </div>
 
                             <button

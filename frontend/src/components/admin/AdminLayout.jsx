@@ -14,6 +14,7 @@ function AdminLayout() {
 
     const menuItems = [
         { path: '/admin/dashboard', label: 'Overview', icon: Icons.Dashboard },
+        { path: '/admin/orders', label: 'Orders', icon: Icons.Package },
         { path: '/admin/sellers', label: 'Pending Sellers', icon: Icons.Users },
         { path: '/admin/categories', label: 'Categories', icon: Icons.Categories },
         { path: '/admin/announcements', label: 'Announcements', icon: Icons.Megaphone },

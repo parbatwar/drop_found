@@ -41,9 +41,9 @@ class Order(Base):
     total_amount = Column(Numeric(10, 2), nullable=False)
 
     # Delivery (Changes per order)
+    delivery_fee = Column(Numeric(10, 2), nullable=False, default=0.00)
     receiver_phone = Column(String(50), nullable=False)
     delivery_address = Column(Text, nullable=False)
-    delivery_fee = Column(Numeric(10, 2), nullable=False, default=0.00)
     payment_method = Column(
         Enum(PaymentMethod, native_enum=False),
         nullable=False,

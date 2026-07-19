@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
 
 // Admin Pages
+import AdminOrders from './pages/admin/AdminOrders';
 import AdminSellers from './pages/admin/AdminSellers';
 import AdminCategories from './pages/admin/Categories';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
@@ -108,6 +109,7 @@ function App() {
                         Overview Metrics Coming Soon...
                     </div>
                 } />
+                <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/sellers" element={<AdminSellers />} />
                 <Route path="/admin/categories" element={<AdminCategories />} />
                 <Route path="/admin/announcements" element={<AdminAnnouncements />} />

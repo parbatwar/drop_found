@@ -28,12 +28,15 @@ class SocialPlatform(str, enum.Enum):
 
 
 class OrderStatus(str, enum.Enum):
-    pending = "pending"
-    accepted = "accepted"
-    shipped = "shipped"
-    delivered = "delivered"
-    rejected = "rejected"
-    cancelled = "cancelled"
+    pending = "pending"                     # Order placed, waiting for seller
+    accepted = "accepted"                   # Seller accepted
+    rejected = "rejected"                   # Seller rejected the order
+    cancelled = "cancelled"                 # Cancelled (before ready_for_pickup)
+    ready_for_pickup = "ready_for_pickup"   # Package ready, waiting for delivery person
+    picked_up = "picked_up"                 # Delivery person collected the package
+    out_for_delivery = "out_for_delivery"   # Delivery person is on the way
+    delivered = "delivered"                 # Item delivered to buyer
+    completed = "completed"                 # Auto-completed after 7 days
 
 
 class PaymentMethod(str, enum.Enum):
