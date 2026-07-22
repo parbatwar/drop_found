@@ -10,7 +10,7 @@ from app.models.seller.seller import SellerProfile
 from app.models.order.cart import Cart, CartItem
 from app.models.user.user import User
 from app.schemas.order import CheckoutRequest, QuickBuyRequest, OrderUpdate
-from app.utils.order import get_tier_delivery_fee, get_delivery_fee
+from app.utils.order import get_tier_delivery_fee
 import uuid
 
 
@@ -56,10 +56,11 @@ class OrderService:
             OrderStatus.pending: [
                 OrderStatus.accepted,
                 OrderStatus.rejected,
+                OrderStatus.cancelled,  # ✅ Add cancelled for buyers
             ],
             OrderStatus.accepted: [
                 OrderStatus.ready_for_pickup,
-                OrderStatus.cancelled,
+                OrderStatus.cancelled,  # ✅ Add cancelled for buyers
             ],
             OrderStatus.ready_for_pickup: [
                 OrderStatus.picked_up,
@@ -71,31 +72,40 @@ class OrderService:
                 OrderStatus.delivered,
             ],
             OrderStatus.delivered: [
-                OrderStatus.completed,  # ✅ Admin can manually complete
+                OrderStatus.completed,
             ],
-            # Final states
             OrderStatus.rejected: [],
             OrderStatus.cancelled: [],
             OrderStatus.completed: [],
         }
 
-        # ✅ Define who can do what (simplified)
+        # ✅ Define who can do what
         seller_controlled = {
             OrderStatus.accepted,
             OrderStatus.rejected,
             OrderStatus.ready_for_pickup,
-            OrderStatus.cancelled,
         }
 
         admin_controlled = {
             OrderStatus.picked_up,
             OrderStatus.out_for_delivery,
             OrderStatus.delivered,
-            OrderStatus.completed,  # ✅ Admin can mark as completed
+            OrderStatus.completed,
         }
 
-        # ✅ Check permissions based on the target status
-        if new_status in seller_controlled:
+        # ✅ FIRST: Check if buyer is cancelling their own order
+        if new_status == OrderStatus.cancelled and current_user.id == order.buyer_id:
+            # Buyer can cancel if status is pending or accepted
+            if current_status not in [OrderStatus.pending, OrderStatus.accepted]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cannot cancel order at this stage. It's already being processed.",
+                )
+            # Allow buyer cancellation - skip rest of permission checks
+            pass
+
+        # ✅ THEN: Check seller permissions
+        elif new_status in seller_controlled:
             # Only the seller can update these statuses
             seller = (
                 db.query(SellerProfile)
@@ -105,23 +115,14 @@ class OrderService:
             if not seller or order.seller_id != seller.id:
                 raise HTTPException(status_code=403, detail="Not your order")
 
-            if new_status == OrderStatus.cancelled and current_status not in [
-                OrderStatus.pending,
-                OrderStatus.accepted,
-            ]:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Cannot cancel order at this stage. It's already being processed.",
-                )
-
+        # ✅ THEN: Check admin permissions
         elif new_status in admin_controlled:
-            # ✅ Only admin can update delivery and completion statuses
+            # Only admin can update delivery and completion statuses
             if current_user.role.value != "admin":
                 raise HTTPException(
                     status_code=403, detail="Only admin can update delivery status"
                 )
 
-            # ✅ If completing, ensure order is delivered first
             if (
                 new_status == OrderStatus.completed
                 and current_status != OrderStatus.delivered
@@ -131,18 +132,11 @@ class OrderService:
                     detail="Order must be delivered before marking as completed",
                 )
 
-        # ✅ Buyer cancellation check
-        elif new_status == OrderStatus.cancelled:
-            if current_user.id == order.buyer_id:
-                if current_status not in [OrderStatus.pending, OrderStatus.accepted]:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Cannot cancel order at this stage. It's already being processed.",
-                    )
-            else:
-                raise HTTPException(
-                    status_code=403, detail="Not authorized to cancel this order"
-                )
+        # ✅ If no permission matched, deny
+        else:
+            raise HTTPException(
+                status_code=403, detail="Not authorized to update this order"
+            )
 
         # ✅ Validate transition
         allowed = transitions.get(current_status, [])

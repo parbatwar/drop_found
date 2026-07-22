@@ -52,9 +52,29 @@ def get_seller_followers(
     return {"followers": result, "count": len(result)}
 
 
-@router.get("", response_model=list[FollowResponse])
+@router.get("", response_model=list[dict])
 def get_my_following(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return FollowService.get_my_following(current_user, db)
+    """Get all shops that the current user follows with seller details"""
+    follows = FollowService.get_my_following(current_user, db)
+
+    result = []
+    for follow in follows:
+        result.append(
+            {
+                "id": follow.id,
+                "seller_id": follow.seller_id,
+                "created_at": follow.created_at,
+                "seller": {
+                    "id": follow.seller.id,
+                    "shop_name": follow.seller.shop_name,
+                    "slug": follow.seller.slug,
+                    "avatar_url": follow.seller.avatar_url,
+                    "seller_type": follow.seller.seller_type,
+                },
+            }
+        )
+
+    return result

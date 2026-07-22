@@ -1,15 +1,39 @@
+// context/AuthContext.jsx
 import { createContext, useState, useContext, useEffect } from 'react';
 import { getCurrentUser } from '../api/auth';
+import apiClient from '../api/client';
 
 // Create a context for authentication
 const AuthContext = createContext();
 
-// App lai data provide garna ko lagi AuthProvider component banako ho
-export const AuthProvider = ({children}) => {
-
-    // State to hold the current user and loading status
+export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // ✅ Handle Google OAuth callback on page load
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        if (token) {
+            localStorage.setItem('token', token);
+            // Clean the token out of the URL immediately so it doesn't linger
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            getCurrentUser()
+                .then((res) => {
+                    setUser(res.data);
+                    // Redirect user based on role if they landed on root
+                    if (res.data.role === 'admin') {
+                        window.location.href = '/admin/dashboard';
+                    }
+                })
+                .catch((err) => {
+                    console.error('Session initialization failed:', err);
+                    localStorage.removeItem('token');
+                });
+        }
+    }, []);
 
     // Page load huda current user ko data fetch garna ko lagi useEffect hook use gareko ho
     useEffect(() => {
@@ -17,8 +41,11 @@ export const AuthProvider = ({children}) => {
         if (token) {
             getCurrentUser()
                 .then((res) => setUser(res.data))
-                .catch(() => localStorage.removeItem('token'))
-                .finally(() => setLoading(false) )
+                .catch(() => {
+                    localStorage.removeItem('token');
+                    setUser(null);
+                })
+                .finally(() => setLoading(false));
         } else {
             setLoading(false);
         }
@@ -33,28 +60,13 @@ export const AuthProvider = ({children}) => {
     const logout = () => {
         localStorage.removeItem('token');
         setUser(null);
-    }
+    };
 
-
-    // App ko sabai components lai user, login, logout, loading ko data provide garna ko lagi AuthContext.Provider use gareko ho
-    return(
+    return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>
             {children}
         </AuthContext.Provider>
-
     );
-}
+};
 
-// Custom hook to use the AuthContext in other components
 export const useAuth = () => useContext(AuthContext);
-
-
-/*
-AuthProvider({ children }) — children represents whatever components you wrap inside this provider (your whole app, in main.jsx)
-on load, it checks localStorage for a saved token — if found, it calls your backend's /auth/me to fetch the actual user data
-.then() — runs if the API call succeeds, saves the user
-.catch() — runs if it fails (invalid/expired token), removes the bad token
-.finally() — runs no matter what, stops the loading state
-login() and logout() are the two functions every component will call when someone logs in/out
-useAuth() is a shortcut — instead of writing useContext(AuthContext) everywhere, any component just calls useAuth() and gets { user, login, logout, loading }
-*/

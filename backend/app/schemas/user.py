@@ -11,7 +11,7 @@ class UserCreate(BaseModel):
     password: str
     first_name: str
     last_name: str
-    phone: str | None = None
+    phone: str | None = None  # ✅ Optional
 
 
 class UserUpdate(BaseModel):
@@ -42,7 +42,21 @@ class UserResponse(BaseModel):
     role: UserRole
     is_active: bool
     is_email_verified: bool
+
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GoogleUserCreate(BaseModel):
+    """Model for creating a user via Google OAuth."""
+
+    email: EmailStr
+    first_name: str
+    last_name: str
+    google_id: str  # Optional: store for future reference
+    is_email_verified: bool = True  # Google already verified the email
 
     class Config:
         from_attributes = True

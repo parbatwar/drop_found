@@ -1,9 +1,9 @@
+# app/services/cart_service.py
 from decimal import Decimal
-
 from fastapi import HTTPException
 from app.models.order.cart import Cart, CartItem
 from app.models.catalog.listing import Listing
-from app.utils.order import get_delivery_fee
+from app.utils.order import get_tier_delivery_fee
 
 
 class CartService:
@@ -55,24 +55,36 @@ class CartService:
 
     @staticmethod
     def build_cart_response(cart, db):
-        delivery_fee_per_order = get_delivery_fee(db)
-
         items = []
         subtotal = Decimal("0")
-        seller_ids = set()
+
+        # Group items by seller with their subtotal
+        seller_groups = {}
 
         for item in cart.items:
             listing = item.listing
 
+            if not listing:
+                continue
+
             line_total = listing.price * item.quantity
             subtotal += line_total
 
-            seller_ids.add(listing.seller_id)
+            seller_id = str(listing.seller_id)  # ✅ Convert to string
 
-            items.append(
+            if seller_id not in seller_groups:
+                seller_groups[seller_id] = {
+                    "seller_id": seller_id,  # ✅ Already string
+                    "shop_name": listing.seller.shop_name,
+                    "subtotal": Decimal("0"),
+                    "items": [],
+                }
+
+            seller_groups[seller_id]["subtotal"] += line_total
+            seller_groups[seller_id]["items"].append(
                 {
-                    "id": item.id,
-                    "listing_id": item.listing_id,
+                    "id": str(item.id),  # ✅ Convert to string
+                    "listing_id": str(item.listing_id),  # ✅ Convert to string
                     "quantity": item.quantity,
                     "title": listing.title,
                     "price": float(listing.price),
@@ -80,22 +92,45 @@ class CartService:
                     "image_url": (
                         listing.images[0].image_url if listing.images else None
                     ),
-                    "seller_id": listing.seller_id,
+                    "seller_id": seller_id,  # ✅ Already string
                     "shop_name": listing.seller.shop_name,
                 }
             )
 
-        seller_order_count = len(seller_ids)
-        delivery_fee = delivery_fee_per_order * seller_order_count
-        total = subtotal + delivery_fee
+        # ✅ Calculate delivery fee PER SELLER using tiered pricing
+        total_delivery_fee = Decimal("0")
+        seller_breakdown = []
+
+        for seller_id, group in seller_groups.items():
+            seller_subtotal = group["subtotal"]
+            delivery_fee = get_tier_delivery_fee(db, seller_subtotal)
+            total_delivery_fee += delivery_fee
+
+            seller_breakdown.append(
+                {
+                    "seller_id": seller_id,  # ✅ Already string
+                    "shop_name": group["shop_name"],
+                    "subtotal": float(seller_subtotal),
+                    "delivery_fee": float(delivery_fee),
+                }
+            )
+
+        total = subtotal + total_delivery_fee
+        seller_order_count = len(seller_groups)
+
+        # Flatten items for response
+        all_items = []
+        for group in seller_groups.values():
+            all_items.extend(group["items"])
 
         return {
-            "id": cart.id,
-            "items": items,
+            "id": str(cart.id),  # ✅ Convert to string
+            "items": all_items,
             "subtotal": float(subtotal),
-            "delivery_fee": float(delivery_fee),
+            "delivery_fee": float(total_delivery_fee),
             "total": float(total),
             "seller_order_count": seller_order_count,
+            "seller_breakdown": seller_breakdown,
         }
 
     @staticmethod
@@ -117,11 +152,9 @@ class CartService:
                     status_code=400,
                     detail="Not enough stock",
                 )
-
             item.quantity = data.quantity
 
         db.commit()
-
         return CartService.get_cart(current_user, db)
 
     @staticmethod

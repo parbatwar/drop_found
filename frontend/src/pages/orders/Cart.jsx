@@ -1,4 +1,4 @@
-// pages/orders/Cart.jsx
+// pages/orders/Cart.jsx - Updated
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCart, updateCartItem, removeCartItem, clearCart } from '../../api/cart';
@@ -91,38 +91,33 @@ function Cart() {
 
     const items = cart?.items || [];
     const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    
+    // ✅ Use data from API response
     const subtotal = cart?.subtotal || 0;
-    
-    // ✅ Calculate delivery fee based on subtotal
-    const getDeliveryFee = (subtotal) => {
-        return subtotal < 700 ? 80 : 120;
-    };
-    
-    const deliveryFee = getDeliveryFee(subtotal);
-    const total = subtotal + deliveryFee;
+    const deliveryFee = cart?.delivery_fee || 0;  // Already calculated per seller
+    const total = cart?.total || 0;
+    const sellerBreakdown = cart?.seller_breakdown || [];
 
     // Group items by seller for display
     const groupedItems = items.reduce((groups, item) => {
-        const sellerId = item.seller_id || item.listing?.seller_id || 'unknown';
+        const sellerId = item.seller_id || 'unknown';
         if (!groups[sellerId]) {
             groups[sellerId] = {
                 seller_id: sellerId,
-                shop_name: item.shop_name || item.listing?.shop_name || 'Shop',
+                shop_name: item.shop_name || 'Shop',
                 items: [],
                 subtotal: 0
             };
         }
         groups[sellerId].items.push(item);
-        groups[sellerId].subtotal += (item.price || item.listing?.price || 0) * (item.quantity || 0);
+        groups[sellerId].subtotal += (item.price || 0) * (item.quantity || 0);
         return groups;
     }, {});
 
-    // Delivery fee info
-    const getDeliveryFeeInfo = (subtotal) => {
-        if (subtotal < 700) {
-            return { fee: 80, label: 'Under NPR 700' };
-        }
-        return { fee: 120, label: 'NPR 700 and above' };
+    // ✅ Get delivery fee for each seller from the breakdown
+    const getSellerDeliveryFee = (sellerId) => {
+        const breakdown = sellerBreakdown.find(b => b.seller_id === sellerId);
+        return breakdown?.delivery_fee || 0;
     };
 
     if (items.length === 0) {
@@ -197,7 +192,7 @@ function Cart() {
                     {/* Cart Items */}
                     <div className="lg:col-span-8">
                         {Object.values(groupedItems).map((group) => {
-                            const deliveryInfo = getDeliveryFeeInfo(group.subtotal);
+                            const sellerDeliveryFee = getSellerDeliveryFee(group.seller_id);
                             return (
                                 <div key={group.seller_id} className="mb-6">
                                     {/* Seller Header */}
@@ -213,12 +208,9 @@ function Cart() {
                                     {/* Group Items */}
                                     <div className="space-y-3">
                                         {group.items.map((item) => {
-                                            const imageUrl = item.image_url || item.listing?.images?.[0]?.image_url || null;
-                                            const title = item.title || item.listing?.title || 'Product';
-                                            const price = item.price || item.listing?.price || 0;
-                                            const size = item.size || item.listing?.size || null;
-                                            const sellerType = item.seller_type || item.listing?.seller_type || 'Item';
-                                            const listingId = item.listing_id || item.listing?.id || null;
+                                            const imageUrl = item.image_url || null;
+                                            const title = item.title || 'Product';
+                                            const price = item.price || 0;
 
                                             return (
                                                 <div 
@@ -242,24 +234,13 @@ function Cart() {
 
                                                     {/* Product Info */}
                                                     <div className="flex-1 min-w-0">
-                                                        <Link 
-                                                            to={`/product/${listingId || item.id}`}
-                                                            className="text-sm font-light text-neutral-800 hover:text-black transition-colors"
-                                                        >
+                                                        <p className="text-sm font-light text-neutral-800">
                                                             {title}
-                                                        </Link>
+                                                        </p>
                                                         <div className="flex flex-wrap items-center gap-2 mt-1">
                                                             <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                                                                {sellerType}
+                                                                Item
                                                             </span>
-                                                            {size && (
-                                                                <>
-                                                                    <span className="w-px h-2 bg-neutral-300"></span>
-                                                                    <span className="text-[9px] text-neutral-400 uppercase">
-                                                                        Size {size.replace('_', ' ')}
-                                                                    </span>
-                                                                </>
-                                                            )}
                                                         </div>
                                                         <p className="text-sm font-medium text-neutral-900 mt-2">
                                                             NPR {Number(price).toLocaleString()}
@@ -309,10 +290,10 @@ function Cart() {
                                             </span>
                                             <span className="text-neutral-400">|</span>
                                             <span className="text-neutral-500">
-                                                Delivery: <span className="text-neutral-900">NPR {deliveryInfo.fee}</span>
+                                                Delivery: <span className="text-neutral-900">NPR {sellerDeliveryFee}</span>
                                             </span>
                                             <span className="text-[9px] text-neutral-400">
-                                                ({deliveryInfo.label})
+                                                ({group.subtotal < 700 ? 'Under NPR 700' : 'NPR 700 and above'})
                                             </span>
                                         </div>
                                     </div>
@@ -333,7 +314,7 @@ function Cart() {
                     {/* Order Summary */}
                     <div className="lg:col-span-4">
                         <div className="border border-neutral-100 p-6 md:p-8 lg:sticky lg:top-24">
-                            <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium pb-4 border-b border-neutral-100">
+                            <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium pb-4 border-t-neutral-100">
                                 Order Summary
                             </h2>
 
@@ -342,10 +323,21 @@ function Cart() {
                                     <span>Subtotal ({totalItems} items)</span>
                                     <span className="text-neutral-900">NPR {subtotal.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between text-neutral-500">
-                                    <span>Delivery Fee</span>
-                                    <span className="text-neutral-900">NPR {deliveryFee.toLocaleString()}</span>
+                                
+                                {/* ✅ Show delivery fee with breakdown */}
+                                <div className="text-neutral-500 border-t border-neutral-100 pt-2">
+                                    <div className="flex justify-between text-xs font-medium text-neutral-600">
+                                        <span>Delivery Fee</span>
+                                        <span>NPR {deliveryFee.toLocaleString()}</span>
+                                    </div>
+                                    {sellerBreakdown.map((seller) => (
+                                        <div key={seller.seller_id} className="flex justify-between text-[10px] text-neutral-400 ml-4">
+                                            <span>{seller.shop_name}</span>
+                                            <span>NPR {seller.delivery_fee.toLocaleString()}</span>
+                                        </div>
+                                    ))}
                                 </div>
+                                
                                 <div className="flex justify-between pt-3 border-t border-neutral-100 text-base">
                                     <span className="font-light text-neutral-600">Total</span>
                                     <span className="font-medium text-black">NPR {total.toLocaleString()}</span>

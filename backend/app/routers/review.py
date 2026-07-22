@@ -29,19 +29,21 @@ def create_review(
     Create a review for a completed order.
     One review per order item.
     """
-    # Verify order exists and belongs to user
+    # ✅ Allow both delivered AND completed orders
     order = (
         db.query(Order)
         .filter(
             Order.id == order_id,
             Order.buyer_id == current_user.id,
-            Order.status == "delivered",
+            Order.status.in_(["delivered", "completed"]),  # ✅ Fixed
         )
         .first()
     )
 
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found or not delivered")
+        raise HTTPException(
+            status_code=404, detail="Order not found or not delivered/completed"
+        )
 
     # Verify listing exists and get seller
     listing = db.query(Listing).filter(Listing.id == listing_id).first()

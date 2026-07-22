@@ -1,4 +1,5 @@
 from app.models.user.user import User
+from app.models.user.email_verification import EmailVerification
 from app.models.seller.seller import SellerProfile, SellerSocialLink
 from app.models.catalog import Listing, ListingImage, Category
 from app.models.order.order import Order

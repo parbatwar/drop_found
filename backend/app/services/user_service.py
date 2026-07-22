@@ -1,7 +1,6 @@
 class UserService:
 
     @staticmethod
-    @staticmethod
     def update_profile(data, current_user, db):
         user = current_user
 

@@ -202,7 +202,7 @@ function Navbar() {
                                                     Account Details
                                                 </Link>
                                                 <Link to="/orders" className="block px-4 py-2 text-xs text-neutral-500 hover:bg-neutral-50 hover:text-black transition-colors">
-                                                    Order History
+                                                    Purchase History
                                                 </Link>
                                                 <Link to="/wishlist" className="block px-4 py-2 text-xs text-neutral-500 hover:bg-neutral-50 hover:text-black transition-colors">
                                                     Saved Items

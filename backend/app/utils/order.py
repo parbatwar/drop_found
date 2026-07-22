@@ -29,9 +29,9 @@ def get_tier_delivery_fee(db: Session, subtotal: Decimal) -> Decimal:
     return _get_setting(db, "inside_valley_delivery_fee_high")
 
 
-def get_delivery_fee(db: Session) -> Decimal:
-    """
-    Legacy function - returns the low tier fee.
-    Deprecated: Use get_tier_delivery_fee instead.
-    """
-    return _get_setting(db, "inside_valley_delivery_fee_low")
+# def get_delivery_fee(db: Session) -> Decimal:
+#     """
+#     Legacy function - returns the low tier fee.
+#     Deprecated: Use get_tier_delivery_fee instead.
+#     """
+#     return _get_setting(db, "inside_valley_delivery_fee_low")

@@ -1,5 +1,6 @@
 // pages/seller/SellerOrders.jsx
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Add this
 import { getSellerOrders, updateOrderStatus } from "../../api/orders";
 import { Icons } from "../../components/Icons";
 
@@ -17,6 +18,7 @@ const ORDER_STATUS = {
 };
 
 function SellerOrders() {
+    const navigate = useNavigate(); // ✅ Add navigate
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,13 @@ function SellerOrders() {
         }
     };
 
-    const handleStatusUpdate = async (id, status) => {
+    // ✅ Navigate to order details
+    const handleOrderClick = (orderId) => {
+        navigate(`/seller/orders/${orderId}`);
+    };
+
+    const handleStatusUpdate = async (id, status, e) => {
+        e.stopPropagation(); // ✅ Prevent navigation when clicking action buttons
         try {
             await updateOrderStatus(id, { status });
             loadOrders();
@@ -242,7 +250,8 @@ function SellerOrders() {
                                     return (
                                         <tr
                                             key={order.id}
-                                            className="hover:bg-neutral-50 transition-colors"
+                                            onClick={() => handleOrderClick(order.id)} // ✅ Make row clickable
+                                            className="hover:bg-neutral-50 transition-colors cursor-pointer"
                                         >
                                             {/* Product */}
                                             <td className="py-5 pr-4">
@@ -319,13 +328,12 @@ function SellerOrders() {
                                                 </span>
                                             </td>
 
-                                            {/* ✅ Actions - Updated with new flow */}
+                                            {/* Actions */}
                                             <td className="py-5">
                                                 <div className="flex justify-end gap-2 flex-wrap">
-                                                    {/* ✅ PENDING: Accept or Reject */}
                                                     {actions.includes('accept') && (
                                                         <button
-                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.ACCEPTED)}
+                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.ACCEPTED, e)}
                                                             className="px-4 py-1.5 bg-black text-white text-[9px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-colors"
                                                         >
                                                             Accept
@@ -333,78 +341,31 @@ function SellerOrders() {
                                                     )}
                                                     {actions.includes('reject') && (
                                                         <button
-                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.REJECTED)}
+                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.REJECTED, e)}
                                                             className="px-4 py-1.5 border border-neutral-300 text-[9px] uppercase tracking-[0.2em] hover:border-black hover:bg-black hover:text-white transition-colors"
                                                         >
                                                             Reject
                                                         </button>
                                                     )}
-
-                                                    {/* ✅ ACCEPTED: Ready for Pickup or Cancel */}
                                                     {actions.includes('ready_for_pickup') && (
                                                         <button
-                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.READY_FOR_PICKUP)}
+                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.READY_FOR_PICKUP, e)}
                                                             className="px-4 py-1.5 bg-purple-600 text-white text-[9px] uppercase tracking-[0.2em] hover:bg-purple-700 transition-colors"
                                                         >
-                                                            Ready for Pickup
+                                                            Ready
                                                         </button>
                                                     )}
                                                     {actions.includes('cancel') && (
                                                         <button
-                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.CANCELLED)}
+                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.CANCELLED, e)}
                                                             className="px-4 py-1.5 border border-red-300 text-red-500 text-[9px] uppercase tracking-[0.2em] hover:bg-red-50 transition-colors"
                                                         >
                                                             Cancel
                                                         </button>
                                                     )}
-
-                                                    {/* ✅ Status indicators for non-actionable statuses */}
-                                                    {order.status === ORDER_STATUS.READY_FOR_PICKUP && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-purple-600 flex items-center gap-1">
-                                                            <Icons.Package className="w-3 h-3" />
-                                                            Waiting for pickup
-                                                        </span>
-                                                    )}
-
-                                                    {order.status === ORDER_STATUS.PICKED_UP && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-indigo-600 flex items-center gap-1">
-                                                            <Icons.Truck className="w-3 h-3" />
-                                                            With delivery
-                                                        </span>
-                                                    )}
-
-                                                    {order.status === ORDER_STATUS.OUT_FOR_DELIVERY && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-blue-600 flex items-center gap-1">
-                                                            <Icons.Truck className="w-3 h-3" />
-                                                            Out for delivery
-                                                        </span>
-                                                    )}
-
-                                                    {order.status === ORDER_STATUS.DELIVERED && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-green-600 flex items-center gap-1">
-                                                            <Icons.Check className="w-3 h-3" />
-                                                            Delivered
-                                                        </span>
-                                                    )}
-
-                                                    {order.status === ORDER_STATUS.COMPLETED && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-emerald-600 flex items-center gap-1">
-                                                            <Icons.Check className="w-3 h-3" />
-                                                            Completed
-                                                        </span>
-                                                    )}
-
-                                                    {order.status === ORDER_STATUS.REJECTED && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-red-600 flex items-center gap-1">
-                                                            <Icons.X className="w-3 h-3" />
-                                                            Rejected
-                                                        </span>
-                                                    )}
-
-                                                    {order.status === ORDER_STATUS.CANCELLED && (
-                                                        <span className="text-[9px] uppercase tracking-[0.3em] text-neutral-400 flex items-center gap-1">
-                                                            <Icons.X className="w-3 h-3" />
-                                                            Cancelled
+                                                    {actions.length === 0 && (
+                                                        <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                                            No actions
                                                         </span>
                                                     )}
                                                 </div>

@@ -53,6 +53,16 @@ class OrderBuyer(BaseModel):
         from_attributes = True
 
 
+class OrderSeller(BaseModel):
+    id: UUID
+    shop_name: str
+    slug: str
+    avatar_url: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class ReviewMini(BaseModel):
     id: UUID
     rating: int
@@ -68,6 +78,7 @@ class OrderResponse(BaseModel):
     seller_id: UUID
     order_group_id: UUID | None
 
+    seller: OrderSeller
     buyer: OrderBuyer
     items: list[OrderItemResponse] = []
     review: ReviewMini | None = None

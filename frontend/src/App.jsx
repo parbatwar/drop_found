@@ -23,7 +23,8 @@ import SellerDashboard from './pages/seller/SellerDashboard';
 import Listings from './pages/seller/Listings';
 import CreateListing from './pages/seller/CreateListing';
 import EditListing from './pages/seller/EditListing';
-import SellerOrders from './pages/seller/Orders';
+import SellerOrders from './pages/seller/SellerOrders';
+import SellerOrderDetails from './pages/seller/SellerOrderDetails';
 import SellerEdit from './pages/seller/SellerEdit';
 
 // Shop Pages
@@ -41,6 +42,7 @@ import MyOrders from './pages/orders/MyOrders';
 import Checkout from './pages/orders/Checkout';
 import Cart from './pages/orders/Cart';
 import Wishlist from './pages/Wishlist';
+import Invoice from './pages/orders/Invoice';
 
 // Product/Listing Pages
 import ProductDetail from './pages/listings/ProductDetail';
@@ -82,6 +84,7 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/orders/invoice/:orderGroupId" element={<Invoice />} />
             </Route>
         </Route>
 
@@ -95,7 +98,8 @@ function App() {
                 <Route path="/seller/listings/new" element={<CreateListing />} />
                 <Route path="/seller/listings/:id/edit" element={<EditListing />} />
                 <Route path="/seller/orders" element={<SellerOrders />} />
-                <Route path="/seller/shop/edit" element={<SellerEdit />} />
+                <Route path="/seller/orders/:orderId" element={<SellerOrderDetails />} />
+                <Route path="/seller/shop/edit" element={<SellerEdit />} />\
             </Route>
         </Route>
 

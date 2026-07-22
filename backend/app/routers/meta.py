@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -12,7 +14,7 @@ from app.models.enums.listing_enum import (
 from app.models.enums.enums import SellerType
 from app.models.enums.listing_enum import Gender, ListingColor
 from app.utils.category import get_active_category
-from app.utils.order import get_delivery_fee
+from app.utils.order import get_tier_delivery_fee
 
 router = APIRouter(prefix="/meta", tags=["meta"])
 
@@ -52,4 +54,4 @@ def get_seller_options():
 
 @router.get("/delivery-fee")
 def get_current_delivery_fee(db: Session = Depends(get_db)):
-    return {"delivery_fee": float(get_delivery_fee(db))}
+    return {"delivery_fee": float(get_tier_delivery_fee(db, Decimal(0)))}

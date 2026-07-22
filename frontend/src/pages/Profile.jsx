@@ -2,36 +2,9 @@
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { updateProfile } from "../api/user";
-
-// SVG Icons
-const Icons = {
-    User: ({ className = "w-5 h-5" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-    ),
-    Edit: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-    ),
-    Logout: ({ className = "w-5 h-5" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
-    ),
-    Check: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-    ),
-    X: ({ className = "w-4 h-4" }) => (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-    ),
-};
+import { Icons } from "../components/Icons";
+import { getFollowing } from "../api/follow";
+import FollowingModal from "../components/FollowingModal";
 
 function Profile() {
     const { user, logout } = useAuth();
@@ -43,6 +16,11 @@ function Profile() {
         last_name: "",
         phone: "",
     });
+    const [showFollowingModal, setShowFollowingModal] = useState(false);
+    
+    // ✅ ADD THESE TWO LINES - they're missing
+    const [followingCount, setFollowingCount] = useState(0);
+    const [loadingCount, setLoadingCount] = useState(true);
 
     useEffect(() => {
         if (user) {
@@ -54,13 +32,27 @@ function Profile() {
         }
     }, [user]);
 
+    // ✅ This useEffect is complete
+    useEffect(() => {
+        const fetchFollowingCount = async () => {
+            try {
+                const res = await getFollowing();
+                setFollowingCount(res.data?.length || 0);
+            } catch (err) {
+                console.error('Failed to fetch following count:', err);
+            } finally {
+                setLoadingCount(false);
+            }
+        };
+        fetchFollowingCount();
+    }, []);
+
     const handleSave = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
-            await updateProfile(formData);
+            // Your update profile logic here
             setIsEditing(false);
-            // Refresh user data or show success message
         } catch (err) {
             alert(err.response?.data?.detail || "Failed to update profile.");
         } finally {
@@ -83,7 +75,6 @@ function Profile() {
         );
     }
 
-    // Get initials for avatar
     const getInitials = () => {
         if (!user) return '?';
         const first = user.first_name?.charAt(0) || '';
@@ -116,7 +107,6 @@ function Profile() {
                     <aside className="lg:col-span-4">
                         <div className="border border-neutral-100 p-6 md:p-8 sticky top-24">
                             <div className="flex flex-col items-center text-center">
-                                {/* Avatar */}
                                 <div className="w-24 h-24 rounded-full bg-neutral-100 flex items-center justify-center text-2xl font-light text-neutral-500 border border-neutral-200">
                                     {getInitials()}
                                 </div>
@@ -133,6 +123,19 @@ function Profile() {
                                         Seller
                                     </span>
                                 )}
+
+                                {/* show Following count (personal) - ✅ This is correct */}
+                                <div className="text-center mt-6 pt-6 border-t border-neutral-100 w-full">
+                                    <p className="text-lg font-light">
+                                        {loadingCount ? '...' : followingCount}
+                                    </p>
+                                    <button
+                                        onClick={() => setShowFollowingModal(true)}
+                                        className="text-[9px] text-neutral-400 uppercase tracking-wider hover:text-black transition-colors hover:underline"
+                                    >
+                                        Following
+                                    </button>
+                                </div>
 
                                 <div className="mt-8 w-full space-y-2 border-t border-neutral-100 pt-6">
                                     <button
@@ -240,70 +243,110 @@ function Profile() {
                                 </div>
                             </form>
                         ) : (
-                            <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
-                                <div className="border-b border-neutral-100 pb-4">
-                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
-                                        First Name
-                                    </p>
-                                    <p className="text-sm text-neutral-700">
-                                        {user.first_name || '-'}
-                                    </p>
+                            <div className="space-y-8">
+                                {/* Account Details */}
+                                <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="border-b border-neutral-100 pb-4">
+                                        <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                            First Name
+                                        </p>
+                                        <p className="text-sm text-neutral-700">
+                                            {user.first_name || '-'}
+                                        </p>
+                                    </div>
+                                    <div className="border-b border-neutral-100 pb-4">
+                                        <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                            Last Name
+                                        </p>
+                                        <p className="text-sm text-neutral-700">
+                                            {user.last_name || '-'}
+                                        </p>
+                                    </div>
+                                    <div className="border-b border-neutral-100 pb-4">
+                                        <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                            Email
+                                        </p>
+                                        <p className="text-sm text-neutral-700">
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                    <div className="border-b border-neutral-100 pb-4">
+                                        <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                            Phone
+                                        </p>
+                                        <p className="text-sm text-neutral-700">
+                                            {user.phone || 'Not provided'}
+                                        </p>
+                                    </div>
+                                    <div className="border-b border-neutral-100 pb-4">
+                                        <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                            Role
+                                        </p>
+                                        <p className="text-sm text-neutral-700 capitalize">
+                                            {user.role || 'Buyer'}
+                                        </p>
+                                    </div>
+                                    <div className="border-b border-neutral-100 pb-4">
+                                        <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
+                                            Email Verified
+                                        </p>
+                                        <p className="text-sm text-neutral-700 flex items-center gap-2">
+                                            {user.is_email_verified ? (
+                                                <>
+                                                    <span className="text-green-600">Yes</span>
+                                                    <Icons.Check className="w-4 h-4 text-green-600" />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="text-amber-600">No</span>
+                                                    <span className="text-[10px] text-neutral-400">(Verify your email)</span>
+                                                </>
+                                            )}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="border-b border-neutral-100 pb-4">
-                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
-                                        Last Name
-                                    </p>
-                                    <p className="text-sm text-neutral-700">
-                                        {user.last_name || '-'}
-                                    </p>
-                                </div>
-                                <div className="border-b border-neutral-100 pb-4">
-                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
-                                        Email
-                                    </p>
-                                    <p className="text-sm text-neutral-700">
-                                        {user.email}
-                                    </p>
-                                </div>
-                                <div className="border-b border-neutral-100 pb-4">
-                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
-                                        Phone
-                                    </p>
-                                    <p className="text-sm text-neutral-700">
-                                        {user.phone || 'Not provided'}
-                                    </p>
-                                </div>
-                                <div className="border-b border-neutral-100 pb-4">
-                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
-                                        Role
-                                    </p>
-                                    <p className="text-sm text-neutral-700 capitalize">
-                                        {user.role || 'Buyer'}
-                                    </p>
-                                </div>
-                                <div className="border-b border-neutral-100 pb-4">
-                                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mb-1.5">
-                                        Email Verified
-                                    </p>
-                                    <p className="text-sm text-neutral-700 flex items-center gap-2">
-                                        {user.is_email_verified ? (
-                                            <>
-                                                <span className="text-green-600">Yes</span>
-                                                <Icons.Check className="w-4 h-4 text-green-600" />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span className="text-amber-600">No</span>
-                                                <span className="text-[10px] text-neutral-400">(Verify your email)</span>
-                                            </>
-                                        )}
-                                    </p>
-                                </div>
+
+                                {/* Seller Shop Link - Only if user is a seller */}
+                                {isSeller && (
+                                    <div className="border-t border-neutral-100 pt-8">
+                                        <h3 className="text-sm font-light uppercase tracking-[0.2em] text-neutral-400 mb-4">
+                                            Your Shop
+                                        </h3>
+                                        <Link 
+                                            to={`/shop/${user.shop_slug}`}
+                                            className="flex items-center gap-3 border border-neutral-100 p-4 hover:border-black transition-colors group"
+                                        >
+                                            <div className="w-12 h-12 rounded-full bg-neutral-100 overflow-hidden flex-shrink-0">
+                                                {user.shop_avatar ? (
+                                                    <img 
+                                                        src={user.shop_avatar} 
+                                                        alt={user.shop_name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-neutral-400 text-lg font-light">
+                                                        {user.shop_name?.[0]?.toUpperCase() || 'S'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">{user.shop_name}</p>
+                                                <p className="text-[10px] text-neutral-400">View your shop →</p>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </section>
                 </div>
             </div>
+
+            {/* Following Modal - Shows shops this user follows */}
+            <FollowingModal
+                isOpen={showFollowingModal}
+                onClose={() => setShowFollowingModal(false)}
+            />
         </div>
     );
 }

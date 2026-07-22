@@ -2,7 +2,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.dependencies import get_current_user
 from app.database import get_db
+from app.models.catalog.listing import Listing
 from app.models.enums.enums import OrderStatus
+from app.models.order.order import Order, OrderGroup, OrderItem
+from app.models.order.order import OrderGroup
 from app.schemas.order import (
     OrderGroupResponse,
     OrderResponse,
@@ -12,6 +15,7 @@ from app.schemas.order import (
 )
 from app.services.order_service import OrderService
 from app.models.user.user import User
+from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -66,6 +70,31 @@ def get_order_group(
 ):
     """Get an order group with all its orders"""
     return OrderService.get_order_group(order_group_id, current_user, db)
+
+
+@router.get("/groups/me", response_model=list[OrderGroupResponse])
+def view_my_order_groups(
+    current_user: User = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Get all order groups for the current buyer with orders and sellers loaded"""
+    order_groups = (
+        db.query(OrderGroup)
+        .options(
+            joinedload(OrderGroup.orders).joinedload(Order.seller),
+            joinedload(OrderGroup.orders)
+            .joinedload(Order.items)
+            .joinedload(OrderItem.listing)
+            .joinedload(Listing.images),
+            joinedload(OrderGroup.orders).joinedload(Order.buyer),
+            joinedload(OrderGroup.orders).joinedload(Order.review),
+        )
+        .filter(OrderGroup.buyer_id == current_user.id)
+        .order_by(OrderGroup.created_at.desc())
+        .all()
+    )
+
+    return order_groups
 
 
 # ─── Checkout Endpoints ───

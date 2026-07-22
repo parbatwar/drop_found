@@ -1,4 +1,4 @@
-// src/pages/shop/SellerProfile.jsx
+// pages/shop/SellerProfile.jsx
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getSeller } from '../../api/seller';
@@ -61,9 +61,19 @@ function SellerProfile() {
             if (isFollowing) {
                 await unfollowSeller(seller.id);
                 setIsFollowing(false);
+                // Update follower count
+                setSeller(prev => ({
+                    ...prev,
+                    followers_count: prev.followers_count - 1
+                }));
             } else {
                 await followSeller(seller.id);
                 setIsFollowing(true);
+                // Update follower count
+                setSeller(prev => ({
+                    ...prev,
+                    followers_count: prev.followers_count + 1
+                }));
             }
         } catch (err) {
             console.error(err);
@@ -211,12 +221,14 @@ function SellerProfile() {
                         </p>
                     )}
 
-                    {/* Stats with Rating */}
+                    {/* ✅ Stats - Show Followers here (public) */}
                     <div className="flex flex-wrap gap-8 mt-6 pt-6 border-t border-neutral-100">
                         <div>
                             <p className="text-lg font-light">{listings.length}</p>
                             <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Items</p>
                         </div>
+                        
+                        {/* ✅ Followers - Only on shop page */}
                         <div>
                             <button
                                 onClick={() => setShowFollowersModal(true)}
@@ -231,6 +243,7 @@ function SellerProfile() {
                                 </p>
                             </button>
                         </div>
+                        
                         <div>
                             <p className="text-lg font-light">{totalReviews}</p>
                             <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
@@ -397,12 +410,13 @@ function SellerProfile() {
                 </div>
             </div>
 
-            {/* Followers Modal */}
+            {/* ✅ Followers Modal - Shows who follows this shop */}
             <FollowersModal
                 isOpen={showFollowersModal}
                 onClose={() => setShowFollowersModal(false)}
-                sellerId={seller?.id}
-                sellerName={seller?.shop_name}
+                sellerId={seller.id}
+                sellerName={seller.shop_name}
+                sellerAvatar={seller.avatar_url}
             />
         </div>
     );
