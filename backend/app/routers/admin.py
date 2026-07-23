@@ -1,3 +1,4 @@
+# backend/app/routers/admin.py
 from typing import List
 import uuid
 from fastapi import APIRouter, Depends
@@ -17,6 +18,7 @@ def get_pending_sellers(
     admin_user=Depends(require_role(UserRole.admin)),
     db: Session = Depends(get_db),
 ):
+    """Get all pending seller applications with verification details."""
     return AdminService.get_pending_sellers(db=db)
 
 
@@ -27,4 +29,5 @@ def review_seller(
     admin_user=Depends(require_role(UserRole.admin)),
     db: Session = Depends(get_db),
 ):
+    """Review seller application with granular verification control."""
     return AdminService.review_seller(seller_id=seller_id, data=data, db=db)

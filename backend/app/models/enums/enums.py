@@ -1,6 +1,11 @@
 import enum
 
 
+class BusinessType(str, enum.Enum):
+    individual = "individual"
+    registered = "registered"
+
+
 class UserRole(str, enum.Enum):
     buyer = "buyer"
     seller = "seller"
@@ -28,15 +33,15 @@ class SocialPlatform(str, enum.Enum):
 
 
 class OrderStatus(str, enum.Enum):
-    pending = "pending"                     # Order placed, waiting for seller
-    accepted = "accepted"                   # Seller accepted
-    rejected = "rejected"                   # Seller rejected the order
-    cancelled = "cancelled"                 # Cancelled (before ready_for_pickup)
-    ready_for_pickup = "ready_for_pickup"   # Package ready, waiting for delivery person
-    picked_up = "picked_up"                 # Delivery person collected the package
-    out_for_delivery = "out_for_delivery"   # Delivery person is on the way
-    delivered = "delivered"                 # Item delivered to buyer
-    completed = "completed"                 # Auto-completed after 7 days
+    pending = "pending"  # Order placed, waiting for seller
+    accepted = "accepted"  # Seller accepted
+    rejected = "rejected"  # Seller rejected the order
+    cancelled = "cancelled"  # Cancelled (before ready_for_pickup)
+    ready_for_pickup = "ready_for_pickup"  # Package ready, waiting for delivery person
+    picked_up = "picked_up"  # Delivery person collected the package
+    out_for_delivery = "out_for_delivery"  # Delivery person is on the way
+    delivered = "delivered"  # Item delivered to buyer
+    completed = "completed"  # Auto-completed after 7 days
 
 
 class PaymentMethod(str, enum.Enum):
@@ -54,8 +59,3 @@ class PaymentStatus(str, enum.Enum):
 class PayoutStatus(str, enum.Enum):
     pending = "pending"
     paid = "paid"
-
-
-class BusinessType(str, enum.Enum):
-    brand = "brand"
-    retailer = "retailer"

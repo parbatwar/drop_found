@@ -1,8 +1,15 @@
+# backend/app/routers/seller.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.database import get_db
-from app.schemas.seller import SellerApply, SellerResponse, SellerUpdate
+from app.schemas.seller import (
+    SellerApply,
+    SellerResponse,
+    SellerUpdate,
+    SellerVerificationStatusResponse,
+    BusinessVerificationRequest,
+)
 from app.services.seller_service import SellerService
 from app.models.user.user import User
 from app.core.dependencies import get_current_user_optional
@@ -18,6 +25,7 @@ def apply_for_seller(
 ):
     """
     Requires the user to be authenticated and not already a seller.
+    ✅ Now includes verification documents and business type.
     """
     return SellerService.apply_for_seller(data=data, current_user=current_user, db=db)
 
@@ -55,3 +63,13 @@ def get_seller_profile(
 ):
     """Get a seller profile by slug for viewing."""
     return SellerService.get_seller_profile(slug, db, current_user)
+
+
+# ✅ New endpoint: Get verification status
+@router.get("/verification/status", response_model=dict)
+def get_verification_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get the current user's seller verification status."""
+    return SellerService.get_seller_verification_status(current_user, db)

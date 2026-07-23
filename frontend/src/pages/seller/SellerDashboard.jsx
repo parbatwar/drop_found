@@ -174,6 +174,42 @@ function SellerDashboard() {
                                         <h3 className="text-lg font-light">
                                             {seller.shop_name}
                                         </h3>
+                                        
+                                        {/* ✅ Verification Status Badges */}
+                                        <div className="flex items-center justify-center gap-2 mt-1">
+                                            {/* Green Badge - Identity Verified */}
+                                            {seller.is_identity_verified && seller.verification_status === 'approved' && !seller.is_business_verified && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-green-50 text-green-700 border border-green-200 rounded-full">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                                    Individual Verified
+                                                </span>
+                                            )}
+                                            
+                                            {/* Blue Badge - Business Verified */}
+                                            {seller.is_business_verified && seller.verification_status === 'approved' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                                                    <Icons.Verified className="w-3 h-3" />
+                                                    Business Verified
+                                                </span>
+                                            )}
+                                            
+                                            {/* Pending */}
+                                            {seller.verification_status === 'pending' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                    Under Review
+                                                </span>
+                                            )}
+                                            
+                                            {/* Rejected */}
+                                            {seller.verification_status === 'rejected' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-red-50 text-red-700 border border-red-200 rounded-full">
+                                                    <Icons.X className="w-3 h-3" />
+                                                    Rejected
+                                                </span>
+                                            )}
+                                        </div>
+                                        
                                         <span className={`inline-block mt-1 text-[10px] uppercase tracking-widest ${
                                             seller.verification_status === 'approved' ? 'text-green-600' :
                                             seller.verification_status === 'pending' ? 'text-yellow-600' :
