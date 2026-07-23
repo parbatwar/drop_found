@@ -1,31 +1,54 @@
 // frontend/src/pages/admin/AdminSellers.jsx
 import { useEffect, useState } from 'react';
-import { getPendingSellers, reviewSeller } from '../../api/seller';
+import { getPendingSellers, reviewSeller, getSellers } from '../../api/seller';
+import AdminTable from '../../components/admin/AdminTable';
+import AdminFilters from '../../components/admin/AdminFilters';
+import AdminStatsBar from '../../components/admin/AdminStatsBar';
+import DocumentViewerModal from '../../components/admin/DocumentViewerModal';
 import { Icons } from '../../components/Icons';
 
 function AdminSellers() {
-    const [applications, setApplications] = useState([]);
+    const [allSellers, setAllSellers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [actionId, setActionId] = useState(null);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
-    const [selectedApplication, setSelectedApplication] = useState(null);
+    const [selectedSeller, setSelectedSeller] = useState(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [actionId, setActionId] = useState(null);
+
+    // Filters state
+    const [filters, setFilters] = useState({
+        status: 'all',
+        type: 'all',
+        sellerType: 'all',
+    });
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        fetchApplications();
+        fetchSellers();
     }, []);
 
-    const fetchApplications = async () => {
+    const fetchSellers = async () => {
         setLoading(true);
         setError('');
         try {
-            const res = await getPendingSellers();
-            console.log('📦 Pending sellers response:', res.data);
-            setApplications(res.data || []);
+            const [pendingRes, approvedRes] = await Promise.all([
+                getPendingSellers(),
+                getSellers()
+            ]);
+            
+            const pending = pendingRes.data || [];
+            const approved = approvedRes.data || [];
+            
+            const all = [
+                ...pending.map(s => ({ ...s, status: 'pending' })),
+                ...approved.map(s => ({ ...s, status: 'approved' }))
+            ];
+            
+            setAllSellers(all);
         } catch (err) {
-            console.error("Failed fetching applications:", err);
-            setError(err.response?.data?.detail || "Could not load pending applications.");
+            console.error("Failed fetching sellers:", err);
+            setError(err.response?.data?.detail || "Could not load sellers.");
         } finally {
             setLoading(false);
         }
@@ -43,7 +66,7 @@ function AdminSellers() {
                 verify_business: verifyBusiness,
             });
             setSuccessMessage(`Application ${status === 'approved' ? 'approved' : 'rejected'} successfully.`);
-            setApplications((prev) => prev.filter((app) => app.id !== id));
+            await fetchSellers();
         } catch (err) {
             console.error(`Action failed for ID ${id}:`, err);
             setError(err.response?.data?.detail || "Failed to process application.");
@@ -68,7 +91,6 @@ function AdminSellers() {
     const getDocumentUrl = (app, docType) => {
         if (!app) return null;
         
-        // 1. Check individual fields first (most reliable)
         const directMap = {
             'identity_front': app.identity_front_url,
             'identity_back': app.identity_back_url,
@@ -80,7 +102,6 @@ function AdminSellers() {
             return directMap[docType];
         }
         
-        // 2. Check verification_documents JSON
         if (app.verification_documents) {
             const altKeys = {
                 'identity_front': ['identity_front', 'identity_front_url', 'front_id'],
@@ -99,39 +120,242 @@ function AdminSellers() {
         return null;
     };
 
-    // ✅ Check if any documents exist
     const hasDocuments = (app) => {
         const docTypes = ['identity_front', 'identity_back', 'pan_certificate', 'registration_certificate'];
         return docTypes.some(type => getDocumentUrl(app, type));
     };
 
-    // ✅ Debug: Log what's available when modal opens
-    const openDocumentModal = (app) => {
-        console.log('🔍 Opening document modal for:', app.shop_name);
-        console.log('🔍 Full app object:', app);
-        console.log('🔍 Verification Documents JSON:', app.verification_documents);
-        console.log('🔍 Identity Front URL:', app.identity_front_url);
-        console.log('🔍 Identity Back URL:', app.identity_back_url);
-        console.log('🔍 PAN Certificate URL:', app.pan_certificate_url);
-        console.log('🔍 Registration Certificate URL:', app.registration_certificate_url);
-        console.log('🔍 All keys:', Object.keys(app));
+    // ✅ Filter logic
+    const getFilteredSellers = () => {
+        let filtered = allSellers;
         
-        // Check each document type
-        const docTypes = ['identity_front', 'identity_back', 'pan_certificate', 'registration_certificate'];
-        docTypes.forEach(type => {
-            const url = getDocumentUrl(app, type);
-            console.log(`🔍 ${type} URL:`, url);
-        });
+        // ✅ Normalize filter values
+        const statusFilter = filters.status || 'all';
+        const typeFilter = filters.type || 'all';
+        const sellerTypeFilter = filters.sellerType || 'all';
         
-        setSelectedApplication(app);
-        setShowDetailsModal(true);
+        // Status filter
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(s => {
+                const status = (s.verification_status || s.status || '').toLowerCase();
+                return status === statusFilter.toLowerCase();
+            });
+        }
+        
+        // Type filter
+        if (typeFilter !== 'all') {
+            filtered = filtered.filter(s => {
+                const isBiz = isBusiness(s);
+                return typeFilter === 'business' ? isBiz : !isBiz;
+            });
+        }
+        
+        // Seller Type filter
+        if (sellerTypeFilter !== 'all') {
+            filtered = filtered.filter(s => {
+                const sellerType = (s.seller_type || '').toLowerCase();
+                return sellerType === sellerTypeFilter.toLowerCase();
+            });
+        }
+        
+        // Search
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(s => 
+                s.shop_name?.toLowerCase().includes(query) ||
+                s.business_phone?.includes(query) ||
+                s.business_email?.toLowerCase().includes(query) ||
+                s.location?.toLowerCase().includes(query)
+            );
+        }
+        
+        return filtered;
     };
+    
+    const filteredSellers = getFilteredSellers();
+
+    // ✅ Stats (rejected removed)
+    const stats = {
+        total: allSellers.length,
+        pending: allSellers.filter(s => s.verification_status === 'pending' || s.status === 'pending').length,
+        approved: allSellers.filter(s => s.verification_status === 'approved' || s.status === 'approved').length,
+        business: allSellers.filter(s => isBusiness(s)).length,
+        individual: allSellers.filter(s => !isBusiness(s)).length,
+    };
+
+    // ✅ Status badge (rejected removed)
+    const StatusBadge = ({ status }) => {
+        const configs = {
+            pending: { label: 'Pending', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+            approved: { label: 'Approved', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+        };
+        const config = configs[status] || configs.pending;
+        return (
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-medium rounded-full ${config.bg} ${config.color} border ${config.border}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${config.color.replace('text', 'bg')}`} />
+                {config.label}
+            </span>
+        );
+    };
+
+    // ✅ Column definitions
+    const columns = [
+        {
+            key: 'shop',
+            label: 'Shop',
+            render: (row) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-medium text-neutral-500 flex-shrink-0">
+                        {getInitials(row.shop_name)}
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-neutral-800">{row.shop_name}</p>
+                        <p className="text-[9px] text-neutral-400">{row.seller_type || 'N/A'}</p>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'type',
+            label: 'Type',
+            render: (row) => (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-medium rounded-full ${
+                    isBusiness(row) 
+                        ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                        : 'bg-green-50 text-green-600 border border-green-200'
+                }`}>
+                    {isBusiness(row) ? 'Business' : 'Individual'}
+                </span>
+            ),
+        },
+        {
+            key: 'contact',
+            label: 'Contact',
+            className: 'hidden md:table-cell',
+            render: (row) => (
+                <div>
+                    {row.business_phone && <p className="text-sm text-neutral-600">{row.business_phone}</p>}
+                    {row.business_email && <p className="text-xs text-neutral-400 truncate max-w-[150px]">{row.business_email}</p>}
+                </div>
+            ),
+        },
+        {
+            key: 'location',
+            label: 'Location',
+            className: 'hidden lg:table-cell',
+            render: (row) => <span className="text-sm text-neutral-500">{row.location || '—'}</span>,
+        },
+        {
+            key: 'status',
+            label: 'Status',
+            render: (row) => <StatusBadge status={row.verification_status || row.status} />,
+        },
+        {
+            key: 'documents',
+            label: 'Documents',
+            render: (row) => {
+                const hasDocs = hasDocuments(row);
+                return hasDocs ? (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedSeller(row);
+                            setShowDetailsModal(true);
+                        }}
+                        className="text-[9px] text-blue-600 hover:text-blue-800 underline transition-colors flex items-center gap-1"
+                    >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View
+                    </button>
+                ) : (
+                    <span className="text-[9px] text-neutral-400">No docs</span>
+                );
+            },
+        },
+        {
+            key: 'actions',
+            label: 'Actions',
+            className: 'text-right',
+            render: (row) => {
+                const isPending = row.verification_status === 'pending' || row.status === 'pending';
+                return (
+                    <div className="flex justify-end gap-2 flex-wrap">
+                        {isPending ? (
+                            <>
+                                <button
+                                    disabled={actionId !== null}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAction(row.id, 'approved', true, isBusiness(row));
+                                    }}
+                                    className="px-3 py-1 bg-black text-white text-[9px] uppercase tracking-wider hover:bg-neutral-800 transition-colors disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed rounded"
+                                >
+                                    Approve
+                                </button>
+                                <button
+                                    disabled={actionId !== null}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAction(row.id, 'rejected', false, false);
+                                    }}
+                                    className="px-3 py-1 border border-red-300 text-red-500 text-[9px] uppercase tracking-wider hover:bg-red-50 transition-colors disabled:border-neutral-100 disabled:text-neutral-300 disabled:cursor-not-allowed rounded"
+                                >
+                                    Reject
+                                </button>
+                            </>
+                        ) : (
+                            <span className="text-[9px] text-green-600 uppercase tracking-wider">
+                                ✅ Approved
+                            </span>
+                        )}
+                    </div>
+                );
+            },
+        },
+    ];
+
+    // ✅ Filter definitions (rejected removed from options)
+    const filterDefinitions = [
+        {
+            key: 'status',
+            label: 'Status',
+            defaultValue: 'all',
+            options: [
+                { value: 'all', label: 'All Status' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'approved', label: 'Approved' },
+            ],
+        },
+        {
+            key: 'type',
+            label: 'Type',
+            defaultValue: 'all',
+            options: [
+                { value: 'all', label: 'All Types' },
+                { value: 'individual', label: 'Individual' },
+                { value: 'business', label: 'Business' },
+            ],
+        },
+        {
+            key: 'sellerType',
+            label: 'Category',
+            defaultValue: 'all',  // ✅ Make sure this is set
+            options: [
+                { value: 'all', label: 'All Categories' },
+                { value: 'thrift', label: 'Thrift' },
+                { value: 'retailer', label: 'Retailer' },
+            ],
+        },
+    ];
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
-                    Loading Applications...
+                    Loading Sellers...
                 </div>
             </div>
         );
@@ -140,343 +364,73 @@ function AdminSellers() {
     return (
         <div>
             {/* Header */}
-            <div className="flex items-center justify-between mb-8 pb-6 border-b border-neutral-100">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-100">
                 <div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-400">
-                            <Icons.Users className="w-4 h-4" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-light tracking-tight text-black">
-                                Pending Sellers
-                            </h1>
-                            <p className="text-sm text-neutral-500 mt-0.5">
-                                Review and manage seller applications with verification documents.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div className="text-right">
-                    <span className="text-2xl font-light text-neutral-300">
-                        {applications.length}
-                    </span>
-                    <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                        Pending
+                    <h1 className="text-2xl font-light tracking-tight text-black">
+                        Seller Management
+                    </h1>
+                    <p className="text-sm text-neutral-500 mt-0.5">
+                        Manage all seller applications and their verification status.
                     </p>
                 </div>
             </div>
 
+            {/* Stats Bar */}
+            <AdminStatsBar stats={stats} className="mb-4" />
+
             {/* Status Messages */}
             {error && (
-                <div className="mb-6 bg-red-50 border-l-2 border-red-400 px-4 py-3 text-sm text-red-600">
+                <div className="mb-4 bg-red-50 border-l-2 border-red-400 px-4 py-3 text-sm text-red-600">
                     {error}
                 </div>
             )}
             {successMessage && (
-                <div className="mb-6 bg-green-50 border-l-2 border-green-400 px-4 py-3 text-sm text-green-600">
+                <div className="mb-4 bg-green-50 border-l-2 border-green-400 px-4 py-3 text-sm text-green-600">
                     {successMessage}
                 </div>
             )}
 
-            {/* Applications List */}
-            {applications.length === 0 ? (
-                <div className="border border-neutral-200 bg-neutral-50 p-20 text-center">
-                    <div className="text-4xl font-light text-neutral-300 mb-3">📋</div>
-                    <p className="text-sm text-neutral-400 uppercase tracking-wider">
-                        No pending applications
-                    </p>
-                    <p className="text-[10px] text-neutral-300 mt-1">
-                        All seller applications have been reviewed.
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {applications.map((app) => (
-                        <div 
-                            key={app.id} 
-                            className="bg-white border border-neutral-100 p-5 hover:border-neutral-300 transition-colors duration-200"
-                        >
-                            <div className="flex flex-col md:flex-row md:items-center gap-4">
-                                {/* Application Info */}
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center flex-wrap gap-2.5 mb-1.5">
-                                        <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium text-neutral-500 flex-shrink-0">
-                                            {getInitials(app.shop_name)}
-                                        </div>
-                                        <div>
-                                            <h3 className="text-base font-light text-neutral-900">
-                                                {app.shop_name}
-                                            </h3>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[9px] uppercase tracking-widest bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded">
-                                                    {app.seller_type}
-                                                </span>
-                                                <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded ${
-                                                    isBusiness(app) 
-                                                        ? 'bg-blue-50 text-blue-600' 
-                                                        : 'bg-green-50 text-green-600'
-                                                }`}>
-                                                    {isBusiness(app) ? 'Business' : 'Individual'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {app.bio && (
-                                        <p className="text-sm text-neutral-500 leading-relaxed line-clamp-2">
-                                            {app.bio}
-                                        </p>
-                                    )}
-                                    
-                                    <div className="flex items-center gap-4 mt-2">
-                                        {app.location && (
-                                            <span className="text-[9px] text-neutral-400 flex items-center gap-1">
-                                                <Icons.Location className="w-3 h-3" />
-                                                {app.location}
-                                            </span>
-                                        )}
-                                        <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                                            Applied: {new Date(app.created_at).toLocaleDateString()}
-                                        </span>
-                                        {app.business_phone && (
-                                            <span className="text-[9px] text-neutral-400">
-                                                📞 {app.business_phone}
-                                            </span>
-                                        )}
-                                        {hasDocuments(app) && (
-                                            <span className="text-[9px] text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200">
-                                                📎 Documents Uploaded
-                                            </span>
-                                        )}
-                                        <button
-                                            onClick={() => openDocumentModal(app)}
-                                            className="text-[9px] text-blue-600 hover:text-blue-800 underline transition-colors"
-                                        >
-                                            View Documents
-                                        </button>
-                                    </div>
-                                </div>
+            {/* Filters */}
+            <AdminFilters
+                filters={filterDefinitions}
+                onFilterChange={(newFilters) => setFilters(newFilters)}
+                onSearch={(query) => setSearchQuery(query)}
+                onClear={() => {
+                    setFilters({ status: 'all', type: 'all', sellerType: 'all' });
+                    setSearchQuery('');
+                }}
+                searchPlaceholder="Search by shop name, phone, email..."
+                className="mb-6"
+            />
 
-                                {/* Actions */}
-                                <div className="flex items-center gap-2.5 flex-shrink-0">
-                                    <button
-                                        type="button"
-                                        disabled={actionId !== null}
-                                        onClick={() => handleAction(app.id, 'approved', true, isBusiness(app))}
-                                        className="flex items-center gap-1.5 bg-black text-white px-4 py-2 text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-colors duration-200 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
-                                    >
-                                        <Icons.Check className="w-3.5 h-3.5" />
-                                        {actionId === app.id ? '...' : 'Approve'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        disabled={actionId !== null}
-                                        onClick={() => handleAction(app.id, 'rejected', false, false)}
-                                        className="flex items-center gap-1.5 border border-neutral-200 text-neutral-600 px-4 py-2 text-[10px] uppercase tracking-[0.2em] hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-colors duration-200 disabled:border-neutral-100 disabled:text-neutral-300 disabled:cursor-not-allowed"
-                                    >
-                                        <Icons.X className="w-3.5 h-3.5" />
-                                        Reject
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            {/* Table */}
+            <AdminTable
+                columns={columns}
+                data={filteredSellers}
+                emptyMessage="No sellers found. Try adjusting your filters."
+            />
 
-            {/* Document Details Modal */}
-            {showDetailsModal && selectedApplication && (
-                <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0" onClick={() => setShowDetailsModal(false)} />
-                    <div className="relative bg-white w-full max-w-2xl max-h-[80vh] overflow-y-auto border border-neutral-100 shadow-lg">
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-100">
-                            <div>
-                                <h2 className="text-lg font-light tracking-tight text-black">
-                                    Verification Documents
-                                </h2>
-                                <p className="text-[10px] text-neutral-400 uppercase tracking-wider">
-                                    {selectedApplication.shop_name}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded ${
-                                        isBusiness(selectedApplication) 
-                                            ? 'bg-blue-50 text-blue-600' 
-                                            : 'bg-green-50 text-green-600'
-                                    }`}>
-                                        {isBusiness(selectedApplication) ? 'Business' : 'Individual'}
-                                    </span>
-                                    {selectedApplication.business_phone && (
-                                        <span className="text-[9px] text-neutral-400">
-                                            📞 {selectedApplication.business_phone}
-                                        </span>
-                                    )}
-                                    {selectedApplication.business_email && (
-                                        <span className="text-[9px] text-neutral-400">
-                                            ✉️ {selectedApplication.business_email}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowDetailsModal(false)}
-                                className="text-neutral-400 hover:text-black transition-colors"
-                            >
-                                <Icons.X className="w-5 h-5" />
-                            </button>
-                        </div>
+            {/* Footer */}
+            <div className="mt-4 flex items-center justify-between text-[9px] text-neutral-400 uppercase tracking-wider">
+                <span>{filteredSellers.length} sellers found</span>
+            </div>
 
-                        <div className="px-6 py-6 space-y-6">
-
-                            {/* Identity Documents */}
-                            <div>
-                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3">
-                                    Identity Documents
-                                </h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {getDocumentUrl(selectedApplication, 'identity_front') && (
-                                        <div className="border border-neutral-200 rounded overflow-hidden">
-                                            <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-200">
-                                                <p className="text-[9px] text-neutral-500 uppercase tracking-wider">ID Front</p>
-                                            </div>
-                                            <img 
-                                                src={getDocumentUrl(selectedApplication, 'identity_front')} 
-                                                alt="ID Front"
-                                                className="w-full h-auto object-cover"
-                                                onClick={() => window.open(getDocumentUrl(selectedApplication, 'identity_front'), '_blank')}
-                                                onError={(e) => {
-                                                    e.target.src = '';
-                                                    e.target.alt = 'Image failed to load';
-                                                    e.target.className = 'w-full h-32 object-contain bg-neutral-100 text-neutral-400 text-xs flex items-center justify-center';
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                    {getDocumentUrl(selectedApplication, 'identity_back') && (
-                                        <div className="border border-neutral-200 rounded overflow-hidden">
-                                            <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-200">
-                                                <p className="text-[9px] text-neutral-500 uppercase tracking-wider">ID Back</p>
-                                            </div>
-                                            <img 
-                                                src={getDocumentUrl(selectedApplication, 'identity_back')} 
-                                                alt="ID Back"
-                                                className="w-full h-auto object-cover"
-                                                onError={(e) => {
-                                                    e.target.src = '';
-                                                    e.target.alt = 'Image failed to load';
-                                                    e.target.className = 'w-full h-32 object-contain bg-neutral-100 text-neutral-400 text-xs flex items-center justify-center';
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                    {!getDocumentUrl(selectedApplication, 'identity_front') && 
-                                     !getDocumentUrl(selectedApplication, 'identity_back') && (
-                                        <div className="col-span-2 text-center py-8 text-neutral-400 text-sm border border-dashed border-neutral-200 rounded">
-                                            No identity documents uploaded
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Business Documents */}
-                            {isBusiness(selectedApplication) && (
-                                <div className="border-t border-neutral-100 pt-6">
-                                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3">
-                                        Business Documents
-                                    </h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {getDocumentUrl(selectedApplication, 'pan_certificate') && (
-                                            <div className="border border-neutral-200 rounded overflow-hidden">
-                                                <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-200">
-                                                    <p className="text-[9px] text-neutral-500 uppercase tracking-wider">PAN Certificate</p>
-                                                </div>
-                                                <img 
-                                                    src={getDocumentUrl(selectedApplication, 'pan_certificate')} 
-                                                    alt="PAN Certificate"
-                                                    className="w-full h-auto object-cover"
-                                                    onError={(e) => {
-                                                        e.target.src = '';
-                                                        e.target.alt = 'Image failed to load';
-                                                        e.target.className = 'w-full h-32 object-contain bg-neutral-100 text-neutral-400 text-xs flex items-center justify-center';
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                        {getDocumentUrl(selectedApplication, 'registration_certificate') && (
-                                            <div className="border border-neutral-200 rounded overflow-hidden">
-                                                <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-200">
-                                                    <p className="text-[9px] text-neutral-500 uppercase tracking-wider">Registration Certificate</p>
-                                                </div>
-                                                <img 
-                                                    src={getDocumentUrl(selectedApplication, 'registration_certificate')} 
-                                                    alt="Registration Certificate"
-                                                    className="w-full h-auto object-cover"
-                                                    onError={(e) => {
-                                                        e.target.src = '';
-                                                        e.target.alt = 'Image failed to load';
-                                                        e.target.className = 'w-full h-32 object-contain bg-neutral-100 text-neutral-400 text-xs flex items-center justify-center';
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                        {!getDocumentUrl(selectedApplication, 'pan_certificate') && 
-                                         !getDocumentUrl(selectedApplication, 'registration_certificate') && (
-                                            <div className="col-span-2 text-center py-8 text-neutral-400 text-sm border border-dashed border-neutral-200 rounded">
-                                                No business documents uploaded
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-neutral-600 border-t border-neutral-100 pt-4">
-                                        {selectedApplication.business_registration_number && (
-                                            <div>
-                                                <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Registration Number</p>
-                                                <p className="font-mono text-sm">{selectedApplication.business_registration_number}</p>
-                                            </div>
-                                        )}
-                                        {selectedApplication.pan_number && (
-                                            <div>
-                                                <p className="text-[9px] text-neutral-400 uppercase tracking-wider">PAN Number</p>
-                                                <p className="font-mono text-sm">{selectedApplication.pan_number}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Modal Footer with Actions */}
-                        <div className="px-6 py-4 border-t border-neutral-100 bg-neutral-50 flex justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    handleAction(selectedApplication.id, 'approved', true, isBusiness(selectedApplication));
-                                    setShowDetailsModal(false);
-                                }}
-                                className="px-6 py-2.5 text-[10px] uppercase tracking-[0.2em] bg-black text-white hover:bg-neutral-800 transition-colors"
-                            >
-                                Approve
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    handleAction(selectedApplication.id, 'rejected', false, false);
-                                    setShowDetailsModal(false);
-                                }}
-                                className="px-6 py-2.5 text-[10px] uppercase tracking-[0.2em] border border-red-300 text-red-500 hover:bg-red-50 transition-colors"
-                            >
-                                Reject
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowDetailsModal(false)}
-                                className="px-6 py-2.5 text-[10px] uppercase tracking-[0.2em] text-neutral-500 hover:text-black transition-colors"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Document Modal */}
+            <DocumentViewerModal
+                isOpen={showDetailsModal}
+                onClose={() => setShowDetailsModal(false)}
+                seller={selectedSeller}
+                getDocumentUrl={getDocumentUrl}
+                isBusiness={isBusiness}
+                onApprove={(id) => {
+                    handleAction(id, 'approved', true, isBusiness(selectedSeller));
+                    setShowDetailsModal(false);
+                }}
+                onReject={(id) => {
+                    handleAction(id, 'rejected', false, false);
+                    setShowDetailsModal(false);
+                }}
+            />
         </div>
     );
 }

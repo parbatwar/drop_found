@@ -1,5 +1,6 @@
 // frontend/src/pages/seller/SellerApply.jsx
 import { useSellerApplication } from '../../hooks/useSellerApplication';
+import { Link, useNavigate } from 'react-router-dom';
 import StepProgress from '../../components/SellerApply/StepProgress';
 import FileUpload from '../../components/SellerApply/FileUpload';
 import FormSection from '../../components/SellerApply/FormSection';
@@ -10,6 +11,7 @@ const capitalizeSellerType = (type) => {
 };
 
 function SellerApply() {
+    const navigate = useNavigate();
     const {
         currentStep,
         businessType,
@@ -21,6 +23,9 @@ function SellerApply() {
         formData,
         sellerTypes,
         previews,
+        hasPendingApplication,
+        applicationStatus,
+        isInitialized,
         setBusinessType,
         handleChange,
         handleUpload,
@@ -28,9 +33,11 @@ function SellerApply() {
         goToNextStep,
         goToPreviousStep,
         handleSubmit,
+        resetRejectedStatus,
     } = useSellerApplication();
 
-    if (fetchingOptions) {
+    // ✅ Show loading state while checking status
+    if (!isInitialized || fetchingOptions) {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center">
                 <div className="text-[10px] tracking-[0.4em] uppercase text-gray-400 animate-pulse">
@@ -40,6 +47,64 @@ function SellerApply() {
         );
     }
 
+    // ✅ Show pending application message
+    if (hasPendingApplication && applicationStatus === 'pending') {
+        return (
+            <div className="bg-white min-h-screen flex items-center justify-center px-4">
+                <div className="max-w-md w-full text-center">
+                    <div className="text-6xl mb-6">⏳</div>
+                    <h1 className="text-3xl font-light tracking-tight text-black mb-3">
+                        Application Under Review
+                    </h1>
+                    <p className="text-gray-500 leading-relaxed mb-6">
+                        Your seller application is currently being reviewed by our team.
+                        This usually takes 1-2 business days.
+                    </p>
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-amber-700">
+                            📧 We'll notify you via email once your application is approved.
+                        </p>
+                    </div>
+                    <Link 
+                        to="/" 
+                        className="inline-block border border-black px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-300"
+                    >
+                        Return to Home
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    // ✅ Show rejected message with Reapply Now button - FIXED
+    if (applicationStatus === 'rejected') {
+        return (
+            <div className="bg-white min-h-screen flex items-center justify-center px-4">
+                <div className="max-w-md w-full text-center">
+                    <div className="text-6xl mb-6">📋</div>
+                    <h1 className="text-3xl font-light tracking-tight text-black mb-3">
+                        Application Not Approved
+                    </h1>
+                    <p className="text-gray-500 leading-relaxed mb-6">
+                        Your seller application was not approved. You can reapply with updated information.
+                    </p>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-red-700">
+                            Please review your application details and ensure all documents are clear and valid.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={resetRejectedStatus}  // ✅ FIXED: Just call resetRejectedStatus, no navigation or reload
+                        className="bg-black text-white px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-gray-800 transition-colors duration-300"
+                    >
+                        Reapply Now
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ✅ Show the form (only if no pending/approved/rejected)
     return (
         <div className="bg-white min-h-screen">
             <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-16">
@@ -283,7 +348,6 @@ function SellerApply() {
                                 <span className="text-xs text-amber-600">Accepted: JPG, PNG, WebP (Max 2MB)</span>
                             </div>
 
-                            {/* ✅ ID Front - Images only */}
                             <FileUpload
                                 label="ID Front"
                                 preview={previews.identity_front}
@@ -294,7 +358,6 @@ function SellerApply() {
                                 isDocument={false}
                             />
 
-                            {/* ✅ ID Back - Images only */}
                             <FileUpload
                                 label="ID Back"
                                 preview={previews.identity_back}
@@ -357,7 +420,6 @@ function SellerApply() {
                                         <span className="text-xs text-blue-600">Takes 2-3 business days.</span>
                                     </div>
 
-                                    {/* ✅ PAN Certificate - Accepts PDF */}
                                     <FileUpload
                                         label="PAN Certificate"
                                         preview={previews.pan_certificate}
@@ -368,7 +430,6 @@ function SellerApply() {
                                         isDocument={true}
                                     />
 
-                                    {/* ✅ Registration Certificate - Accepts PDF */}
                                     <FileUpload
                                         label="Registration Certificate"
                                         preview={previews.registration_certificate}

@@ -29,3 +29,5 @@ export const getPendingSellers = () => apiClient.get('/admin/sellers/pending');
 // ✅ New: Review seller (admin)
 export const reviewSeller = (sellerId, data) => 
     apiClient.patch(`/admin/sellers/${sellerId}/review`, data);
+
+export const getApplicationStatus = () => apiClient.get('/sellers/application/status');

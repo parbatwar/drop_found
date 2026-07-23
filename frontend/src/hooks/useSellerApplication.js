@@ -1,7 +1,7 @@
 // frontend/src/hooks/useSellerApplication.js
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { applySeller, getMySellerProfile } from '../api/seller';
+import { applySeller, getMySellerProfile, getApplicationStatus } from '../api/seller';
 import { getSellerOptions } from '../api/meta';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary';
 
@@ -21,6 +21,13 @@ export const useSellerApplication = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [uploading, setUploading] = useState({});
+    
+    const [applicationStatus, setApplicationStatus] = useState(null);
+    const [hasPendingApplication, setHasPendingApplication] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const [existingProfile, setExistingProfile] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [isReapplyingManually, setIsReapplyingManually] = useState(false); // ✅ New flag
     
     const [formData, setFormData] = useState({
         shop_name: '',
@@ -52,52 +59,166 @@ export const useSellerApplication = () => {
     const formDataRef = useRef(formData);
     const isBusiness = businessType === 'registered';
 
+    // ✅ Reset rejected status to allow reapplication
+    const resetRejectedStatus = () => {
+        console.log('🔄 Resetting rejected status for reapplication...');
+        setIsReapplyingManually(true); // ✅ Set the flag
+        setApplicationStatus(null);
+        setHasPendingApplication(false);
+        setIsReapplying(true);
+        setShowForm(true);
+        setIsInitialized(true);
+        setFetchingOptions(false);
+        
+        // Reset form to allow reapplication
+        setFormData({
+            shop_name: '',
+            bio: '',
+            location: '',
+            seller_type: '',
+            avatar_url: '',
+            business_type: 'individual',
+            business_phone: '',
+            business_email: '',
+            identity_front_url: '',
+            identity_back_url: '',
+            selfie_url: '',
+            pan_certificate_url: '',
+            registration_certificate_url: '',
+            business_registration_number: '',
+            pan_number: '',
+        });
+        setPreviews({
+            logo: null,
+            identity_front: null,
+            identity_back: null,
+            selfie: null,
+            pan_certificate: null,
+            registration_certificate: null,
+        });
+        setError('');
+        setCurrentStep(1);
+    };
+
     useEffect(() => {
         const init = async () => {
             try {
-                let existing = null;
-                try {
-                    const profile = await getMySellerProfile();
-                    const status = profile.data?.verification_status;
-                    if (status === 'pending' || status === 'approved') {
+                // ✅ If we're manually reapplying, skip the status check
+                if (isReapplyingManually) {
+                    console.log('🔄 Manual reapply - skipping status check');
+                    setIsInitialized(true);
+                    setFetchingOptions(false);
+                    setShowForm(true);
+                    // Load seller options
+                    try {
+                        const options = await getSellerOptions();
+                        const types = options.data?.seller_types || [];
+                        setSellerTypes(types);
+                        if (types.length) {
+                            setFormData(prev => ({ ...prev, seller_type: types[0] }));
+                        }
+                    } catch (e) {
+                        console.error('Could not load seller options:', e);
+                    }
+                    return;
+                }
+
+                console.log('🔍 Checking application status...');
+                
+                const statusRes = await getApplicationStatus();
+                const statusData = statusRes.data;
+                console.log('🔍 Application status response:', statusData);
+                
+                if (statusData.has_applied) {
+                    console.log('🔍 Status:', statusData.status);
+                    
+                    if (statusData.status === 'pending') {
+                        console.log('✅ Pending application found!');
+                        setHasPendingApplication(true);
+                        setApplicationStatus('pending');
+                        setIsInitialized(true);
+                        setFetchingOptions(false);
+                        return;
+                    }
+                    
+                    if (statusData.status === 'approved') {
+                        console.log('✅ Approved seller, redirecting to dashboard');
                         navigate('/seller/dashboard', { replace: true });
                         return;
                     }
-                    if (status === 'rejected') {
-                        existing = profile.data;
+                    
+                    if (statusData.status === 'rejected') {
+                        console.log('❌ Rejected application found');
                         setIsReapplying(true);
+                        setApplicationStatus('rejected');
+                        setShowForm(false); // Don't show form yet, show rejected message first
+                        
+                        // Load existing data for reapplication (but don't show form yet)
+                        try {
+                            const profileRes = await getMySellerProfile();
+                            const profileData = profileRes.data;
+                            setExistingProfile(profileData);
+                            if (profileData) {
+                                const types = await getSellerOptions();
+                                const typesData = types.data?.seller_types || [];
+                                setSellerTypes(typesData);
+                                
+                                setFormData(prev => ({
+                                    ...prev,
+                                    shop_name: profileData.shop_name || '',
+                                    bio: profileData.bio || '',
+                                    location: profileData.location || '',
+                                    seller_type: profileData.seller_type || typesData[0] || '',
+                                    avatar_url: profileData.avatar_url || '',
+                                    business_type: profileData.business_type || 'individual',
+                                    business_phone: profileData.business_phone || '',
+                                    business_email: profileData.business_email || '',
+                                }));
+                                setBusinessType(profileData.business_type || 'individual');
+                                if (profileData.avatar_url) {
+                                    setPreviews(prev => ({ ...prev, logo: profileData.avatar_url }));
+                                }
+                            }
+                        } catch (err) {
+                            console.log('Could not load rejected profile data:', err);
+                        }
+                        setIsInitialized(true);
+                        setFetchingOptions(false);
+                        return;
                     }
-                } catch (e) {}
-
+                }
+                
+                // ✅ No application found - load fresh form
+                console.log('📝 No existing application found, loading form...');
+                setShowForm(true);
                 const options = await getSellerOptions();
                 const types = options.data?.seller_types || [];
                 setSellerTypes(types);
-
-                if (existing) {
-                    setFormData(prev => ({
-                        ...prev,
-                        shop_name: existing.shop_name || '',
-                        bio: existing.bio || '',
-                        location: existing.location || '',
-                        seller_type: existing.seller_type || types[0] || '',
-                        avatar_url: existing.avatar_url || '',
-                        business_type: existing.business_type || 'individual',
-                        business_phone: existing.business_phone || '',
-                        business_email: existing.business_email || '',
-                    }));
-                    setBusinessType(existing.business_type || 'individual');
-                    if (existing.avatar_url) setPreviews(prev => ({ ...prev, logo: existing.avatar_url }));
-                } else if (types.length) {
+                
+                if (types.length) {
                     setFormData(prev => ({ ...prev, seller_type: types[0] }));
                 }
+                
             } catch (err) {
-                setError('Could not load configurations.');
+                console.error('Error checking application status:', err);
+                setShowForm(true);
+                try {
+                    const options = await getSellerOptions();
+                    const types = options.data?.seller_types || [];
+                    setSellerTypes(types);
+                    if (types.length) {
+                        setFormData(prev => ({ ...prev, seller_type: types[0] }));
+                    }
+                } catch (e) {
+                    console.error('Could not load seller options:', e);
+                }
             } finally {
                 setFetchingOptions(false);
+                setIsInitialized(true);
             }
         };
         init();
-    }, [navigate]);
+    }, [navigate, isReapplyingManually]); // ✅ Added isReapplyingManually as dependency
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -108,11 +229,9 @@ export const useSellerApplication = () => {
         });
     };
 
-    // ✅ Updated handleUpload with field mapping
     const handleUpload = async (field, file) => {
         if (!file) return;
         
-        // ✅ Map display field names to actual formData field names
         const fieldMapping = {
             'logo': 'avatar_url',
             'identity_front': 'identity_front_url',
@@ -165,15 +284,12 @@ export const useSellerApplication = () => {
                 isDocument: isDocument 
             });
             
-            // ✅ Update with the correct field name
             setFormData(prev => {
                 const newData = { ...prev, [actualField]: url };
                 formDataRef.current = newData;
-                console.log('📝 Updated formData:', newData);
                 return newData;
             });
             
-            console.log(`✅ Uploaded ${field} -> ${actualField}:`, url);
             setError('');
             return url;
         } catch (err) {
@@ -196,10 +312,6 @@ export const useSellerApplication = () => {
 
     const validateStep = (step) => {
         const data = formDataRef.current;
-        
-        console.log('🔍 Validating Step:', step);
-        console.log('🔍 Identity Front URL:', data.identity_front_url);
-        console.log('🔍 Identity Back URL:', data.identity_back_url);
         
         switch(step) {
             case 1:
@@ -343,6 +455,12 @@ export const useSellerApplication = () => {
         sellerTypes,
         previews,
         uploading,
+        hasPendingApplication,
+        applicationStatus,
+        isInitialized,
+        existingProfile,
+        showForm,
+        resetRejectedStatus,
         setBusinessType,
         handleChange,
         handleUpload,

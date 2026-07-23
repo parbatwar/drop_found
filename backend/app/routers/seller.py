@@ -13,6 +13,7 @@ from app.schemas.seller import (
 from app.services.seller_service import SellerService
 from app.models.user.user import User
 from app.core.dependencies import get_current_user_optional
+from app.models.seller import SellerProfile
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
@@ -73,3 +74,35 @@ def get_verification_status(
 ):
     """Get the current user's seller verification status."""
     return SellerService.get_seller_verification_status(current_user, db)
+
+
+@router.get("/application/status")
+def get_application_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get the current user's seller application status without throwing 403"""
+    seller = (
+        db.query(SellerProfile).filter(SellerProfile.user_id == current_user.id).first()
+    )
+
+    if not seller:
+        return {
+            "has_applied": False,
+            "status": None,
+            "can_sell": False,
+            "is_identity_verified": False,
+            "is_business_verified": False,
+            "message": "No application found",
+        }
+
+    return {
+        "has_applied": True,
+        "status": seller.verification_status,
+        "can_sell": seller.is_identity_verified
+        and seller.verification_status == "approved",
+        "is_identity_verified": seller.is_identity_verified,
+        "is_business_verified": seller.is_business_verified,
+        "shop_name": seller.shop_name,
+        "message": f"Application is {seller.verification_status}",
+    }
