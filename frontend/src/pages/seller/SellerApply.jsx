@@ -36,7 +36,7 @@ function SellerApply() {
         resetRejectedStatus,
     } = useSellerApplication();
 
-    // ✅ Show loading state while checking status
+    // Show loading state while checking status
     if (!isInitialized || fetchingOptions) {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center">
@@ -47,7 +47,7 @@ function SellerApply() {
         );
     }
 
-    // ✅ Show pending application message
+    // Show pending application message
     if (hasPendingApplication && applicationStatus === 'pending') {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center px-4">
@@ -62,7 +62,7 @@ function SellerApply() {
                     </p>
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
                         <p className="text-sm text-amber-700">
-                            📧 We'll notify you via email once your application is approved.
+                            We'll notify you via email once your application is approved.
                         </p>
                     </div>
                     <Link 
@@ -76,7 +76,7 @@ function SellerApply() {
         );
     }
 
-    // ✅ Show rejected message with Reapply Now button - FIXED
+    // Show rejected message with Reapply Now button
     if (applicationStatus === 'rejected') {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center px-4">
@@ -94,7 +94,7 @@ function SellerApply() {
                         </p>
                     </div>
                     <button 
-                        onClick={resetRejectedStatus}  // ✅ FIXED: Just call resetRejectedStatus, no navigation or reload
+                        onClick={resetRejectedStatus}
                         className="bg-black text-white px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-gray-800 transition-colors duration-300"
                     >
                         Reapply Now
@@ -104,7 +104,7 @@ function SellerApply() {
         );
     }
 
-    // ✅ Show the form (only if no pending/approved/rejected)
+    // Show the form (only if no pending/approved/rejected)
     return (
         <div className="bg-white min-h-screen">
             <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-16">
@@ -342,21 +342,17 @@ function SellerApply() {
                     {/* ============================================ */}
                     {currentStep === 2 && (
                         <div className="space-y-6">
-                            <div className="bg-amber-50 border border-amber-200 p-4 text-sm text-amber-700">
-                                📸 Upload clear photos of your ID.
-                                <br />
-                                <span className="text-xs text-amber-600">Accepted: JPG, PNG, WebP (Max 2MB)</span>
-                            </div>
-
+                            
                             <FileUpload
                                 label="ID Front"
                                 preview={previews.identity_front}
                                 onUpload={(file) => handleUpload('identity_front', file)}
                                 onRemove={() => removeFile('identity_front')}
                                 required
-                                info="Citizenship, Passport, or Driver's License (Front)"
+                                info="Citizenship, Passport, or Driver's License (JPG, PNG, WebP)"
                                 isDocument={false}
                             />
+                            
 
                             <FileUpload
                                 label="ID Back"
@@ -364,29 +360,9 @@ function SellerApply() {
                                 onUpload={(file) => handleUpload('identity_back', file)}
                                 onRemove={() => removeFile('identity_back')}
                                 required
-                                info="Citizenship, Passport, or Driver's License (Back)"
+                                info="Citizenship, Passport, or Driver's License (JPG, PNG, WebP)"
                                 isDocument={false}
                             />
-
-                            {/* Selfie - Coming Soon */}
-                            <div className="border border-dashed border-gray-300 p-4 bg-gray-50 rounded">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-600">Selfie with ID</p>
-                                        <p className="text-xs text-gray-400">
-                                            Take a selfie holding your ID next to your face
-                                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                                Coming Soon
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
 
                             <div className="flex justify-between pt-4">
                                 <button
@@ -414,11 +390,6 @@ function SellerApply() {
                         <div className="space-y-6">
                             {isBusiness ? (
                                 <>
-                                    <div className="bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700">
-                                        📄 Business verification required. Upload your documents below.
-                                        <br />
-                                        <span className="text-xs text-blue-600">Takes 2-3 business days.</span>
-                                    </div>
 
                                     <FileUpload
                                         label="PAN Certificate"
@@ -440,29 +411,8 @@ function SellerApply() {
                                         isDocument={true}
                                     />
 
-                                    {/* Address Proof - Coming Soon */}
-                                    <div className="border border-dashed border-gray-300 p-4 bg-gray-50">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-600">Business Address Proof</p>
-                                                <p className="text-xs text-gray-400">
-                                                    Utility bill, rental agreement, or bank statement showing business address
-                                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                                        Coming Soon
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <div className="bg-gray-50 p-4 text-sm text-gray-600 border border-gray-200">
-                                        ⏳ Documents will be reviewed within 2-3 business days.
+                                        Documents will be reviewed within 1-2 business days.
                                     </div>
                                 </>
                             ) : (

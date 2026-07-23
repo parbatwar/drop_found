@@ -125,11 +125,11 @@ function AdminSellers() {
         return docTypes.some(type => getDocumentUrl(app, type));
     };
 
-    // ✅ Filter logic
+    // Filter logic
     const getFilteredSellers = () => {
         let filtered = allSellers;
         
-        // ✅ Normalize filter values
+        // Normalize filter values
         const statusFilter = filters.status || 'all';
         const typeFilter = filters.type || 'all';
         const sellerTypeFilter = filters.sellerType || 'all';
@@ -174,7 +174,7 @@ function AdminSellers() {
     
     const filteredSellers = getFilteredSellers();
 
-    // ✅ Stats (rejected removed)
+    // Stats
     const stats = {
         total: allSellers.length,
         pending: allSellers.filter(s => s.verification_status === 'pending' || s.status === 'pending').length,
@@ -183,7 +183,7 @@ function AdminSellers() {
         individual: allSellers.filter(s => !isBusiness(s)).length,
     };
 
-    // ✅ Status badge (rejected removed)
+    // Status badge
     const StatusBadge = ({ status }) => {
         const configs = {
             pending: { label: 'Pending', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
@@ -198,7 +198,7 @@ function AdminSellers() {
         );
     };
 
-    // ✅ Column definitions
+    // Column definitions
     const columns = [
         {
             key: 'shop',
@@ -308,7 +308,7 @@ function AdminSellers() {
                             </>
                         ) : (
                             <span className="text-[9px] text-green-600 uppercase tracking-wider">
-                                ✅ Approved
+                                Approved
                             </span>
                         )}
                     </div>

@@ -10,7 +10,7 @@ function FileUpload({
     accept = 'image/jpeg,image/jpg,image/png,image/webp',
     isDocument = false,
 }) {
-    // ✅ For documents, accept PDF as well
+    // For documents, accept PDF as well
     const getAccept = () => {
         if (isDocument) {
             return 'image/jpeg,image/jpg,image/png,image/webp,application/pdf';
@@ -18,7 +18,7 @@ function FileUpload({
         return accept;
     };
 
-    // ✅ Check if preview is a PDF placeholder
+    // Check if preview is a PDF placeholder
     const isPDF = preview === 'pdf-placeholder' || (preview && preview.endsWith('.pdf'));
 
     return (
@@ -31,7 +31,7 @@ function FileUpload({
                     preview ? 'border-solid border-black' : ''
                 }`}>
                     {preview ? (
-                        // ✅ Show preview for images, PDF icon for PDFs
+                        // Show preview for images, PDF icon for PDFs
                         isPDF ? (
                             <div className="flex flex-col items-center justify-center w-full h-full bg-red-50">
                                 <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 24 24">
@@ -77,5 +77,4 @@ function FileUpload({
     );
 }
 
-// ✅ Make sure default export is present
 export default FileUpload;

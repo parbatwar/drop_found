@@ -9,6 +9,70 @@ import { useSellerReviews } from '../../hooks/useReview';
 import { Icons } from '../../components/Icons';
 import FollowersModal from '../../components/FollowersModal';
 
+// ✅ Reusable Verified Badge Component
+const VerifiedBadge = ({ type }) => {
+    if (type === 'individual') {
+        return (
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] font-medium bg-green-100 text-green-800 border border-green-300 rounded-full shadow-sm">
+                <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Individual Verified
+            </span>
+        );
+    }
+    
+    if (type === 'business') {
+        return (
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] font-medium bg-blue-100 text-blue-800 border border-blue-300 rounded-full shadow-sm">
+                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Business Verified
+            </span>
+        );
+    }
+    
+    return null;
+};
+
+// ✅ Verification Icon with Tooltip
+const VerificationIcon = ({ type }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    
+    const getTooltipText = () => {
+        if (type === 'individual') return 'Identity Verified';
+        if (type === 'business') return 'Business Registered & Verified';
+        return 'Verified Seller';
+    };
+    
+    const getIconColor = () => {
+        if (type === 'individual') return 'text-green-500';
+        if (type === 'business') return 'text-blue-500';
+        return 'text-blue-500';
+    };
+    
+    return (
+        <div 
+            className="relative inline-flex items-center"
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+        >
+            <span className={getIconColor()} title={getTooltipText()}>
+                <Icons.Verified className="w-5 h-5" />
+            </span>
+            
+            {/* Tooltip */}
+            {showTooltip && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-black text-white text-[10px] font-medium rounded whitespace-nowrap z-10 shadow-lg">
+                    {getTooltipText()}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-black"></div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 function SellerProfile() {
     const { slug } = useParams();
     const navigate = useNavigate();
@@ -61,7 +125,6 @@ function SellerProfile() {
             if (isFollowing) {
                 await unfollowSeller(seller.id);
                 setIsFollowing(false);
-                // Update follower count
                 setSeller(prev => ({
                     ...prev,
                     followers_count: prev.followers_count - 1
@@ -69,7 +132,6 @@ function SellerProfile() {
             } else {
                 await followSeller(seller.id);
                 setIsFollowing(true);
-                // Update follower count
                 setSeller(prev => ({
                     ...prev,
                     followers_count: prev.followers_count + 1
@@ -90,7 +152,6 @@ function SellerProfile() {
         return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
     };
 
-    // Render stars for rating
     const renderStars = (rating) => {
         const stars = [];
         const fullStars = Math.floor(rating);
@@ -141,6 +202,19 @@ function SellerProfile() {
         );
     }
 
+    // Determine verification type for the icon
+    const getVerificationType = () => {
+        if (seller.is_business_verified && seller.verification_status === 'approved') {
+            return 'business';
+        }
+        if (seller.is_identity_verified && seller.verification_status === 'approved') {
+            return 'individual';
+        }
+        return null;
+    };
+
+    const verificationType = getVerificationType();
+
     return (
         <div className="bg-white min-h-screen py-12 md:py-16">
             <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-12">
@@ -163,48 +237,31 @@ function SellerProfile() {
                                 <img
                                     src={seller.avatar_url}
                                     alt={seller.shop_name}
-                                    className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border border-neutral-200"
+                                    className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border border-neutral-200 flex-shrink-0"
                                 />
                             ) : (
-                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-neutral-200 bg-neutral-50 flex items-center justify-center text-neutral-400 text-xl font-light">
+                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-neutral-200 bg-neutral-50 flex items-center justify-center text-neutral-400 text-xl font-light flex-shrink-0">
                                     {getInitials(seller.shop_name)}
                                 </div>
                             )}
                             
-                            <div>
-                                <div className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <h1 className="text-2xl md:text-3xl font-light tracking-tight text-black">
                                         {seller.shop_name}
                                     </h1>
                                     
-                                    {/* ✅ Green Badge - Verified Individual */}
-                                    {seller.is_identity_verified && !seller.is_business_verified && seller.verification_status === 'approved' && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-medium bg-green-50 text-green-700 border border-green-200 rounded-full">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                            Verified Individual
-                                        </span>
-                                    )}
-                                    
-                                    {/* ✅ Blue Badge - Verified Business */}
-                                    {seller.is_business_verified && seller.verification_status === 'approved' && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-                                            <Icons.Verified className="w-3.5 h-3.5" />
-                                            Verified Business
-                                        </span>
-                                    )}
-                                    
-                                    {/* ⏳ Pending Status */}
-                                    {seller.verification_status === 'pending' && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                            Under Review
-                                        </span>
+                                    {/* ✅ Single Verification Icon - Green for Individual, Blue for Business */}
+                                    {verificationType && (
+                                        <VerificationIcon type={verificationType} />
                                     )}
                                 </div>
-                                <div className="flex flex-wrap items-center gap-3 mt-1">
+                                
+                                <div className="flex flex-wrap items-center gap-3 mt-1.5">
                                     <span className="text-[10px] uppercase tracking-widest text-neutral-500">
                                         {seller.seller_type || 'Curator'}
                                     </span>
+                                    
                                     {seller.location && (
                                         <>
                                             <span className="w-px h-3 bg-neutral-300"></span>
@@ -214,7 +271,19 @@ function SellerProfile() {
                                             </span>
                                         </>
                                     )}
+                                    
+                                    {seller.business_phone && (
+                                        <>
+                                            <span className="w-px h-3 bg-neutral-300"></span>
+                                            <span className="text-[10px] text-neutral-400 flex items-center gap-1">
+                                                <Icons.Phone className="w-3 h-3" />
+                                                {seller.business_phone}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
+
+
                             </div>
                         </div>
 
@@ -222,7 +291,7 @@ function SellerProfile() {
                         {user?.id !== seller.user_id && (
                             <button
                                 onClick={handleFollow}
-                                className={`px-8 py-2.5 text-[10px] uppercase tracking-[0.2em] transition-all duration-300 ${
+                                className={`px-8 py-2.5 text-[10px] uppercase tracking-[0.2em] transition-all duration-300 flex-shrink-0 ${
                                     isFollowing
                                         ? "bg-black text-white hover:bg-neutral-800"
                                         : "border border-neutral-200 text-black hover:border-black hover:bg-black hover:text-white"
@@ -240,14 +309,13 @@ function SellerProfile() {
                         </p>
                     )}
 
-                    {/* ✅ Stats - Show Followers here (public) */}
+                    {/* Stats */}
                     <div className="flex flex-wrap gap-8 mt-6 pt-6 border-t border-neutral-100">
                         <div>
                             <p className="text-lg font-light">{listings.length}</p>
                             <p className="text-[9px] text-neutral-400 uppercase tracking-wider">Items</p>
                         </div>
                         
-                        {/* ✅ Followers - Only on shop page */}
                         <div>
                             <button
                                 onClick={() => setShowFollowersModal(true)}
@@ -258,7 +326,7 @@ function SellerProfile() {
                                 </p>
                                 <p className="text-[9px] text-neutral-400 uppercase tracking-wider flex items-center gap-1">
                                     Followers
-                                    <span className="text-[8px] text-neutral-300">↗</span>
+                                    <span className="text-[8px] text-neutral-300 group-hover:text-black transition-colors">↗</span>
                                 </p>
                             </button>
                         </div>
@@ -413,7 +481,6 @@ function SellerProfile() {
                                 ))}
                             </div>
 
-                            {/* Load More Button */}
                             {hasMore && (
                                 <div className="mt-8 text-center">
                                     <button
@@ -429,7 +496,7 @@ function SellerProfile() {
                 </div>
             </div>
 
-            {/* ✅ Followers Modal - Shows who follows this shop */}
+            {/* Followers Modal */}
             <FollowersModal
                 isOpen={showFollowersModal}
                 onClose={() => setShowFollowersModal(false)}

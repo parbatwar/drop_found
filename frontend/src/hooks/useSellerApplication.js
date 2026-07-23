@@ -59,7 +59,7 @@ export const useSellerApplication = () => {
     const formDataRef = useRef(formData);
     const isBusiness = businessType === 'registered';
 
-    // ✅ Reset rejected status to allow reapplication
+    // Reset rejected status to allow reapplication
     const resetRejectedStatus = () => {
         console.log('🔄 Resetting rejected status for reapplication...');
         setIsReapplyingManually(true); // ✅ Set the flag
@@ -188,7 +188,7 @@ export const useSellerApplication = () => {
                     }
                 }
                 
-                // ✅ No application found - load fresh form
+                // No application found - load fresh form
                 console.log('📝 No existing application found, loading form...');
                 setShowForm(true);
                 const options = await getSellerOptions();
@@ -218,7 +218,7 @@ export const useSellerApplication = () => {
             }
         };
         init();
-    }, [navigate, isReapplyingManually]); // ✅ Added isReapplyingManually as dependency
+    }, [navigate, isReapplyingManually]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

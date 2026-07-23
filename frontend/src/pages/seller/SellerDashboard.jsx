@@ -6,14 +6,51 @@ import { getMySellerProfile } from '../../api/seller';
 import { getSellerListings } from '../../api/listings';
 import { getSellerOrders } from '../../api/orders';
 import { Icons } from '../../components/Icons';
-import FollowersModal from '../../components/FollowersModal'; // ✅ Import the modal
+import FollowersModal from '../../components/FollowersModal';
+
+// ✅ Verification Icon with Tooltip (reused from SellerProfile)
+const VerificationIcon = ({ type }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    
+    const getTooltipText = () => {
+        if (type === 'individual') return 'Identity Verified';
+        if (type === 'business') return 'Business Registered & Verified';
+        return 'Verified Seller';
+    };
+    
+    const getIconColor = () => {
+        if (type === 'individual') return 'text-green-500';
+        if (type === 'business') return 'text-blue-500';
+        return 'text-blue-500';
+    };
+    
+    return (
+        <div 
+            className="relative inline-flex items-center"
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+        >
+            <span className={getIconColor()} title={getTooltipText()}>
+                <Icons.Verified className="w-5 h-5" />
+            </span>
+            
+            {/* Tooltip */}
+            {showTooltip && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-black text-white text-[10px] font-medium rounded whitespace-nowrap z-10 shadow-lg">
+                    {getTooltipText()}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-black"></div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 function SellerDashboard() {
     const { user } = useAuth();
     const [seller, setSeller] = useState(null);
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showFollowersModal, setShowFollowersModal] = useState(false); // ✅ Add state
+    const [showFollowersModal, setShowFollowersModal] = useState(false);
     const [stats, setStats] = useState({
         totalProducts: 0,
         activeListings: 0,
@@ -99,6 +136,20 @@ function SellerDashboard() {
         return stars;
     };
 
+    // Determine verification type for the icon
+    const getVerificationType = () => {
+        if (!seller) return null;
+        if (seller.is_business_verified && seller.verification_status === 'approved') {
+            return 'business';
+        }
+        if (seller.is_identity_verified && seller.verification_status === 'approved') {
+            return 'individual';
+        }
+        return null;
+    };
+
+    const verificationType = getVerificationType();
+
     const actionItems = [
         { id: 1, name: 'Add Product', path: '/seller/listings/new', icon: Icons.Plus },
         { id: 2, name: 'Manage Products', path: '/seller/listings', icon: Icons.Grid },
@@ -169,61 +220,35 @@ function SellerDashboard() {
                                         )}
                                     </div>
 
-                                    {/* Shop Name */}
+                                    {/* Shop Name with Verification Icon */}
                                     <div className="text-center">
-                                        <h3 className="text-lg font-light">
-                                            {seller.shop_name}
-                                        </h3>
-                                        
-                                        {/* ✅ Verification Status Badges */}
-                                        <div className="flex items-center justify-center gap-2 mt-1">
-                                            {/* Green Badge - Identity Verified */}
-                                            {seller.is_identity_verified && seller.verification_status === 'approved' && !seller.is_business_verified && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-green-50 text-green-700 border border-green-200 rounded-full">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                                    Individual Verified
-                                                </span>
-                                            )}
-                                            
-                                            {/* Blue Badge - Business Verified */}
-                                            {seller.is_business_verified && seller.verification_status === 'approved' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-                                                    <Icons.Verified className="w-3 h-3" />
-                                                    Business Verified
-                                                </span>
-                                            )}
-                                            
-                                            {/* Pending */}
-                                            {seller.verification_status === 'pending' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                    Under Review
-                                                </span>
-                                            )}
-                                            
-                                            {/* Rejected */}
-                                            {seller.verification_status === 'rejected' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[8px] font-medium bg-red-50 text-red-700 border border-red-200 rounded-full">
-                                                    <Icons.X className="w-3 h-3" />
-                                                    Rejected
-                                                </span>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <h3 className="text-lg font-light">
+                                                {seller.shop_name}
+                                            </h3>
+                                            {verificationType && (
+                                                <VerificationIcon type={verificationType} />
                                             )}
                                         </div>
                                         
+                                        {/* Status text - cleaner */}
                                         <span className={`inline-block mt-1 text-[10px] uppercase tracking-widest ${
                                             seller.verification_status === 'approved' ? 'text-green-600' :
-                                            seller.verification_status === 'pending' ? 'text-yellow-600' :
+                                            seller.verification_status === 'pending' ? 'text-amber-600' :
                                             seller.verification_status === 'rejected' ? 'text-red-600' :
                                             'text-neutral-400'
                                         }`}>
-                                            {seller.verification_status || 'Pending'}
+                                            {seller.verification_status === 'approved' ? '✓ Verified' :
+                                             seller.verification_status === 'pending' ? '⏳ Under Review' :
+                                             seller.verification_status === 'rejected' ? '✕ Not Approved' :
+                                             'Pending'}
                                         </span>
                                     </div>
 
                                     {/* Stats Row - Followers, Rating, Reviews */}
                                     <div className="border-t border-neutral-100 pt-4">
                                         <div className="grid grid-cols-3 gap-2 text-center">
-                                            {/* ✅ Followers - Made clickable */}
+                                            {/* Followers - Clickable */}
                                             <div>
                                                 <button
                                                     onClick={() => setShowFollowersModal(true)}
@@ -365,7 +390,7 @@ function SellerDashboard() {
                 </div>
             </div>
 
-            {/* ✅ Followers Modal */}
+            {/* Followers Modal */}
             <FollowersModal
                 isOpen={showFollowersModal}
                 onClose={() => setShowFollowersModal(false)}
