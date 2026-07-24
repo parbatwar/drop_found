@@ -1,151 +1,84 @@
-// pages/seller/SellerOrders.jsx
+// pages/seller/SellerOrders.jsx - Refactored Version
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Add this
+import { useNavigate } from "react-router-dom";
 import { getSellerOrders, updateOrderStatus } from "../../api/orders";
-import { Icons } from "../../components/Icons";
-
-// ✅ Order status constants
-const ORDER_STATUS = {
-    PENDING: 'pending',
-    ACCEPTED: 'accepted',
-    REJECTED: 'rejected',
-    READY_FOR_PICKUP: 'ready_for_pickup',
-    PICKED_UP: 'picked_up',
-    OUT_FOR_DELIVERY: 'out_for_delivery',
-    DELIVERED: 'delivered',
-    COMPLETED: 'completed',
-    CANCELLED: 'cancelled',
-};
+import StatusBadge from "../../components/common/StatusBadge";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useToast } from "../../hooks/useToast";
+import { 
+    ORDER_STATUS, 
+    ORDER_STATUS_LABELS,
+    getFilterLabel,
+} from "../../constants/orderStatus";
+import {
+    getOrderImageUrl,
+    getOrderTitle,
+    getOrderItemCount,
+    getOrderSellerName,
+    formatOrderId,
+} from "../../utils/orderUtils";
+import { getInitials } from "../../utils/stringUtils";
 
 function SellerOrders() {
-    const navigate = useNavigate(); // ✅ Add navigate
+    const navigate = useNavigate();
+    const { showToast } = useToast();
+    
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [orderToUpdate, setOrderToUpdate] = useState(null);
+    const [actionToPerform, setActionToPerform] = useState(null);
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
         loadOrders();
     }, []);
 
     const loadOrders = async () => {
+        setLoading(true);
         try {
             const res = await getSellerOrders();
-            console.log('📦 Seller orders response:', JSON.stringify(res.data, null, 2));
-            setOrders(res.data);
+            setOrders(res.data || []);
         } catch (err) {
             console.error(err);
+            showToast('Failed to load orders', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    // ✅ Navigate to order details
     const handleOrderClick = (orderId) => {
         navigate(`/seller/orders/${orderId}`);
     };
 
     const handleStatusUpdate = async (id, status, e) => {
-        e.stopPropagation(); // ✅ Prevent navigation when clicking action buttons
+        e?.stopPropagation();
+        setOrderToUpdate(id);
+        setActionToPerform(status);
+        setShowConfirm(true);
+    };
+
+    const confirmStatusUpdate = async () => {
+        if (!orderToUpdate || !actionToPerform) return;
+        
+        setUpdating(true);
         try {
-            await updateOrderStatus(id, { status });
-            loadOrders();
+            await updateOrderStatus(orderToUpdate, { status: actionToPerform });
+            await loadOrders();
+            showToast(`Order ${ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() || 'updated'} successfully`, 'success');
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.detail || "Failed to update order");
+            showToast(err.response?.data?.detail || 'Failed to update order', 'error');
+        } finally {
+            setUpdating(false);
+            setShowConfirm(false);
+            setOrderToUpdate(null);
+            setActionToPerform(null);
         }
     };
 
-    // ✅ Updated status configs with new flow
-    const getStatusConfig = (status) => {
-        const configs = {
-            pending: {
-                label: "Pending",
-                color: "text-amber-600",
-                bg: "bg-amber-50",
-                border: "border-amber-200"
-            },
-            accepted: {
-                label: "Accepted",
-                color: "text-blue-600",
-                bg: "bg-blue-50",
-                border: "border-blue-200"
-            },
-            ready_for_pickup: {
-                label: "Ready for Pickup",
-                color: "text-purple-600",
-                bg: "bg-purple-50",
-                border: "border-purple-200"
-            },
-            picked_up: {
-                label: "Picked Up",
-                color: "text-indigo-600",
-                bg: "bg-indigo-50",
-                border: "border-indigo-200"
-            },
-            out_for_delivery: {
-                label: "Out for Delivery",
-                color: "text-blue-600",
-                bg: "bg-blue-50",
-                border: "border-blue-200"
-            },
-            delivered: {
-                label: "Delivered",
-                color: "text-green-600",
-                bg: "bg-green-50",
-                border: "border-green-200"
-            },
-            completed: {
-                label: "Completed",
-                color: "text-emerald-600",
-                bg: "bg-emerald-50",
-                border: "border-emerald-200"
-            },
-            rejected: {
-                label: "Rejected",
-                color: "text-red-600",
-                bg: "bg-red-50",
-                border: "border-red-200"
-            },
-            cancelled: {
-                label: "Cancelled",
-                color: "text-neutral-400",
-                bg: "bg-neutral-50",
-                border: "border-neutral-200"
-            }
-        };
-        return configs[status] || configs.pending;
-    };
-
-    const getInitials = (firstName, lastName) => {
-        if (!firstName && !lastName) return '?';
-        return ((firstName?.charAt(0) || '') + (lastName?.charAt(0) || '')).toUpperCase() || '?';
-    };
-
-    // Helper functions for order display
-    const getFirstItem = (order) => {
-        if (!order.items || order.items.length === 0) return null;
-        return order.items[0];
-    };
-
-    const getListing = (order) => {
-        const item = getFirstItem(order);
-        return item?.listing || {};
-    };
-
-    const getImageUrl = (order) => {
-        const listing = getListing(order);
-        return listing.images?.[0]?.image_url || null;
-    };
-
-    const getTitle = (order) => {
-        const listing = getListing(order);
-        return listing.title || 'Product';
-    };
-
-    const getItemCount = (order) => {
-        return order.items?.length || 0;
-    };
-
-    // ✅ Check what actions seller can take
     const getSellerActions = (status) => {
         const actions = {
             pending: ['accept', 'reject'],
@@ -161,15 +94,46 @@ function SellerOrders() {
         return actions[status] || [];
     };
 
-    if (loading) {
+
+    const getActionButton = (action, orderId) => {
+        const configs = {
+            accept: {
+                label: 'Accept',
+                className: 'bg-black text-white hover:bg-neutral-800',
+            },
+            reject: {
+                label: 'Reject',
+                className: 'border border-red-300 text-red-500 hover:bg-red-50',
+            },
+            ready_for_pickup: {
+                label: 'Ready',
+                className: 'bg-purple-600 text-white hover:bg-purple-700',
+            },
+            cancel: {
+                label: 'Cancel',
+                className: 'border border-red-300 text-red-500 hover:bg-red-50',
+            },
+        };
+
+        const config = configs[action];
+        if (!config) return null;
+
         return (
-            <div className="bg-white min-h-screen flex items-center justify-center">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
-                    Loading Orders...
-                </div>
-            </div>
+            <button
+                onClick={(e) => handleStatusUpdate(orderId, action, e)}
+                disabled={updating}
+                className={`px-4 py-1.5 text-[9px] uppercase tracking-[0.2em] transition-colors disabled:opacity-50 ${config.className}`}
+            >
+                {config.label}
+            </button>
         );
+    };
+
+    if (loading) {
+        return <LoadingSpinner message="Loading Orders..." />;
     }
+
+    const pendingCount = orders.filter(o => o.status === ORDER_STATUS.PENDING).length;
 
     return (
         <div className="bg-white min-h-screen py-12 md:py-16">
@@ -192,21 +156,17 @@ function SellerOrders() {
                         </span>
                         <span className="w-px h-3 bg-neutral-300"></span>
                         <span className="text-[10px] text-neutral-400 uppercase tracking-wider">
-                            {orders.filter(o => o.status === ORDER_STATUS.PENDING).length} Pending
+                            {pendingCount} Pending
                         </span>
                     </div>
                 </div>
 
                 {orders.length === 0 ? (
-                    <div className="border border-neutral-200 bg-neutral-50 p-16 text-center">
-                        <div className="text-4xl font-light text-neutral-300 mb-3">📦</div>
-                        <p className="text-sm text-neutral-400 uppercase tracking-wider">
-                            No orders found
-                        </p>
-                        <p className="text-[10px] text-neutral-300 mt-1">
-                            Your orders will appear here once customers make purchases.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon="📦"
+                        title="No orders found"
+                        subtitle="Your orders will appear here once customers make purchases."
+                    />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse">
@@ -241,16 +201,16 @@ function SellerOrders() {
 
                             <tbody className="divide-y divide-neutral-100">
                                 {orders.map((order) => {
-                                    const statusConfig = getStatusConfig(order.status);
-                                    const imageUrl = getImageUrl(order);
-                                    const title = getTitle(order);
-                                    const itemCount = getItemCount(order);
+                                    const imageUrl = getOrderImageUrl(order);
+                                    const title = getOrderTitle(order);
+                                    const itemCount = getOrderItemCount(order);
+                                    const sellerName = getOrderSellerName(order);
                                     const actions = getSellerActions(order.status);
                                     
                                     return (
                                         <tr
                                             key={order.id}
-                                            onClick={() => handleOrderClick(order.id)} // ✅ Make row clickable
+                                            onClick={() => handleOrderClick(order.id)}
                                             className="hover:bg-neutral-50 transition-colors cursor-pointer"
                                         >
                                             {/* Product */}
@@ -323,46 +283,17 @@ function SellerOrders() {
 
                                             {/* Status */}
                                             <td className="py-5">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[9px] uppercase tracking-wider font-medium rounded-full ${statusConfig.bg} ${statusConfig.color} border ${statusConfig.border}`}>
-                                                    {statusConfig.label}
-                                                </span>
+                                                <StatusBadge status={order.status} size="sm" />
                                             </td>
 
                                             {/* Actions */}
                                             <td className="py-5">
                                                 <div className="flex justify-end gap-2 flex-wrap">
-                                                    {actions.includes('accept') && (
-                                                        <button
-                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.ACCEPTED, e)}
-                                                            className="px-4 py-1.5 bg-black text-white text-[9px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-colors"
-                                                        >
-                                                            Accept
-                                                        </button>
-                                                    )}
-                                                    {actions.includes('reject') && (
-                                                        <button
-                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.REJECTED, e)}
-                                                            className="px-4 py-1.5 border border-neutral-300 text-[9px] uppercase tracking-[0.2em] hover:border-black hover:bg-black hover:text-white transition-colors"
-                                                        >
-                                                            Reject
-                                                        </button>
-                                                    )}
-                                                    {actions.includes('ready_for_pickup') && (
-                                                        <button
-                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.READY_FOR_PICKUP, e)}
-                                                            className="px-4 py-1.5 bg-purple-600 text-white text-[9px] uppercase tracking-[0.2em] hover:bg-purple-700 transition-colors"
-                                                        >
-                                                            Ready
-                                                        </button>
-                                                    )}
-                                                    {actions.includes('cancel') && (
-                                                        <button
-                                                            onClick={(e) => handleStatusUpdate(order.id, ORDER_STATUS.CANCELLED, e)}
-                                                            className="px-4 py-1.5 border border-red-300 text-red-500 text-[9px] uppercase tracking-[0.2em] hover:bg-red-50 transition-colors"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    )}
+                                                    {actions.map((action) => (
+                                                        <div key={action}>
+                                                            {getActionButton(action, order.id)}
+                                                        </div>
+                                                    ))}
                                                     {actions.length === 0 && (
                                                         <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
                                                             No actions
@@ -378,6 +309,22 @@ function SellerOrders() {
                     </div>
                 )}
             </div>
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={showConfirm}
+                onClose={() => {
+                    setShowConfirm(false);
+                    setOrderToUpdate(null);
+                    setActionToPerform(null);
+                }}
+                onConfirm={confirmStatusUpdate}
+                title="Update Order Status"
+                message={`Are you sure you want to ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() : 'update'} this order?`}
+                confirmLabel={`Yes, ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform] : 'Update'}`}
+                confirmVariant="primary"
+                loading={updating}
+            />
         </div>
     );
 }

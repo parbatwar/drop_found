@@ -1,49 +1,37 @@
-// pages/admin/AdminOrders.jsx
+// pages/admin/AdminOrders.jsx - Refactored Version
 import { useState, useEffect } from 'react';
 import { getAllOrders, adminUpdateOrderStatus, completeOrder } from '../../api/orders';
-
-const ORDER_STATUS = {
-    PENDING: 'pending',
-    ACCEPTED: 'accepted',
-    REJECTED: 'rejected',
-    READY_FOR_PICKUP: 'ready_for_pickup',
-    PICKED_UP: 'picked_up',
-    OUT_FOR_DELIVERY: 'out_for_delivery',
-    DELIVERED: 'delivered',
-    COMPLETED: 'completed',
-    CANCELLED: 'cancelled',
-};
-
-const ORDER_STATUS_LABELS = {
-    [ORDER_STATUS.PENDING]: 'Pending',
-    [ORDER_STATUS.ACCEPTED]: 'Accepted',
-    [ORDER_STATUS.REJECTED]: 'Rejected',
-    [ORDER_STATUS.READY_FOR_PICKUP]: 'Ready for Pickup',
-    [ORDER_STATUS.PICKED_UP]: 'Picked Up',
-    [ORDER_STATUS.OUT_FOR_DELIVERY]: 'Out for Delivery',
-    [ORDER_STATUS.DELIVERED]: 'Delivered',
-    [ORDER_STATUS.COMPLETED]: 'Completed',
-    [ORDER_STATUS.CANCELLED]: 'Cancelled',
-};
-
-const ORDER_STATUS_COLORS = {
-    [ORDER_STATUS.PENDING]: 'bg-amber-50 text-amber-600 border-amber-200',
-    [ORDER_STATUS.ACCEPTED]: 'bg-blue-50 text-blue-600 border-blue-200',
-    [ORDER_STATUS.REJECTED]: 'bg-red-50 text-red-600 border-red-200',
-    [ORDER_STATUS.READY_FOR_PICKUP]: 'bg-purple-50 text-purple-600 border-purple-200',
-    [ORDER_STATUS.PICKED_UP]: 'bg-indigo-50 text-indigo-600 border-indigo-200',
-    [ORDER_STATUS.OUT_FOR_DELIVERY]: 'bg-blue-50 text-blue-600 border-blue-200',
-    [ORDER_STATUS.DELIVERED]: 'bg-green-50 text-green-600 border-green-200',
-    [ORDER_STATUS.COMPLETED]: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-    [ORDER_STATUS.CANCELLED]: 'bg-neutral-50 text-neutral-400 border-neutral-200',
-};
+import StatusBadge from '../../components/common/StatusBadge';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import EmptyState from '../../components/common/EmptyState';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { useToast } from '../../hooks/useToast';
+import { 
+    ORDER_STATUS, 
+    ORDER_STATUS_LABELS,
+    ORDER_FILTER_OPTIONS,
+    getFilterLabel,
+} from '../../constants/orderStatus';
+import {
+    getOrderImageUrl,
+    getOrderTitle,
+    getOrderItemCount,
+    formatOrderId,
+    formatOrderDate,
+} from '../../utils/orderUtils';
+import { getInitials } from '../../utils/stringUtils';
 
 function AdminOrders() {
+    const { showToast } = useToast();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filter, setFilter] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [orderToUpdate, setOrderToUpdate] = useState(null);
+    const [actionToPerform, setActionToPerform] = useState(null);
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
         loadOrders();
@@ -53,15 +41,11 @@ function AdminOrders() {
         setLoading(true);
         setError('');
         try {
-            console.log('📤 Fetching orders with filter:', filter);
             const res = await getAllOrders({ 
                 status: filter || undefined, 
                 limit: 100 
             });
-            console.log('📦 Orders response:', res);
-            console.log('📦 Orders data:', res.data);
             
-            // Handle different response structures
             let ordersData = [];
             if (res.data) {
                 ordersData = Array.isArray(res.data) ? res.data : res.data.data || [];
@@ -70,29 +54,40 @@ function AdminOrders() {
         } catch (err) {
             console.error('Failed to load orders:', err);
             setError(err.response?.data?.detail || 'Failed to load orders');
+            showToast('Failed to load orders', 'error');
         } finally {
             setLoading(false);
         }
     };
 
     const handleStatusUpdate = async (orderId, newStatus) => {
-        if (!confirm(`Update order status to "${ORDER_STATUS_LABELS[newStatus]}"?`)) return;
+        setOrderToUpdate(orderId);
+        setActionToPerform(newStatus);
+        setShowConfirm(true);
+    };
+
+    const confirmStatusUpdate = async () => {
+        if (!orderToUpdate || !actionToPerform) return;
+        
+        setUpdating(true);
         try {
-            await adminUpdateOrderStatus(orderId, { status: newStatus });
+            await adminUpdateOrderStatus(orderToUpdate, { status: actionToPerform });
             await loadOrders();
+            showToast(`Order ${ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() || 'updated'} successfully`, 'success');
         } catch (err) {
-            alert(err.response?.data?.detail || 'Failed to update order');
+            showToast(err.response?.data?.detail || 'Failed to update order', 'error');
+        } finally {
+            setUpdating(false);
+            setShowConfirm(false);
+            setOrderToUpdate(null);
+            setActionToPerform(null);
         }
     };
 
     const handleCompleteOrder = async (orderId) => {
-        if (!confirm('Mark this order as completed?')) return;
-        try {
-            await completeOrder(orderId);
-            await loadOrders();
-        } catch (err) {
-            alert(err.response?.data?.detail || 'Failed to complete order');
-        }
+        setOrderToUpdate(orderId);
+        setActionToPerform('complete');
+        setShowConfirm(true);
     };
 
     const getAdminActions = (status) => {
@@ -105,24 +100,42 @@ function AdminOrders() {
         return actions[status] || [];
     };
 
-    const getInitials = (firstName, lastName) => {
-        if (!firstName && !lastName) return '?';
-        return ((firstName?.charAt(0) || '') + (lastName?.charAt(0) || '')).toUpperCase() || '?';
-    };
+    const getActionButton = (action, orderId) => {
+        const configs = {
+            out_for_delivery: {
+                label: 'Out for Delivery',
+                className: 'bg-blue-600 text-white hover:bg-blue-700',
+            },
+            delivered: {
+                label: 'Mark Delivered',
+                className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+            complete: {
+                label: 'Complete',
+                className: 'bg-emerald-600 text-white hover:bg-emerald-700',
+            },
+            picked_up: {
+                label: 'Pick Up',
+                className: 'bg-indigo-600 text-white hover:bg-indigo-700',
+            },
+        };
 
-    const getFirstItem = (order) => {
-        if (!order.items || order.items.length === 0) return null;
-        return order.items[0];
-    };
+        const config = configs[action];
+        if (!config) return null;
 
-    const getImageUrl = (order) => {
-        const item = getFirstItem(order);
-        return item?.listing?.images?.[0]?.image_url || null;
-    };
+        const handleClick = action === 'complete' 
+            ? () => handleCompleteOrder(orderId)
+            : () => handleStatusUpdate(orderId, action);
 
-    const getTitle = (order) => {
-        const item = getFirstItem(order);
-        return item?.listing?.title || 'Product';
+        return (
+            <button
+                onClick={handleClick}
+                disabled={updating}
+                className={`px-3 py-1 text-[8px] uppercase tracking-wider transition-colors disabled:opacity-50 ${config.className}`}
+            >
+                {config.label}
+            </button>
+        );
     };
 
     const filteredOrders = searchTerm
@@ -130,19 +143,11 @@ function AdminOrders() {
             order.id?.includes(searchTerm) || 
             order.buyer?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             order.buyer?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            getTitle(order).toLowerCase().includes(searchTerm.toLowerCase())
+            getOrderTitle(order).toLowerCase().includes(searchTerm.toLowerCase())
         )
         : orders;
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
-                    Loading Orders...
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <LoadingSpinner message="Loading Orders..." />;
 
     if (error) {
         return (
@@ -219,11 +224,11 @@ function AdminOrders() {
 
             {/* Orders Table */}
             {orders.length === 0 ? (
-                <div className="border border-neutral-200 bg-neutral-50 p-20 text-center">
-                    <p className="text-sm text-neutral-400 uppercase tracking-wider">
-                        No orders found
-                    </p>
-                </div>
+                <EmptyState
+                    icon="📦"
+                    title="No orders found"
+                    subtitle="Orders will appear here once customers make purchases."
+                />
             ) : (
                 <div className="bg-white border border-neutral-100 overflow-hidden">
                     <div className="overflow-x-auto">
@@ -254,19 +259,18 @@ function AdminOrders() {
                                 {filteredOrders.map((order) => {
                                     const status = order.status;
                                     const actions = getAdminActions(status);
-                                    const statusClass = ORDER_STATUS_COLORS[status] || 'bg-neutral-50 text-neutral-400 border-neutral-200';
-                                    const imageUrl = getImageUrl(order);
-                                    const title = getTitle(order);
-                                    const itemCount = order.items?.length || 0;
+                                    const imageUrl = getOrderImageUrl(order);
+                                    const title = getOrderTitle(order);
+                                    const itemCount = getOrderItemCount(order);
 
                                     return (
                                         <tr key={order.id} className="hover:bg-neutral-50 transition-colors">
                                             <td className="px-4 py-4">
                                                 <p className="text-xs font-mono text-neutral-600">
-                                                    #{order.id?.slice(0, 8) || 'N/A'}
+                                                    #{formatOrderId(order.id)}
                                                 </p>
                                                 <p className="text-[9px] text-neutral-400">
-                                                    {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
+                                                    {formatOrderDate(order.created_at)}
                                                 </p>
                                             </td>
                                             <td className="px-4 py-4">
@@ -306,50 +310,21 @@ function AdminOrders() {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <span className={`inline-block px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-medium rounded border ${statusClass}`}>
-                                                    {ORDER_STATUS_LABELS[status] || status}
-                                                </span>
+                                                <StatusBadge status={status} size="sm" />
                                             </td>
                                             <td className="px-4 py-4">
                                                 <div className="flex justify-end gap-1.5 flex-wrap">
-                                                    {actions.includes('out_for_delivery') && (
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.OUT_FOR_DELIVERY)}
-                                                            className="px-3 py-1 bg-blue-600 text-white text-[8px] uppercase tracking-wider hover:bg-blue-700 transition-colors"
-                                                        >
-                                                            Out for Delivery
-                                                        </button>
-                                                    )}
-                                                    {actions.includes('delivered') && (
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.DELIVERED)}
-                                                            className="px-3 py-1 bg-green-600 text-white text-[8px] uppercase tracking-wider hover:bg-green-700 transition-colors"
-                                                        >
-                                                            Mark Delivered
-                                                        </button>
-                                                    )}
-                                                    {actions.includes('complete') && (
-                                                        <button
-                                                            onClick={() => handleCompleteOrder(order.id)}
-                                                            className="px-3 py-1 bg-emerald-600 text-white text-[8px] uppercase tracking-wider hover:bg-emerald-700 transition-colors"
-                                                        >
-                                                            Complete
-                                                        </button>
-                                                    )}
-                                                    {actions.includes('picked_up') && (
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(order.id, ORDER_STATUS.PICKED_UP)}
-                                                            className="px-3 py-1 bg-indigo-600 text-white text-[8px] uppercase tracking-wider hover:bg-indigo-700 transition-colors"
-                                                        >
-                                                            Pick Up
-                                                        </button>
-                                                    )}
+                                                    {actions.map((action) => (
+                                                        <div key={action}>
+                                                            {getActionButton(action, order.id)}
+                                                        </div>
+                                                    ))}
                                                     {actions.length === 0 && (
                                                         <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                                                            {status === ORDER_STATUS.COMPLETED ? '✅ Done' : 
-                                                             status === ORDER_STATUS.REJECTED ? '❌ Rejected' :
-                                                             status === ORDER_STATUS.CANCELLED ? '🚫 Cancelled' :
-                                                             '⏳ Waiting'}
+                                                            {status === ORDER_STATUS.COMPLETED ? 'Done' : 
+                                                             status === ORDER_STATUS.REJECTED ? 'Rejected' :
+                                                             status === ORDER_STATUS.CANCELLED ? 'Cancelled' :
+                                                             'Waiting'}
                                                         </span>
                                                     )}
                                                 </div>
@@ -362,6 +337,22 @@ function AdminOrders() {
                     </div>
                 </div>
             )}
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={showConfirm}
+                onClose={() => {
+                    setShowConfirm(false);
+                    setOrderToUpdate(null);
+                    setActionToPerform(null);
+                }}
+                onConfirm={confirmStatusUpdate}
+                title="Update Order Status"
+                message={`Are you sure you want to ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() || actionToPerform : 'update'} this order?`}
+                confirmLabel={`Yes, ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform] || actionToPerform : 'Update'}`}
+                confirmVariant="primary"
+                loading={updating}
+            />
         </div>
     );
 }

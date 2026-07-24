@@ -36,7 +36,7 @@ export const ORDER_STATUS_COLORS = {
     [ORDER_STATUS.CANCELLED]: 'bg-neutral-50 text-neutral-400 border-neutral-200',
 };
 
-// For verification status badges (seller/admin)
+// Verification status
 export const VERIFICATION_STATUS = {
     PENDING: 'pending',
     APPROVED: 'approved',
@@ -55,9 +55,22 @@ export const VERIFICATION_STATUS_COLORS = {
     [VERIFICATION_STATUS.REJECTED]: 'bg-red-50 text-red-600 border-red-200',
 };
 
-// Order status action mappings
+// Order filter options
+export const ORDER_FILTER_OPTIONS = [
+    { key: 'all', label: 'All Orders' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'accepted', label: 'Accepted' },
+    { key: 'ready_for_pickup', label: 'Ready for Pickup' },
+    { key: 'picked_up', label: 'Picked Up' },
+    { key: 'out_for_delivery', label: 'Out for Delivery' },
+    { key: 'delivered', label: 'Delivered' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'rejected', label: 'Rejected' },
+    { key: 'cancelled', label: 'Cancelled' },
+];
+
+// Order status actions
 export const ORDER_STATUS_ACTIONS = {
-    // What buyer can do
     buyer: {
         [ORDER_STATUS.PENDING]: ['cancel'],
         [ORDER_STATUS.ACCEPTED]: ['cancel'],
@@ -66,7 +79,6 @@ export const ORDER_STATUS_ACTIONS = {
         [ORDER_STATUS.REJECTED]: [],
         [ORDER_STATUS.CANCELLED]: [],
     },
-    // What seller can do
     seller: {
         [ORDER_STATUS.PENDING]: ['accept', 'reject'],
         [ORDER_STATUS.ACCEPTED]: ['ready_for_pickup', 'cancel'],
@@ -76,7 +88,6 @@ export const ORDER_STATUS_ACTIONS = {
         [ORDER_STATUS.DELIVERED]: [],
         [ORDER_STATUS.COMPLETED]: [],
     },
-    // What admin can do
     admin: {
         [ORDER_STATUS.PENDING]: ['accept', 'reject', 'cancel'],
         [ORDER_STATUS.ACCEPTED]: ['ready_for_pickup', 'cancel'],
@@ -88,7 +99,7 @@ export const ORDER_STATUS_ACTIONS = {
     },
 };
 
-// Helper function to get tracking steps
+// Helper functions
 export const getTrackingSteps = () => [
     { key: ORDER_STATUS.PENDING, label: 'Order Placed' },
     { key: ORDER_STATUS.ACCEPTED, label: 'Accepted' },
@@ -99,7 +110,6 @@ export const getTrackingSteps = () => [
     { key: ORDER_STATUS.COMPLETED, label: 'Completed' },
 ];
 
-// Helper function to get step index
 export const getStepIndex = (status) => {
     const orderFlow = [
         ORDER_STATUS.PENDING,
@@ -111,4 +121,9 @@ export const getStepIndex = (status) => {
         ORDER_STATUS.COMPLETED,
     ];
     return orderFlow.indexOf(status);
+};
+
+export const getFilterLabel = (key) => {
+    const option = ORDER_FILTER_OPTIONS.find(f => f.key === key);
+    return option?.label || key;
 };

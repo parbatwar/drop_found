@@ -1,23 +1,25 @@
-// pages/orders/Checkout.jsx
+// pages/orders/Checkout.jsx - Refactored Version
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { getCart } from "../../api/cart";
 import { checkoutCart, quickBuy } from '../../api/orders';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../hooks/useToast';
 import { Icons } from '../../components/Icons';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import OrderSummary from '../../components/orders/OrderSummary';
+import OrderItemsList from '../../components/orders/OrderItemsList';
 
-// ✅ Helper function to calculate delivery fee
+// Helper function to calculate delivery fee
 const getDeliveryFee = (subtotal) => {
-    if (subtotal < 700) {
-        return 80;
-    }
-    return 120;
+    return subtotal < 700 ? 80 : 120;
 };
 
 function Checkout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { showToast } = useToast();
 
     const listing = location.state?.listing;
     const quantity = location.state?.quantity || 1;
@@ -41,13 +43,8 @@ function Checkout() {
         if (!isQuickBuy) {
             setLoadingCart(true);
             getCart()
-                .then((res) => {
-                    setCart(res.data);
-                    console.log('📦 Cart data:', res.data);
-                })
-                .catch((err) => {
-                    console.error('Failed to fetch cart:', err);
-                })
+                .then((res) => setCart(res.data))
+                .catch((err) => console.error('Failed to fetch cart:', err))
                 .finally(() => setLoadingCart(false));
         }
     }, [isQuickBuy]);
@@ -58,10 +55,7 @@ function Checkout() {
                 <div className="text-center">
                     <div className="text-4xl font-light text-neutral-200 mb-4">🛒</div>
                     <p className="text-sm text-neutral-400 mb-6">No checkout item selected.</p>
-                    <Link
-                        to="/"
-                        className="inline-block border border-black px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-300"
-                    >
+                    <Link to="/" className="inline-block border border-black px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-300">
                         Return to Shop
                     </Link>
                 </div>
@@ -69,9 +63,8 @@ function Checkout() {
         );
     }
 
-    // ✅ Calculate Quick Buy totals
+    // Calculate Quick Buy totals
     const itemSubtotal = isQuickBuy ? parseFloat(listing.price) * quantity : null;
-    // ✅ Calculate delivery fee based on subtotal
     const deliveryFee = isQuickBuy ? getDeliveryFee(itemSubtotal) : (cart?.delivery_fee || 0);
     const total = isQuickBuy ? itemSubtotal + deliveryFee : (cart?.total || 0);
 
@@ -97,10 +90,12 @@ function Checkout() {
                     payment_method: paymentMethod,
                 });
             }
+            showToast('Order placed successfully!', 'success');
             navigate('/orders', { state: { justPlaced: result.data } });
         } catch (err) {
             console.error('Checkout error:', err);
             setError(err.response?.data?.detail || 'Failed to complete checkout.');
+            showToast('Failed to place order', 'error');
         } finally {
             setProcessing(false);
         }
@@ -112,36 +107,31 @@ function Checkout() {
         { id: 'cod', label: 'Cash on Delivery', icon: Icons.Truck },
     ];
 
+    if (loadingCart) {
+        return <LoadingSpinner message="Loading Checkout..." />;
+    }
+
     return (
         <div className="bg-white min-h-screen py-12 md:py-16">
             <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-12">
 
                 <div className="mb-10 border-b border-neutral-100 pb-6">
-                    <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">
-                        Checkout
-                    </span>
-                    <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">
-                        Complete Your Order
-                    </h1>
-                    <p className="text-sm text-neutral-500 mt-2">
-                        Review your {isQuickBuy ? 'item' : 'cart'} and provide delivery details.
-                    </p>
+                    <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">Checkout</span>
+                    <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">Complete Your Order</h1>
+                    <p className="text-sm text-neutral-500 mt-2">Review your {isQuickBuy ? 'item' : 'cart'} and provide delivery details.</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
 
+                    {/* Form */}
                     <div className="lg:col-span-7">
                         <form onSubmit={handleSubmitOrder} className="space-y-8">
 
                             <div className="space-y-5">
-                                <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
-                                    Shipping Details
-                                </h2>
+                                <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">Shipping Details</h2>
 
                                 {error && (
-                                    <div className="bg-red-50 border-l-2 border-red-400 px-4 py-3 text-sm text-red-600">
-                                        {error}
-                                    </div>
+                                    <div className="bg-red-50 border-l-2 border-red-400 px-4 py-3 text-sm text-red-600">{error}</div>
                                 )}
 
                                 <div>
@@ -172,7 +162,6 @@ function Checkout() {
                                     />
                                 </div>
 
-                                {/* ✅ Delivery fee info */}
                                 <div className="text-[9px] text-neutral-400 leading-relaxed bg-neutral-50 p-3 border border-neutral-100">
                                     <p className="font-medium text-neutral-600">Delivery Fee: NPR {deliveryFee}</p>
                                     <p className="mt-1">• Under NPR 700: NPR 80 delivery fee</p>
@@ -181,9 +170,7 @@ function Checkout() {
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
-                                    Payment Method <span className="text-neutral-300">*</span>
-                                </h2>
+                                <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">Payment Method <span className="text-neutral-300">*</span></h2>
                                 <div className="grid grid-cols-3 gap-3">
                                     {paymentMethods.map((method) => {
                                         const Icon = method.icon;
@@ -198,9 +185,7 @@ function Checkout() {
                                                         : 'border-neutral-200 text-neutral-400 hover:text-black hover:border-neutral-300'
                                                 }`}
                                             >
-                                                <Icon className={`w-5 h-5 ${
-                                                    paymentMethod === method.id ? 'text-white' : 'text-neutral-400'
-                                                }`} />
+                                                <Icon className={`w-5 h-5 ${paymentMethod === method.id ? 'text-white' : 'text-neutral-400'}`} />
                                                 {method.label}
                                             </button>
                                         );
@@ -220,54 +205,29 @@ function Checkout() {
                         </form>
                     </div>
 
+                    {/* Order Summary */}
                     <div className="lg:col-span-5">
                         <div className="border border-neutral-100 p-6 md:p-8 lg:sticky lg:top-24">
-                            <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium pb-4 border-b border-neutral-100">
-                                Order Summary
-                            </h2>
+                            <h2 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium pb-4 border-b border-neutral-100">Order Summary</h2>
 
                             {isQuickBuy ? (
-                                // ✅ Quick Buy Summary
+                                // Quick Buy Summary
                                 <>
                                     <div className="flex gap-4 pt-4 pb-4 border-b border-neutral-100">
                                         <div className="w-20 h-20 flex-shrink-0 bg-neutral-50 border border-neutral-100 overflow-hidden">
                                             {listing.images?.[0] && (
-                                                <img
-                                                    src={listing.images[0].image_url}
-                                                    alt={listing.title}
-                                                    className="w-full h-full object-cover"
-                                                />
+                                                <img src={listing.images[0].image_url} alt={listing.title} className="w-full h-full object-cover" />
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-light text-neutral-800 truncate">
-                                                {listing.title}
-                                            </p>
-                                            <p className="text-[9px] text-neutral-400 uppercase tracking-wider mt-1">
-                                                Qty: {quantity}
-                                            </p>
-                                            <p className="text-sm font-medium text-neutral-900 mt-1">
-                                                NPR {Number(listing.price).toLocaleString()} each
-                                            </p>
+                                            <p className="text-sm font-light text-neutral-800 truncate">{listing.title}</p>
+                                            <p className="text-[9px] text-neutral-400 uppercase tracking-wider mt-1">Qty: {quantity}</p>
+                                            <p className="text-sm font-medium text-neutral-900 mt-1">NPR {Number(listing.price).toLocaleString()} each</p>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2.5 pt-4 text-sm">
-                                        <div className="flex justify-between text-neutral-500">
-                                            <span>Subtotal ({quantity} item{quantity > 1 ? 's' : ''})</span>
-                                            <span className="text-neutral-900">NPR {itemSubtotal.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between text-neutral-500">
-                                            <span>Delivery Fee</span>
-                                            <span className="text-neutral-900">NPR {deliveryFee}</span>
-                                        </div>
-                                        <div className="flex justify-between pt-3 border-t border-neutral-100 text-base">
-                                            <span className="font-light text-neutral-600">Total</span>
-                                            <span className="font-medium text-black">NPR {total.toLocaleString()}</span>
-                                        </div>
-                                    </div>
+                                    <OrderSummary subtotal={itemSubtotal} deliveryFee={deliveryFee} total={total} />
 
-                                    {/* ✅ Delivery fee info */}
                                     <div className="mt-3 text-[9px] text-neutral-400 leading-relaxed bg-neutral-50 p-3 border border-neutral-100">
                                         <p className="font-medium text-neutral-600">Delivery Fee: NPR {deliveryFee}</p>
                                         <p className="mt-1">• Under NPR 700: NPR 80 delivery fee</p>
@@ -275,79 +235,41 @@ function Checkout() {
                                     </div>
                                 </>
                             ) : (
-                                // ✅ Cart Summary
-                                loadingCart ? (
-                                    <div className="py-8 text-center">
-                                        <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
-                                            Loading Cart...
+                                // Cart Summary
+                                <>
+                                    {loadingCart ? (
+                                        <div className="py-8 text-center">
+                                            <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">Loading Cart...</div>
                                         </div>
-                                    </div>
-                                ) : cart?.items?.length === 0 ? (
-                                    <div className="py-8 text-center">
-                                        <p className="text-sm text-neutral-400">Your cart is empty</p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {/* Cart Items */}
-                                        <div className="space-y-4 pt-4">
-                                            {cart?.items?.map((item) => (
-                                                <div
-                                                    key={item.id}
-                                                    className="flex gap-3 border-b border-neutral-100 pb-3 last:border-0"
-                                                >
-                                                    <img
-                                                        src={item.image_url}
-                                                        alt={item.title}
-                                                        className="w-16 h-16 object-cover border border-neutral-100"
-                                                    />
-
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm truncate">{item.title}</p>
-                                                        <p className="text-xs text-neutral-500">
-                                                            Qty: {item.quantity}
-                                                        </p>
-                                                        <p className="text-xs font-medium">
-                                                            NPR {Number(item.price).toLocaleString()}
-                                                        </p>
-                                                    </div>
-
-                                                    <p className="text-sm font-medium">
-                                                        NPR {Number(item.line_total || item.price * item.quantity).toLocaleString()}
-                                                    </p>
-                                                </div>
-                                            ))}
+                                    ) : cart?.items?.length === 0 ? (
+                                        <div className="py-8 text-center">
+                                            <p className="text-sm text-neutral-400">Your cart is empty</p>
                                         </div>
-
-                                        {/* Totals */}
-                                        <div className="space-y-2 pt-4 border-t border-neutral-100">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="text-neutral-500">Subtotal</span>
-                                                <span className="text-neutral-900">NPR {(cart?.subtotal ?? 0).toLocaleString()}</span>
+                                    ) : (
+                                        <>
+                                            <div className="pt-4">
+                                                <OrderItemsList items={cart?.items || []} showPrices={true} showQuantities={true} />
                                             </div>
 
-                                            <div className="flex justify-between text-sm">
-                                                <span className="text-neutral-500">Delivery Fee</span>
-                                                <span className="text-neutral-900">NPR {(cart?.delivery_fee ?? 0).toLocaleString()}</span>
+                                            <div className="pt-4 border-t border-neutral-100">
+                                                <OrderSummary 
+                                                    subtotal={cart?.subtotal || 0}
+                                                    deliveryFee={cart?.delivery_fee || 0}
+                                                    total={cart?.total || 0}
+                                                />
                                             </div>
 
-                                            <div className="flex justify-between pt-3 border-t border-neutral-100 text-base">
-                                                <span className="font-light text-neutral-600">Total</span>
-                                                <span className="font-medium text-black">NPR {(cart?.total ?? 0).toLocaleString()}</span>
+                                            <div className="mt-4 text-[9px] text-neutral-400 leading-relaxed border-t border-neutral-100 pt-3">
+                                                <p>• Delivery fee calculated per seller's suborder</p>
+                                                <p>• Under NPR 700: NPR 80 delivery fee</p>
+                                                <p>• NPR 700 and above: NPR 120 delivery fee</p>
                                             </div>
-                                        </div>
-
-                                        {/* Delivery Fee Info */}
-                                        <div className="mt-4 text-[9px] text-neutral-400 leading-relaxed border-t border-neutral-100 pt-3">
-                                            <p>• Delivery fee calculated per seller's suborder</p>
-                                            <p>• Under NPR 700: NPR 80 delivery fee</p>
-                                            <p>• NPR 700 and above: NPR 120 delivery fee</p>
-                                        </div>
-                                    </>
-                                )
+                                        </>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
