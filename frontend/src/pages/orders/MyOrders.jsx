@@ -4,43 +4,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getMyOrderGroups, updateOrderStatus } from "../../api/orders";
 import { createReview } from "../../api/reviews";
 import { Icons } from "../../components/Icons";
-
-const ORDER_STATUS = {
-    PENDING: 'pending',
-    ACCEPTED: 'accepted',
-    REJECTED: 'rejected',
-    READY_FOR_PICKUP: 'ready_for_pickup',
-    PICKED_UP: 'picked_up',
-    OUT_FOR_DELIVERY: 'out_for_delivery',
-    DELIVERED: 'delivered',
-    COMPLETED: 'completed',
-    CANCELLED: 'cancelled',
-};
-
-const STATUS_LABELS = {
-    pending: 'Pending',
-    accepted: 'Accepted',
-    ready_for_pickup: 'Ready',
-    picked_up: 'Picked Up',
-    out_for_delivery: 'Out for Delivery',
-    delivered: 'Delivered',
-    completed: 'Completed',
-    rejected: 'Rejected',
-    cancelled: 'Cancelled',
-};
-
-const FILTER_OPTIONS = [
-    { key: 'all', label: 'All Orders' },
-    { key: 'pending', label: 'Pending' },
-    { key: 'accepted', label: 'Accepted' },
-    { key: 'ready_for_pickup', label: 'Ready' },
-    { key: 'picked_up', label: 'Picked Up' },
-    { key: 'out_for_delivery', label: 'Out for Delivery' },
-    { key: 'delivered', label: 'Delivered' },
-    { key: 'completed', label: 'Completed' },
-    { key: 'rejected', label: 'Rejected' },
-    { key: 'cancelled', label: 'Cancelled' },
-];
+import StatusBadge from "../../components/common/StatusBadge";
+import { 
+    ORDER_STATUS, 
+    ORDER_STATUS_LABELS,
+    getStepIndex,
+    getTrackingSteps 
+} from "../../constants/orderStatus"; 
 
 function MyOrders() {
     const navigate = useNavigate();
@@ -138,22 +108,7 @@ function MyOrders() {
         }
     };
 
-    const getStatusConfig = (status) => {
-        const configs = {
-            pending: { label: "Pending", color: "text-amber-500", dot: "bg-amber-500" },
-            accepted: { label: "Accepted", color: "text-blue-500", dot: "bg-blue-500" },
-            ready_for_pickup: { label: "Ready", color: "text-purple-500", dot: "bg-purple-500" },
-            picked_up: { label: "Picked Up", color: "text-indigo-500", dot: "bg-indigo-500" },
-            out_for_delivery: { label: "Out for Delivery", color: "text-blue-500", dot: "bg-blue-500" },
-            delivered: { label: "Delivered", color: "text-green-500", dot: "bg-green-500" },
-            completed: { label: "Completed", color: "text-emerald-500", dot: "bg-emerald-500" },
-            rejected: { label: "Rejected", color: "text-red-500", dot: "bg-red-500" },
-            cancelled: { label: "Cancelled", color: "text-neutral-400", dot: "bg-neutral-300" }
-        };
-        return configs[status] || configs.pending;
-    };
-
-    // ✅ Fixed: Only one canCancel and canReview function
+    // Only one canCancel and canReview function
     const canCancel = (status) => status === ORDER_STATUS.PENDING || status === ORDER_STATUS.ACCEPTED;
     const canReview = (status) => status === ORDER_STATUS.DELIVERED || status === ORDER_STATUS.COMPLETED;
 

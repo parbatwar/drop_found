@@ -1,4 +1,4 @@
-// constants/orderStatus.js
+// frontend/src/constants/orderStatus.js
 
 export const ORDER_STATUS = {
     PENDING: 'pending',
@@ -25,17 +25,37 @@ export const ORDER_STATUS_LABELS = {
 };
 
 export const ORDER_STATUS_COLORS = {
-    [ORDER_STATUS.PENDING]: 'text-amber-600 bg-amber-50 border-amber-200',
-    [ORDER_STATUS.ACCEPTED]: 'text-blue-600 bg-blue-50 border-blue-200',
-    [ORDER_STATUS.REJECTED]: 'text-red-600 bg-red-50 border-red-200',
-    [ORDER_STATUS.READY_FOR_PICKUP]: 'text-purple-600 bg-purple-50 border-purple-200',
-    [ORDER_STATUS.PICKED_UP]: 'text-indigo-600 bg-indigo-50 border-indigo-200',
-    [ORDER_STATUS.OUT_FOR_DELIVERY]: 'text-blue-600 bg-blue-50 border-blue-200',
-    [ORDER_STATUS.DELIVERED]: 'text-green-600 bg-green-50 border-green-200',
-    [ORDER_STATUS.COMPLETED]: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    [ORDER_STATUS.CANCELLED]: 'text-neutral-400 bg-neutral-50 border-neutral-200',
+    [ORDER_STATUS.PENDING]: 'bg-amber-50 text-amber-600 border-amber-200',
+    [ORDER_STATUS.ACCEPTED]: 'bg-blue-50 text-blue-600 border-blue-200',
+    [ORDER_STATUS.REJECTED]: 'bg-red-50 text-red-600 border-red-200',
+    [ORDER_STATUS.READY_FOR_PICKUP]: 'bg-purple-50 text-purple-600 border-purple-200',
+    [ORDER_STATUS.PICKED_UP]: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+    [ORDER_STATUS.OUT_FOR_DELIVERY]: 'bg-blue-50 text-blue-600 border-blue-200',
+    [ORDER_STATUS.DELIVERED]: 'bg-green-50 text-green-600 border-green-200',
+    [ORDER_STATUS.COMPLETED]: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    [ORDER_STATUS.CANCELLED]: 'bg-neutral-50 text-neutral-400 border-neutral-200',
 };
 
+// For verification status badges (seller/admin)
+export const VERIFICATION_STATUS = {
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+};
+
+export const VERIFICATION_STATUS_LABELS = {
+    [VERIFICATION_STATUS.PENDING]: 'Pending',
+    [VERIFICATION_STATUS.APPROVED]: 'Approved',
+    [VERIFICATION_STATUS.REJECTED]: 'Rejected',
+};
+
+export const VERIFICATION_STATUS_COLORS = {
+    [VERIFICATION_STATUS.PENDING]: 'bg-amber-50 text-amber-600 border-amber-200',
+    [VERIFICATION_STATUS.APPROVED]: 'bg-green-50 text-green-600 border-green-200',
+    [VERIFICATION_STATUS.REJECTED]: 'bg-red-50 text-red-600 border-red-200',
+};
+
+// Order status action mappings
 export const ORDER_STATUS_ACTIONS = {
     // What buyer can do
     buyer: {
@@ -66,4 +86,29 @@ export const ORDER_STATUS_ACTIONS = {
         [ORDER_STATUS.DELIVERED]: ['complete'],
         [ORDER_STATUS.COMPLETED]: [],
     },
+};
+
+// Helper function to get tracking steps
+export const getTrackingSteps = () => [
+    { key: ORDER_STATUS.PENDING, label: 'Order Placed' },
+    { key: ORDER_STATUS.ACCEPTED, label: 'Accepted' },
+    { key: ORDER_STATUS.READY_FOR_PICKUP, label: 'Ready for Pickup' },
+    { key: ORDER_STATUS.PICKED_UP, label: 'Picked Up' },
+    { key: ORDER_STATUS.OUT_FOR_DELIVERY, label: 'Out for Delivery' },
+    { key: ORDER_STATUS.DELIVERED, label: 'Delivered' },
+    { key: ORDER_STATUS.COMPLETED, label: 'Completed' },
+];
+
+// Helper function to get step index
+export const getStepIndex = (status) => {
+    const orderFlow = [
+        ORDER_STATUS.PENDING,
+        ORDER_STATUS.ACCEPTED,
+        ORDER_STATUS.READY_FOR_PICKUP,
+        ORDER_STATUS.PICKED_UP,
+        ORDER_STATUS.OUT_FOR_DELIVERY,
+        ORDER_STATUS.DELIVERED,
+        ORDER_STATUS.COMPLETED,
+    ];
+    return orderFlow.indexOf(status);
 };
