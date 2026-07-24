@@ -1,4 +1,4 @@
-// src/pages/seller/CreateListing.jsx
+// src/pages/seller/CreateListing.jsx - Refactored
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createListing } from '../../api/listings';
@@ -6,111 +6,82 @@ import { getMySellerProfile } from '../../api/seller';
 import { getListingOptions } from '../../api/meta';
 import { Icons } from '../../components/Icons';
 import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { FormField } from '../../components/common/FormField';
+import { ToggleSwitch } from '../../components/common/ToggleSwitch';
+import { ImageUploadGrid } from '../../components/common/ImageUploadGrid';
+import { useToast } from '../../hooks/useToast';
 
 function CreateListing() {
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const fileInputRef = useRef(null);
     
     const [seller, setSeller] = useState(null);
     const [loadingSeller, setLoadingSeller] = useState(true);
     const [options, setOptions] = useState(null);
+    const [uploadingImages, setUploadingImages] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        price: '',
-        quantity: 1,
-        condition: '',
-        category_id: '',
-        gender: '',
-        size: '',
+        title: '', description: '', price: '', quantity: 1,
+        condition: '', category_id: '', gender: '', size: '',
         is_surplus: false,
     });
 
     const [images, setImages] = useState([]);
-    const [uploadingImages, setUploadingImages] = useState(false);
-    const [error, setError] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-
     const isRetailer = seller?.seller_type === 'retailer';
 
     useEffect(() => {
-        Promise.all([
-            getMySellerProfile(),
-            getListingOptions(),
-        ])
+        Promise.all([getMySellerProfile(), getListingOptions()])
             .then(([sellerRes, optionsRes]) => {
                 setSeller(sellerRes.data);
                 setOptions(optionsRes.data);
             })
-            .catch((err) => {
-                console.error(err);
-                setError('Could not load layout configurations safely.');
-            })
+            .catch(() => setError('Could not load configurations.'))
             .finally(() => setLoadingSeller(false));
     }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData({
-            ...formData,
-            [name]: type === 'checkbox' ? checked : value,
-        });
+        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
     const handleImageChange = (e) => {
         setError('');
         const files = Array.from(e.target.files);
-        
-        const totalImages = images.length + files.length;
-        if (totalImages > 6) {
-            setError('Maximum of 6 total images allowed.');
+        if (images.length + files.length > 6) {
+            setError('Maximum of 6 images allowed.');
             return;
         }
-
-        const mappedImages = files.map((file) => ({
-            file,
-            previewUrl: URL.createObjectURL(file),
-        }));
-        setImages((prev) => [...prev, ...mappedImages]);
+        setImages(prev => [...prev, ...files.map(file => ({ file, previewUrl: URL.createObjectURL(file) }))]);
     };
 
-    const removeImageLocal = (indexToRemove) => {
-        setImages((prev) => {
-            const updated = prev.filter((_, idx) => idx !== indexToRemove);
-            URL.revokeObjectURL(prev[indexToRemove].previewUrl);
-            return updated;
+    const removeImage = (index) => {
+        setImages(prev => {
+            URL.revokeObjectURL(prev[index].previewUrl);
+            return prev.filter((_, i) => i !== index);
         });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // ✅ Prevent duplicate submissions
-        if (submitting) {
-            console.log('⚠️ Already submitting, skipping...');
-            return;
-        }
-
-        setError('');
-
+        if (submitting) return;
         if (images.length === 0) {
             setError('Please upload at least one image.');
             return;
         }
 
         setSubmitting(true);
+        setError('');
 
         try {
             setUploadingImages(true);
-            
-            const imageUrlsList = await Promise.all(
-                images.map((img) => uploadToCloudinary(img.file))
-            );
-            
+            const urls = await Promise.all(images.map(img => uploadToCloudinary(img.file)));
             setUploadingImages(false);
 
-            const payload = {
+            await createListing({
                 title: formData.title.trim(),
                 description: formData.description.trim() || null,
                 price: parseFloat(formData.price),
@@ -120,322 +91,191 @@ function CreateListing() {
                 gender: formData.gender,
                 size: formData.size || null,
                 is_surplus: formData.is_surplus || false,
-                images: imageUrlsList.map((url, index) => ({
-                    image_url: url,
-                    display_order: index,
-                })),
-            };
+                images: urls.map((url, i) => ({ image_url: url, display_order: i })),
+            });
 
-            console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
-
-            // ✅ Only call createListing ONCE
-            const response = await createListing(payload);
-            console.log('✅ Response:', response.data);
-
+            showToast('Listing created successfully!', 'success');
             navigate('/seller/listings');
         } catch (err) {
-            console.error("Full error:", err.response?.data);
-
             const detail = err.response?.data?.detail;
-
-            if (Array.isArray(detail)) {
-                setError(detail.map((e) => `${e.loc.join(".")}: ${e.msg}`).join("\n"));
-            } else {
-                setError(detail || "Failed to create listing.");
-            }
-
-            setUploadingImages(false);
+            setError(Array.isArray(detail) ? detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('\n') : detail || 'Failed to create listing.');
+            showToast('Failed to create listing', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loadingSeller) {
-        return (
-            <div className="bg-white min-h-screen flex items-center justify-center">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
-                    Loading Studio Config...
-                </div>
-            </div>
-        );
-    }
+    if (loadingSeller) return <LoadingSpinner message="Loading Studio Config..." />;
 
     return (
         <div className="bg-white min-h-screen py-12 md:py-16">
             <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12">
                 
-                {/* Header */}
                 <div className="mb-10 border-b border-neutral-100 pb-6">
-                    <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">
-                        Studio
-                    </span>
-                    <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">
-                        New Listing
-                    </h1>
-                    <p className="text-sm text-neutral-500 mt-2">
-                        Add a new product to your collection.
-                    </p>
+                    <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">Studio</span>
+                    <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">New Listing</h1>
+                    <p className="text-sm text-neutral-500 mt-2">Add a new product to your collection.</p>
                 </div>
 
-                {/* Error Message */}
                 {error && (
-                    <div className="mb-8 bg-red-50 border-l-2 border-red-400 px-5 py-4 text-sm text-red-600 whitespace-pre-line">
-                        {error}
-                    </div>
+                    <div className="mb-8 bg-red-50 border-l-2 border-red-400 px-5 py-4 text-sm text-red-600 whitespace-pre-line">{error}</div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     
-                    {/* Image Upload Section */}
+                    {/* Images */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
                                 Product Images <span className="text-neutral-300">*</span>
                             </label>
-                            <span className="text-[10px] text-neutral-400">
-                                {images.length} / 6
-                            </span>
+                            <span className="text-[10px] text-neutral-400">{images.length} / 6</span>
                         </div>
-                        
-                        <div className="grid grid-cols-3 gap-3">
-                            {images.map((img, index) => (
-                                <div key={index} className="relative aspect-square bg-neutral-50 border border-neutral-200 overflow-hidden group">
-                                    <img 
-                                        src={img.previewUrl} 
-                                        alt={`Preview ${index + 1}`} 
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => removeImageLocal(index)}
-                                        className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                    >
-                                        <Icons.X className="w-3 h-3" />
-                                    </button>
-                                </div>
-                            ))}
-
-                            {images.length < 6 && (
-                                <div 
-                                    onClick={() => fileInputRef.current.click()}
-                                    className="aspect-square border-2 border-dashed border-neutral-200 hover:border-black flex flex-col items-center justify-center cursor-pointer transition-colors duration-300 bg-neutral-50"
-                                >
-                                    <Icons.Upload className="w-6 h-6 text-neutral-300" />
-                                    <span className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 mt-2">
-                                        Add Image
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-
-                        <input 
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleImageChange}
-                            multiple
-                            accept="image/*"
-                            className="hidden"
+                        <ImageUploadGrid 
+                            images={images} 
+                            onAdd={() => fileInputRef.current?.click()} 
+                            onRemove={removeImage} 
                         />
+                        <input type="file" ref={fileInputRef} onChange={handleImageChange} multiple accept="image/*" className="hidden" />
                     </div>
 
                     {/* Title */}
-                    <div>
-                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                            Product Title <span className="text-neutral-300">*</span>
-                        </label>
+                    <FormField label="Product Title" required>
                         <input
                             type="text"
                             name="title"
                             value={formData.title}
                             onChange={handleChange}
                             placeholder="e.g., Raw Denim Boxy Jacket"
-                            className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                            className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors bg-transparent"
                             required
                         />
-                    </div>
+                    </FormField>
 
                     {/* Description */}
-                    <div>
-                        <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                            Description
-                        </label>
+                    <FormField label="Description">
                         <textarea
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
                             placeholder="Detail the fabric, fit, condition, and story behind this piece..."
                             rows={4}
-                            className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 resize-none bg-transparent"
+                            className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors resize-none bg-transparent"
                         />
-                    </div>
+                    </FormField>
 
-                    {/* Price & Category Row */}
+                    {/* Price & Category */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                                Price (NPR) <span className="text-neutral-300">*</span>
-                            </label>
+                        <FormField label="Price (NPR)" required>
                             <input
                                 type="number"
                                 name="price"
                                 value={formData.price}
                                 onChange={handleChange}
                                 placeholder="0.00"
-                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
-                                required
-                                min="0"
-                                step="0.01"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors bg-transparent"
+                                required min="0" step="0.01"
                             />
-                        </div>
+                        </FormField>
 
-                        <div>
-                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                                Category <span className="text-neutral-300">*</span>
-                            </label>
+                        <FormField label="Category" required>
                             <select
                                 name="category_id"
                                 value={formData.category_id}
                                 onChange={handleChange}
-                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent"
                                 required
                             >
                                 <option value="">Select Category</option>
-                                {options?.categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
+                                {options?.categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                                 ))}
                             </select>
-                        </div>
+                        </FormField>
                     </div>
 
-                    {/* Gender & Quantity Row */}
+                    {/* Gender & Quantity */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                                Gender <span className="text-neutral-300">*</span>
-                            </label>
+                        <FormField label="Gender" required>
                             <select
                                 name="gender"
                                 value={formData.gender}
                                 onChange={handleChange}
-                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent capitalize"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize"
                                 required
                             >
                                 <option value="">Select</option>
-                                {options?.genders.map((gender) => (
-                                    <option key={gender} value={gender}>
-                                        {gender}
-                                    </option>
-                                ))}
+                                {options?.genders.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
-                        </div>
+                        </FormField>
 
-                        <div>
-                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                                Quantity <span className="text-neutral-300">*</span>
-                            </label>
+                        <FormField label="Quantity" required>
                             <input
                                 type="number"
                                 name="quantity"
                                 value={formData.quantity}
                                 onChange={handleChange}
-                                min="1"
-                                step="1"
-                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors duration-300 bg-transparent"
+                                min="1" step="1"
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black placeholder:text-neutral-300 focus:border-black outline-none transition-colors bg-transparent"
                                 required
                             />
-                        </div>
+                        </FormField>
                     </div>
 
-                    {/* Condition & Size Row */}
+                    {/* Condition & Size */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {seller?.seller_type === 'thrift' && (
-                            <div>
-                                <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                                    Condition <span className="text-neutral-300">*</span>
-                                </label>
+                            <FormField label="Condition" required>
                                 <select
                                     name="condition"
                                     value={formData.condition}
                                     onChange={handleChange}
-                                    className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent capitalize"
+                                    className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize"
                                     required
                                 >
                                     <option value="">Select Condition</option>
-                                    {options?.conditions.map((cond) => (
-                                        <option key={cond} value={cond}>
-                                            {cond.replaceAll('_', ' ')}
-                                        </option>
-                                    ))}
+                                    {options?.conditions.map(c => <option key={c} value={c}>{c.replaceAll('_', ' ')}</option>)}
                                 </select>
-                            </div>
+                            </FormField>
                         )}
 
                         <div className={seller?.seller_type !== 'thrift' ? 'md:col-span-2' : ''}>
-                            <label className="block text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-2">
-                                Size
-                            </label>
-                            <select
-                                name="size"
-                                value={formData.size}
-                                onChange={handleChange}
-                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors duration-300 appearance-none cursor-pointer bg-transparent uppercase"
-                            >
-                                <option value="">Select Size</option>
-                                {options?.sizes.map((sz) => (
-                                    <option key={sz} value={sz}>
-                                        {sz.replaceAll('_', ' ')}
-                                    </option>
-                                ))}
-                            </select>
+                            <FormField label="Size">
+                                <select
+                                    name="size"
+                                    value={formData.size}
+                                    onChange={handleChange}
+                                    className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent uppercase"
+                                >
+                                    <option value="">Select Size</option>
+                                    {options?.sizes.map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}
+                                </select>
+                            </FormField>
                         </div>
                     </div>
 
-                    {/* ✅ Retailer-Only Fields - Surplus */}
+                    {/* Retailer-Only: Surplus Toggle */}
                     {isRetailer && (
                         <div className="border-t border-neutral-100 pt-6">
-                            <h3 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-4">
-                                Inventory Tags
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Surplus Toggle */}
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ 
-                                            ...prev, 
-                                            is_surplus: !prev.is_surplus 
-                                        }))}
-                                        className={`relative w-10 h-5 rounded-full transition-colors duration-300 flex-shrink-0 ${
-                                            formData.is_surplus ? 'bg-amber-600' : 'bg-neutral-300'
-                                        }`}
-                                    >
-                                        <span 
-                                            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${
-                                                formData.is_surplus ? 'translate-x-5' : 'translate-x-0'
-                                            }`}
-                                        />
-                                    </button>
-                                    <div>
-                                        <span className="text-sm font-medium text-neutral-700">Surplus</span>
-                                        <p className="text-[9px] text-neutral-400">Overstock, excess inventory</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <h3 className="text-[10px] tracking-[0.2em] uppercase text-neutral-500 font-medium mb-4">Inventory Tags</h3>
+                            <ToggleSwitch
+                                value={formData.is_surplus}
+                                onChange={(val) => setFormData(prev => ({ ...prev, is_surplus: val }))}
+                                label="Surplus"
+                                description="Overstock, excess inventory"
+                                activeColor="bg-amber-600"
+                            />
                         </div>
                     )}
 
-                    {/* Submit Button */}
+                    {/* Submit */}
                     <div className="pt-6 border-t border-neutral-100">
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full bg-black text-white px-6 py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors duration-300 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                            className="w-full bg-black text-white px-6 py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
                         >
-                            {uploadingImages ? 'Uploading Images...' : 
-                             submitting ? 'Publishing...' : 
-                             'Publish Listing'}
+                            {uploadingImages ? 'Uploading Images...' : submitting ? 'Publishing...' : 'Publish Listing'}
                         </button>
                     </div>
                 </form>
