@@ -12,6 +12,7 @@ const ACCEPTED_DOCUMENT_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/
 
 export const useSellerApplication = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [sellerTypes, setSellerTypes] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
@@ -27,8 +28,8 @@ export const useSellerApplication = () => {
     const [isInitialized, setIsInitialized] = useState(false);
     const [existingProfile, setExistingProfile] = useState(null);
     const [showForm, setShowForm] = useState(false);
-    const [isReapplyingManually, setIsReapplyingManually] = useState(false); // ✅ New flag
-    
+    const [isReapplyingManually, setIsReapplyingManually] = useState(false);
+
     const [formData, setFormData] = useState({
         shop_name: '',
         bio: '',
@@ -62,7 +63,7 @@ export const useSellerApplication = () => {
     // Reset rejected status to allow reapplication
     const resetRejectedStatus = () => {
         console.log('🔄 Resetting rejected status for reapplication...');
-        setIsReapplyingManually(true); // ✅ Set the flag
+        setIsReapplyingManually(true);
         setApplicationStatus(null);
         setHasPendingApplication(false);
         setIsReapplying(true);
@@ -103,7 +104,7 @@ export const useSellerApplication = () => {
     useEffect(() => {
         const init = async () => {
             try {
-                // ✅ If we're manually reapplying, skip the status check
+                // If we're manually reapplying, skip the status check
                 if (isReapplyingManually) {
                     console.log('🔄 Manual reapply - skipping status check');
                     setIsInitialized(true);

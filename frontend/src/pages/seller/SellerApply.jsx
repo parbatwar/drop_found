@@ -1,9 +1,12 @@
-// frontend/src/pages/seller/SellerApply.jsx
+// pages/seller/SellerApply.jsx - Refactored
 import { useSellerApplication } from '../../hooks/useSellerApplication';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import StepProgress from '../../components/SellerApply/StepProgress';
 import FileUpload from '../../components/SellerApply/FileUpload';
 import FormSection from '../../components/SellerApply/FormSection';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import StatusBadge from '../../components/common/StatusBadge';
+import EmptyState from '../../components/common/EmptyState';
 
 const capitalizeSellerType = (type) => {
     if (!type) return '';
@@ -11,7 +14,6 @@ const capitalizeSellerType = (type) => {
 };
 
 function SellerApply() {
-    const navigate = useNavigate();
     const {
         currentStep,
         businessType,
@@ -36,75 +38,56 @@ function SellerApply() {
         resetRejectedStatus,
     } = useSellerApplication();
 
-    // Show loading state while checking status
+    // Loading state
     if (!isInitialized || fetchingOptions) {
-        return (
-            <div className="bg-white min-h-screen flex items-center justify-center">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-gray-400 animate-pulse">
-                    Verifying Merchant Profile Status...
-                </div>
-            </div>
-        );
+        return <LoadingSpinner message="Verifying Merchant Profile Status..." />;
     }
 
-    // Show pending application message
+    // Pending application
     if (hasPendingApplication && applicationStatus === 'pending') {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center px-4">
                 <div className="max-w-md w-full text-center">
-                    <div className="text-6xl mb-6">⏳</div>
-                    <h1 className="text-3xl font-light tracking-tight text-black mb-3">
-                        Application Under Review
-                    </h1>
-                    <p className="text-gray-500 leading-relaxed mb-6">
-                        Your seller application is currently being reviewed by our team.
-                        This usually takes 1-2 business days.
-                    </p>
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                    <EmptyState
+                        icon="⏳"
+                        title="Application Under Review"
+                        subtitle="Your seller application is currently being reviewed by our team. This usually takes 1-2 business days."
+                        actionLabel="Return to Home"
+                        actionLink="/"
+                    />
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
                         <p className="text-sm text-amber-700">
                             We'll notify you via email once your application is approved.
                         </p>
                     </div>
-                    <Link 
-                        to="/" 
-                        className="inline-block border border-black px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-300"
-                    >
-                        Return to Home
-                    </Link>
                 </div>
             </div>
         );
     }
 
-    // Show rejected message with Reapply Now button
+    // Rejected application
     if (applicationStatus === 'rejected') {
         return (
             <div className="bg-white min-h-screen flex items-center justify-center px-4">
                 <div className="max-w-md w-full text-center">
-                    <div className="text-6xl mb-6">📋</div>
-                    <h1 className="text-3xl font-light tracking-tight text-black mb-3">
-                        Application Not Approved
-                    </h1>
-                    <p className="text-gray-500 leading-relaxed mb-6">
-                        Your seller application was not approved. You can reapply with updated information.
-                    </p>
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <EmptyState
+                        icon="📋"
+                        title="Application Not Approved"
+                        subtitle="Your seller application was not approved. You can reapply with updated information."
+                        actionLabel="Reapply Now"
+                        onAction={resetRejectedStatus}
+                    />
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
                         <p className="text-sm text-red-700">
                             Please review your application details and ensure all documents are clear and valid.
                         </p>
                     </div>
-                    <button 
-                        onClick={resetRejectedStatus}
-                        className="bg-black text-white px-8 py-3 text-[10px] tracking-[0.2em] uppercase hover:bg-gray-800 transition-colors duration-300"
-                    >
-                        Reapply Now
-                    </button>
                 </div>
             </div>
         );
     }
 
-    // Show the form (only if no pending/approved/rejected)
+    // Show the form
     return (
         <div className="bg-white min-h-screen">
             <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-16">
@@ -120,7 +103,7 @@ function SellerApply() {
                     <p className="text-sm text-gray-400 mt-4 leading-relaxed max-w-md">
                         {isReapplying 
                             ? 'Update your shop details and resubmit your application.'
-                            : 'Join Nepal\'s premier clothing marketplace. Start selling today.'}
+                            : "Join Nepal's premier clothing marketplace. Start selling today."}
                     </p>
                 </div>
 
@@ -134,9 +117,7 @@ function SellerApply() {
 
                 <form onSubmit={handleSubmit} className="animate-fadeIn">
                     
-                    {/* ============================================ */}
                     {/* STEP 1: Shop Info */}
-                    {/* ============================================ */}
                     {currentStep === 1 && (
                         <div className="space-y-6">
                             {/* Business Type */}
@@ -243,7 +224,7 @@ function SellerApply() {
                                 />
                             </FormSection>
 
-                            {/* Business Phone - Required for ALL */}
+                            {/* Business Phone */}
                             <FormSection>
                                 <label className="block text-[10px] tracking-[0.2em] uppercase text-gray-500 font-medium mb-2">
                                     Business Phone <span className="text-red-500">*</span>
@@ -262,7 +243,7 @@ function SellerApply() {
                                 </p>
                             </FormSection>
 
-                            {/* Business Email - Optional */}
+                            {/* Business Email */}
                             <FormSection>
                                 <label className="block text-[10px] tracking-[0.2em] uppercase text-gray-500 font-medium mb-2">
                                     Business Email <span className="text-gray-400">(Optional)</span>
@@ -337,22 +318,24 @@ function SellerApply() {
                         </div>
                     )}
 
-                    {/* ============================================ */}
                     {/* STEP 2: Identity */}
-                    {/* ============================================ */}
                     {currentStep === 2 && (
                         <div className="space-y-6">
-                            
+                            <div className="bg-amber-50 border border-amber-200 p-4 text-sm text-amber-700">
+                                Upload clear photos of your ID.
+                                <br />
+                                <span className="text-xs text-amber-600">Accepted: JPG, PNG, WebP (Max 2MB)</span>
+                            </div>
+
                             <FileUpload
                                 label="ID Front"
                                 preview={previews.identity_front}
                                 onUpload={(file) => handleUpload('identity_front', file)}
                                 onRemove={() => removeFile('identity_front')}
                                 required
-                                info="Citizenship, Passport, or Driver's License (JPG, PNG, WebP)"
+                                info="Citizenship, Passport, or Driver's License (Front)"
                                 isDocument={false}
                             />
-                            
 
                             <FileUpload
                                 label="ID Back"
@@ -360,7 +343,7 @@ function SellerApply() {
                                 onUpload={(file) => handleUpload('identity_back', file)}
                                 onRemove={() => removeFile('identity_back')}
                                 required
-                                info="Citizenship, Passport, or Driver's License (JPG, PNG, WebP)"
+                                info="Citizenship, Passport, or Driver's License (Back)"
                                 isDocument={false}
                             />
 
@@ -383,13 +366,16 @@ function SellerApply() {
                         </div>
                     )}
 
-                    {/* ============================================ */}
                     {/* STEP 3: Documents */}
-                    {/* ============================================ */}
                     {currentStep === 3 && (
                         <div className="space-y-6">
                             {isBusiness ? (
                                 <>
+                                    <div className="bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700">
+                                        Business verification required. Upload your documents below.
+                                        <br />
+                                        <span className="text-xs text-blue-600">Takes 2-3 business days.</span>
+                                    </div>
 
                                     <FileUpload
                                         label="PAN Certificate"
@@ -412,7 +398,7 @@ function SellerApply() {
                                     />
 
                                     <div className="bg-gray-50 p-4 text-sm text-gray-600 border border-gray-200">
-                                        Documents will be reviewed within 1-2 business days.
+                                        Documents will be reviewed within 2-3 business days.
                                     </div>
                                 </>
                             ) : (
