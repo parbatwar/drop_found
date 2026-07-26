@@ -1,4 +1,4 @@
-// frontend/src/components/common/ConfirmDialog.jsx
+// components/common/ConfirmDialog.jsx
 import Modal from './Modal';
 
 function ConfirmDialog({ 

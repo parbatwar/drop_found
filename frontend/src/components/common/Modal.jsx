@@ -1,4 +1,4 @@
-// frontend/src/components/common/Modal.jsx
+// components/common/Modal.jsx
 import { useEffect, useRef } from 'react';
 import { Icons } from '../Icons';
 

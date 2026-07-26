@@ -1,3 +1,4 @@
+// components/common/LoadingSpinner.jsx
 function LoadingSpinner({ message = 'Loading...' }) {
     return (
         <div className="bg-white min-h-screen flex items-center justify-center">
@@ -7,3 +8,5 @@ function LoadingSpinner({ message = 'Loading...' }) {
         </div>
     );
 }
+
+export default LoadingSpinner;

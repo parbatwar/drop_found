@@ -2,8 +2,9 @@
 import { Link } from 'react-router-dom';
 import { Icons } from '../Icons';
 import VerificationIcon from '../common/VerificationIcon';
+import StarRating from '../common/StarRating';
 
-function ShopProfileCard({ seller, stats, onFollowersClick, renderStars }) {
+function ShopProfileCard({ seller, stats, onFollowersClick }) {
     const getStatusText = () => {
         if (seller.verification_status === 'approved') return '✓ Verified';
         if (seller.verification_status === 'pending') return '⏳ Under Review';
@@ -73,7 +74,7 @@ function ShopProfileCard({ seller, stats, onFollowersClick, renderStars }) {
                                 <div className="flex items-center justify-center gap-1">
                                     <span className="text-sm font-light">{stats.rating.toFixed(1)}</span>
                                 </div>
-                                <p className="text-[8px] text-neutral-400 uppercase tracking-wider">{renderStars(stats.rating)}</p>
+                                <StarRating rating={stats.rating} />
                             </div>
                             <div>
                                 <p className="text-lg font-light">{stats.reviews}</p>

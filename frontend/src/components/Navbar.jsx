@@ -334,46 +334,6 @@ function Navbar() {
                     </div>
                 </div>
             )}
-
-            {/* CSS Animation */}
-            <style jsx>{`
-                @keyframes marquee {
-                    0% {
-                        transform: translateX(0);
-                    }
-                    100% {
-                        transform: translateX(-50%);
-                    }
-                }
-                .animate-marquee {
-                    animation: marquee 20s linear infinite;
-                    display: inline-block;
-                }
-                @keyframes slideDown {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-8px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                    }
-                    to {
-                        opacity: 1;
-                    }
-                }
-                .animate-slideDown {
-                    animation: slideDown 0.2s ease-out;
-                }
-                .animate-fade-in {
-                    animation: fadeIn 0.2s ease-out;
-                }
-            `}</style>
         </>
     );
 }

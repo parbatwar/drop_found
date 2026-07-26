@@ -1,4 +1,4 @@
-// hooks/useSellerDashboard.js
+// src/hooks/useSellerDashboard.js
 import { useState, useEffect } from 'react';
 import { getMySellerProfile } from '../api/seller';
 import { getSellerListings } from '../api/listings';
@@ -90,24 +90,14 @@ export const useSellerDashboard = () => {
         return null;
     };
 
-    const renderStars = (rating) => {
-        const stars = [];
-        const roundedRating = Math.round(rating);
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <span key={i} className={`text-sm ${i <= roundedRating ? 'text-amber-500' : 'text-neutral-200'}`}>★</span>
-            );
-        }
-        return stars;
-    };
-
     return {
         seller,
         listings,
         loading,
         stats,
         getVerificationType,
-        renderStars,
         loadSellerData,
     };
 };
+
+export default useSellerDashboard;

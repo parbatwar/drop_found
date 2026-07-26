@@ -1,5 +1,5 @@
-// hooks/useListing.js
-import { useState, useEffect, useCallback } from 'react';
+// hooks/useListing.js - Fixed
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getListing } from '../api/listings';
 import { addToCart } from '../api/cart';
 import { addToWishlist, removeFromWishlist } from '../api/wishlist';
@@ -18,10 +18,21 @@ export const useListing = (listingId) => {
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [addingToCart, setAddingToCart] = useState(false);
+    
+    // ✅ Add a ref to prevent duplicate requests
+    const fetchedRef = useRef(false);
 
     // Fetch listing data
     const fetchListing = useCallback(async () => {
-        if (!listingId) return;
+        if (!listingId) {
+            setLoading(false);
+            return;
+        }
+        
+        // ✅ Prevent duplicate requests
+        if (fetchedRef.current) return;
+        fetchedRef.current = true;
+        
         setLoading(true);
         setError('');
         try {
@@ -38,9 +49,11 @@ export const useListing = (listingId) => {
         }
     }, [listingId, showToast]);
 
+    // ✅ Reset ref when listingId changes
     useEffect(() => {
+        fetchedRef.current = false;
         fetchListing();
-    }, [fetchListing]);
+    }, [listingId]); // ✅ Only depend on listingId, not fetchListing
 
     // Add to cart
     const handleAddToCart = useCallback(async (quantity = 1) => {

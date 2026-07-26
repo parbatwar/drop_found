@@ -1,4 +1,5 @@
-// hooks/useReviews.js
+// hooks/useReviews.js - Fixed Version
+
 import { useState, useEffect, useCallback } from 'react';
 import { getListingReviews, getSellerReviews } from '../api/reviews';
 
@@ -51,9 +52,10 @@ export const useListingReviews = (listingId, initialLimit = 10) => {
         }
     }, [hasMore, loading, page, fetchReviews]);
 
+    // ✅ FIXED: Added fetchReviews to dependencies
     useEffect(() => {
         fetchReviews(1);
-    }, [listingId]);
+    }, [fetchReviews]);
 
     return {
         reviews,
@@ -118,9 +120,10 @@ export const useSellerReviews = (sellerId, initialLimit = 10) => {
         }
     }, [hasMore, loading, page, fetchReviews]);
 
+    // ✅ FIXED: Added fetchReviews to dependencies
     useEffect(() => {
         fetchReviews(1);
-    }, [sellerId]);
+    }, [fetchReviews]);
 
     return {
         reviews,

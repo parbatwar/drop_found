@@ -1,6 +1,9 @@
 // src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 
+import { useToast } from './hooks/useToast';
+import Toast from './components/Toast';
+
 import Layout from './components/Layout';
 import AdminLayout from './components/admin/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
