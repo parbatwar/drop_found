@@ -1,16 +1,10 @@
-# Drop Found 👕🛍️
+# Drop Found
 
-**Nepal's Online Clothing Marketplace** — A full-featured platform connecting thrift shops, retailers, and individual sellers with buyers across Nepal.
+**Clothing Marketplace** — A full-featured platform connecting clothing sellers with buyers across Nepal.
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-
----
-
-## Overview
-
-Drop Found is Nepal's marketplace for thrift clothing, vintage pieces, and brand new fashion. The platform allows sellers to list items, buyers to discover and purchase unique fashion, and admins to manage the ecosystem.
 
 ---
 
