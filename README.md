@@ -1,87 +1,80 @@
 # Drop Found 👕🛍️
 
-An online clothing marketplace built to connect sellers with buyers through a simple and accessible platform.
+**Nepal's Online Clothing Marketplace** — A full-featured platform connecting thrift shops, retailers, and individual sellers with buyers across Nepal.
 
-## Status
-
-🚧 **Actively in development**
-Currently building the MVP (Minimum Viable Product).
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 ---
 
-## Features Implemented
+## Overview
 
-### Authentication
+Drop Found is Nepal's marketplace for thrift clothing, vintage pieces, and brand new fashion. The platform allows sellers to list items, buyers to discover and purchase unique fashion, and admins to manage the ecosystem.
 
-* User registration and login
-* JWT-based authentication and session management
+---
+
+## Key Features
+
+### Authentication & Users
+- Google OAuth 2.0 login/registration
+- JWT-based authentication with role-based access (buyer, seller, admin)
+- User profile management
 
 ### Seller System
+- Multi-step application with document upload
+- Two business types: Registered (with PAN/registration) and Unregistered (individual)
+- Two seller types: Thrift Shop and Retail Shop
+- Identity & business verification with document storage
+- Shop profiles with logos, bios, and contact info
+- Follow system for buyers
 
-* Seller onboarding flow
-* Lightweight verification process
+### Listings & Catalog
+- Admin-managed product categories
+- Rich attributes: gender, size, condition, color, quantity
+- Up to 6 images per listing
+- Smart status management based on inventory
+- Surplus tags for retail items
 
-### Listings
+### Shopping Experience
+- Shopping cart with seller-based grouping
+- Wishlist for saved items
+- Order groups for multi-seller checkout
+- Tiered delivery fees (NPR 80 under 700, NPR 120 for 700+)
+- Full order lifecycle tracking
+- Reviews & ratings for products and sellers
 
-* Create listings
-* Browse listings
-* Update listings
-* Delete listings
-
-### Orders
-
-* Place orders
-* Seller order management
-* Order status updates
-
-### Frontend
-
-* React frontend connected to backend APIs
-* Login and registration flows completed
-
----
-
-## Planned Features
-
-* Reviews & ratings
-* Wishlists
-* User follows
-* Notifications
-* Payment integration (eSewa / Khalti)
-* Full surplus marketplace experience
-* Admin dashboard
+### Admin Dashboard
+- Seller application review with document verification
+- Full order management and status control
+- Category management
+- Platform announcements
 
 ---
 
 ## Tech Stack
 
 ### Backend
-
-* FastAPI
-* PostgreSQL
-* SQLAlchemy
-* Alembic
-* JWT Authentication
+- FastAPI - REST API framework
+- PostgreSQL - Primary database
+- SQLAlchemy - ORM
+- Alembic - Database migrations
+- JWT + Bcrypt - Authentication
+- OAuth2 - Google login
+- Cloudinary - Image/document storage
 
 ### Frontend
+- React - UI framework
+- Vite - Build tool
+- Tailwind CSS - Styling
+- React Router - Navigation
+- Axios - HTTP client
+- Context API - State management
 
-* React (Vite)
-* Tailwind CSS
-* React Router
-* Axios
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- PostgreSQL 14+
+- Cloudinary account
+- Google OAuth credentials
 
----
-
-## Project Structure
-
-```text
-drop_found/
-├── backend/      # FastAPI application
-└── frontend/     # React application
-```
-
----
-
-## Goal
-
-Drop Found aims to make buying and selling thrift and surplus clothing easier by creating a focused marketplace experience for both sellers and buyers.
