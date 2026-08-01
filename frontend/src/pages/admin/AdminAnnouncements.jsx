@@ -10,7 +10,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import Modal from '../../components/common/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
-import { useToast } from '../../hooks/useToast';
+import { useToast } from '../../context/ToastContext';
 
 function AdminAnnouncements() {
     const { showToast } = useToast();

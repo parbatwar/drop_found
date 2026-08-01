@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { updateProfile } from '../api/user';
 import { getFollowing } from '../api/follow';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from './useToast';
+import { useToast } from '../context/ToastContext';
 
 export const useProfile = () => {
     const { user, logout } = useAuth();

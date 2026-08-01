@@ -4,7 +4,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { getCart } from "../../api/cart";
 import { checkoutCart, quickBuy } from '../../api/orders';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../hooks/useToast';
+import { useToast } from '../../context/ToastContext';
 import { Icons } from '../../components/Icons';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import OrderSummary from '../../components/orders/OrderSummary';

@@ -1,10 +1,4 @@
-/**
- * @file OrderCard.jsx
- * @description Component for rendering an individual order item card within the orders list, 
- * displaying product details, pricing, seller information, status badges, and action triggers 
- * such as order cancellation and product reviews.
- */
-
+// components/orders/OrderCard.jsx - Fixed
 import StatusBadge from '../common/StatusBadge';
 import {
     getOrderImageUrl,
@@ -17,30 +11,22 @@ import {
     formatOrderId,
 } from '../../utils/orderUtils';
 
-function OrderCard({ order, onCancel, onReview, showReview }) {
+function OrderCard({ order, onCancel, onReview, showReview = true }) {
     const imageUrl = getOrderImageUrl(order);
     const title = getOrderTitle(order);
     const itemCount = getOrderItemCount(order);
     const sellerName = getOrderSellerName(order);
     const canCancel = canCancelOrder(order.status);
-    const canReview = canReviewOrder(order.status);
+    const canReview = canReviewOrder(order.status) && !order.review;
 
     return (
-        <div 
-            className="border-b border-neutral-100 pb-6 last:border-0 cursor-pointer group hover:bg-neutral-50/30 -mx-2 px-2 rounded-sm transition-colors"
-            onClick={() => onReview?.(order.groupId)}
-        >
+        <div className="border-b border-neutral-100 pb-6 last:border-0 group hover:bg-neutral-50/30 -mx-2 px-2 rounded-sm transition-colors">
             {/* Order Header */}
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <p className="text-xs text-neutral-400 tracking-wide">
-                            Order #{formatOrderId(order.groupId)}
-                        </p>
-                        <span className="text-[9px] text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                            View invoice →
-                        </span>
-                    </div>
+                    <p className="text-xs text-neutral-400 tracking-wide">
+                        Order #{formatOrderId(order.groupId)}
+                    </p>
                     <p className="text-[10px] text-neutral-300">
                         {formatOrderDate(order.groupCreated)}
                     </p>
@@ -118,7 +104,7 @@ function OrderCard({ order, onCancel, onReview, showReview }) {
                         </button>
                     )}
 
-                    {canReview && !order.review && showReview && (
+                    {canReview && showReview && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();

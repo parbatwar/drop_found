@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getWishlist, removeFromWishlist } from "../api/wishlist";
-import { useToast } from "../hooks/useToast";
+import { useToast } from "../context/ToastContext";
 import { Icons } from "../components/Icons";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import EmptyState from "../components/common/EmptyState";

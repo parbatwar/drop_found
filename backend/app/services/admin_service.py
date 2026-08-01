@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models.seller.seller import SellerProfile
 from app.models.user.user import User
-from app.models.enums.enums import VerificationStatus
+from app.models.enums.enums import VerificationStatus, BusinessType
 from app.schemas.seller import ReviewSellerRequest
 from datetime import datetime
 

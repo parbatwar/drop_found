@@ -1,6 +1,12 @@
 // components/dashboard/ActionCard.jsx
 import { Link } from 'react-router-dom';
-import { Icons } from '../Icons';
+
+// ✅ Simple ArrowRight icon without using Icons
+const ArrowRight = ({ className = "w-4 h-4" }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+    </svg>
+);
 
 function ActionCard({ to, icon: Icon, label, comingSoon = false }) {
     if (comingSoon) {
@@ -30,7 +36,7 @@ function ActionCard({ to, icon: Icon, label, comingSoon = false }) {
                     {label}
                 </span>
             </div>
-            <Icons.ArrowRight className="text-neutral-400 group-hover:text-white transition-colors" />
+            <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-colors" />
         </Link>
     );
 }

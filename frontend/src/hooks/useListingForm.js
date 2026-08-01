@@ -1,11 +1,11 @@
-// hooks/useListingForm.js
+// hooks/useListingForm.js - Complete Fixed Version
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createListing, updateListing } from '../api/listings';
+import { createListing, updateListing, getListing } from '../api/listings'; // ✅ Import getListing
 import { getMySellerProfile } from '../api/seller';
 import { getListingOptions } from '../api/meta';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary';
-import { useToast } from './useToast';
+import { useToast } from '../context/ToastContext';
 
 export const useListingForm = (listingId = null) => {
     const navigate = useNavigate();
@@ -81,7 +81,7 @@ export const useListingForm = (listingId = null) => {
                         setExistingImages(listing.images.sort((a, b) => a.display_order - b.display_order));
                     }
                 } catch (err) {
-                    console.error(err);
+                    console.error('Failed to load listing:', err);
                     setError('Could not load listing data.');
                     showToast('Failed to load listing', 'error');
                 }
@@ -156,14 +156,12 @@ export const useListingForm = (listingId = null) => {
                 images: allUrls.map((url, i) => ({ image_url: url, display_order: i })),
             };
 
-            let response;
             if (isEdit) {
-                // Add status for edit
                 payload.status = formData.status;
-                response = await updateListing(listingId, payload);
+                await updateListing(listingId, payload);
                 showToast('Listing updated successfully!', 'success');
             } else {
-                response = await createListing(payload);
+                await createListing(payload);
                 showToast('Listing created successfully!', 'success');
             }
 
@@ -185,7 +183,6 @@ export const useListingForm = (listingId = null) => {
     const totalImages = existingImages.length + newImages.length;
 
     return {
-        // Data
         seller,
         options,
         loading,
@@ -199,8 +196,6 @@ export const useListingForm = (listingId = null) => {
         isRetailer,
         isEdit,
         fileInputRef,
-
-        // Handlers
         handleChange,
         handleImageChange,
         removeNewImage,
@@ -209,3 +204,5 @@ export const useListingForm = (listingId = null) => {
         setFormData,
     };
 };
+
+export default useListingForm;

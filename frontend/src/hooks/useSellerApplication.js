@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { applySeller, getMySellerProfile, getApplicationStatus } from '../api/seller';
 import { getSellerOptions } from '../api/meta';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary';
+import { useToast } from '../context/ToastContext';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const MAX_DOCUMENT_SIZE = 5 * 1024 * 1024;

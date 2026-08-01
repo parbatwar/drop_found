@@ -1,16 +1,14 @@
-// pages/admin/AdminOrders.jsx - Refactored Version
+// pages/admin/AdminOrders.jsx - COMPLETELY FIXED
 import { useState, useEffect } from 'react';
 import { getAllOrders, adminUpdateOrderStatus, completeOrder } from '../../api/orders';
 import StatusBadge from '../../components/common/StatusBadge';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { useToast } from '../../hooks/useToast';
+import { useToast } from '../../context/ToastContext';
 import { 
     ORDER_STATUS, 
     ORDER_STATUS_LABELS,
-    ORDER_FILTER_OPTIONS,
-    getFilterLabel,
 } from '../../constants/orderStatus';
 import {
     getOrderImageUrl,
@@ -31,6 +29,7 @@ function AdminOrders() {
     const [showConfirm, setShowConfirm] = useState(false);
     const [orderToUpdate, setOrderToUpdate] = useState(null);
     const [actionToPerform, setActionToPerform] = useState(null);
+    const [actionLabel, setActionLabel] = useState('');  // ✅ Added
     const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
@@ -63,6 +62,9 @@ function AdminOrders() {
     const handleStatusUpdate = async (orderId, newStatus) => {
         setOrderToUpdate(orderId);
         setActionToPerform(newStatus);
+        // ✅ Set the label for the confirm dialog
+        const label = ORDER_STATUS_LABELS[newStatus] || newStatus;
+        setActionLabel(label);
         setShowConfirm(true);
     };
 
@@ -71,22 +73,34 @@ function AdminOrders() {
         
         setUpdating(true);
         try {
-            await adminUpdateOrderStatus(orderToUpdate, { status: actionToPerform });
+            // ✅ If it's a complete action, use completeOrder API
+            if (actionToPerform === ORDER_STATUS.COMPLETED) {
+                await completeOrder(orderToUpdate);
+            } else {
+                await adminUpdateOrderStatus(orderToUpdate, { status: actionToPerform });
+            }
             await loadOrders();
-            showToast(`Order ${ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() || 'updated'} successfully`, 'success');
+            const statusLabel = ORDER_STATUS_LABELS[actionToPerform] || 'updated';
+            showToast(`Order ${statusLabel.toLowerCase()} successfully`, 'success');
         } catch (err) {
-            showToast(err.response?.data?.detail || 'Failed to update order', 'error');
+            const errorMsg = err.response?.data?.detail;
+            const message = typeof errorMsg === 'string' 
+                ? errorMsg 
+                : (errorMsg ? JSON.stringify(errorMsg) : 'Failed to update order');
+            showToast(message, 'error');
         } finally {
             setUpdating(false);
             setShowConfirm(false);
             setOrderToUpdate(null);
             setActionToPerform(null);
+            setActionLabel('');
         }
     };
 
     const handleCompleteOrder = async (orderId) => {
         setOrderToUpdate(orderId);
-        setActionToPerform('complete');
+        setActionToPerform(ORDER_STATUS.COMPLETED);  // ✅ Use actual status value
+        setActionLabel('Complete');  // ✅ Set the label
         setShowConfirm(true);
     };
 
@@ -100,23 +114,38 @@ function AdminOrders() {
         return actions[status] || [];
     };
 
+    // ✅ Helper to get display label from action
+    const getActionDisplayLabel = (action) => {
+        const actionToLabel = {
+            'picked_up': 'Pick Up',
+            'out_for_delivery': 'Out for Delivery',
+            'delivered': 'Delivered',
+            'complete': 'Complete',
+        };
+        return actionToLabel[action] || action;
+    };
+
     const getActionButton = (action, orderId) => {
         const configs = {
             out_for_delivery: {
                 label: 'Out for Delivery',
                 className: 'bg-blue-600 text-white hover:bg-blue-700',
+                status: ORDER_STATUS.OUT_FOR_DELIVERY,
             },
             delivered: {
                 label: 'Mark Delivered',
                 className: 'bg-green-600 text-white hover:bg-green-700',
+                status: ORDER_STATUS.DELIVERED,
             },
             complete: {
                 label: 'Complete',
                 className: 'bg-emerald-600 text-white hover:bg-emerald-700',
+                status: ORDER_STATUS.COMPLETED,
             },
             picked_up: {
                 label: 'Pick Up',
                 className: 'bg-indigo-600 text-white hover:bg-indigo-700',
+                status: ORDER_STATUS.PICKED_UP,
             },
         };
 
@@ -125,7 +154,7 @@ function AdminOrders() {
 
         const handleClick = action === 'complete' 
             ? () => handleCompleteOrder(orderId)
-            : () => handleStatusUpdate(orderId, action);
+            : () => handleStatusUpdate(orderId, config.status);
 
         return (
             <button
@@ -345,12 +374,13 @@ function AdminOrders() {
                     setShowConfirm(false);
                     setOrderToUpdate(null);
                     setActionToPerform(null);
+                    setActionLabel('');
                 }}
                 onConfirm={confirmStatusUpdate}
                 title="Update Order Status"
-                message={`Are you sure you want to ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() || actionToPerform : 'update'} this order?`}
-                confirmLabel={`Yes, ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform] || actionToPerform : 'Update'}`}
-                confirmVariant="primary"
+                message={`Are you sure you want to ${actionLabel?.toLowerCase() || actionToPerform?.toLowerCase() || 'update'} this order?`}
+                confirmLabel={`Yes, ${actionLabel || actionToPerform || 'Update'}`}
+                confirmVariant={actionToPerform === ORDER_STATUS.COMPLETED ? 'success' : 'primary'}
                 loading={updating}
             />
         </div>

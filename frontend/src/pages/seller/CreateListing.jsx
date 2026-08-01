@@ -1,4 +1,4 @@
-// src/pages/seller/CreateListing.jsx - Clean Version
+// pages/seller/CreateListing.jsx - Fixed Version
 import { useListingForm } from '../../hooks/useListingForm';
 import { Icons } from '../../components/Icons';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -15,7 +15,7 @@ function CreateListing() {
         formData,
         newImages,
         totalImages,
-        isRetailer,
+        isRetailer,      // ✅ This comes from the hook
         fileInputRef,
         handleChange,
         handleImageChange,
@@ -23,7 +23,7 @@ function CreateListing() {
         handleSubmit,
         setFormData,
         options,
-    } = useListingForm();
+    } = useListingForm(); // ✅ No listingId passed (it's for create)
 
     if (loading) return <LoadingSpinner message="Loading Studio Config..." />;
 
@@ -77,7 +77,9 @@ function CreateListing() {
                         <FormField label="Category" required>
                             <select name="category_id" value={formData.category_id} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent" required>
                                 <option value="">Select Category</option>
-                                {options?.categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                                {options?.categories?.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
                             </select>
                         </FormField>
                     </div>
@@ -87,7 +89,7 @@ function CreateListing() {
                         <FormField label="Gender" required>
                             <select name="gender" value={formData.gender} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize" required>
                                 <option value="">Select</option>
-                                {options?.genders.map(g => <option key={g} value={g}>{g}</option>)}
+                                {options?.genders?.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
                         </FormField>
                         <FormField label="Quantity" required>
@@ -97,19 +99,37 @@ function CreateListing() {
 
                     {/* Condition & Size */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {isRetailer && (
+                        {/* ✅ Condition - Only for thrift sellers */}
+                        {!isRetailer && (
                             <FormField label="Condition" required>
-                                <select name="condition" value={formData.condition} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize" required>
+                                <select
+                                    name="condition"
+                                    value={formData.condition}
+                                    onChange={handleChange}
+                                    className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize"
+                                    required
+                                >
                                     <option value="">Select Condition</option>
-                                    {options?.conditions.map(c => <option key={c} value={c}>{c.replaceAll('_', ' ')}</option>)}
+                                    {options?.conditions?.map(c => (
+                                        <option key={c} value={c}>{c.replaceAll('_', ' ')}</option>
+                                    ))}
                                 </select>
                             </FormField>
                         )}
-                        <div className={!isRetailer ? 'md:col-span-2' : ''}>
+
+                        {/* Size - Full width if no condition */}
+                        <div className={!isRetailer ? '' : 'md:col-span-2'}>
                             <FormField label="Size">
-                                <select name="size" value={formData.size} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent uppercase">
+                                <select
+                                    name="size"
+                                    value={formData.size}
+                                    onChange={handleChange}
+                                    className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent uppercase"
+                                >
                                     <option value="">Select Size</option>
-                                    {options?.sizes.map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}
+                                    {options?.sizes?.map(s => (
+                                        <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>
+                                    ))}
                                 </select>
                             </FormField>
                         </div>
@@ -131,7 +151,11 @@ function CreateListing() {
 
                     {/* Submit */}
                     <div className="pt-6 border-t border-neutral-100">
-                        <button type="submit" disabled={submitting} className="w-full bg-black text-white px-6 py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed">
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="w-full bg-black text-white px-6 py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                        >
                             {uploadingImages ? 'Uploading Images...' : submitting ? 'Publishing...' : 'Publish Listing'}
                         </button>
                     </div>

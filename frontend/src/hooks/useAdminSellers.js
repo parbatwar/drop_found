@@ -1,7 +1,7 @@
 // hooks/useAdminSellers.js
 import { useState, useEffect } from 'react';
 import { getPendingSellers, reviewSeller, getSellers } from '../api/seller';
-import { useToast } from './useToast';
+import { useToast } from '../context/ToastContext';
 
 export const useAdminSellers = () => {
     const { showToast } = useToast();

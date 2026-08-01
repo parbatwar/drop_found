@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { createReview } from '../api/reviews';
-import { useToast } from './useToast';
+import { useToast } from '../context/ToastContext';
 
 export const useReviewModal = (onSuccess) => {
     const { showToast } = useToast();

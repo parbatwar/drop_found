@@ -74,7 +74,7 @@ function ShopProfileCard({ seller, stats, onFollowersClick }) {
                                 <div className="flex items-center justify-center gap-1">
                                     <span className="text-sm font-light">{stats.rating.toFixed(1)}</span>
                                 </div>
-                                <StarRating rating={stats.rating} />
+                                <StarRating rating={stats.rating} className="flex items-center justify-center gap-1" />
                             </div>
                             <div>
                                 <p className="text-lg font-light">{stats.reviews}</p>

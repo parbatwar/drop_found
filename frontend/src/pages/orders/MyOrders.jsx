@@ -1,4 +1,4 @@
-// pages/orders/MyOrders.jsx - Final Refactored Version
+// pages/orders/MyOrders.jsx - Complete Correct Version
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../../hooks/useOrders';
@@ -134,7 +134,7 @@ function MyOrders() {
                 submitting={submitting}
             />
 
-            {/* Confirm Dialog  */}
+            {/* Confirm Dialog */}
             <ConfirmDialog
                 isOpen={showCancelConfirm}
                 onClose={() => {

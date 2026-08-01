@@ -5,7 +5,7 @@ import { addToCart } from '../api/cart';
 import { addToWishlist, removeFromWishlist } from '../api/wishlist';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from './useToast';
+import { useToast } from '../context/ToastContext';
 
 export const useListing = (listingId) => {
     const { user } = useAuth();

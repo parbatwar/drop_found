@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { getMySellerProfile } from '../api/seller';
 import { getSellerListings } from '../api/listings';
 import { getSellerOrders } from '../api/orders';
-import { useToast } from './useToast';
+import { useToast } from '../context/ToastContext';
 
 export const useSellerDashboard = () => {
     const { showToast } = useToast();

@@ -1,4 +1,4 @@
-// pages/seller/SellerOrders.jsx - Refactored Version
+// pages/seller/SellerOrders.jsx - COMPLETELY FIXED
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSellerOrders, updateOrderStatus } from "../../api/orders";
@@ -6,18 +6,16 @@ import StatusBadge from "../../components/common/StatusBadge";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import EmptyState from "../../components/common/EmptyState";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { useToast } from "../../hooks/useToast";
+import { useToast } from "../../context/ToastContext";
 import { 
     ORDER_STATUS, 
     ORDER_STATUS_LABELS,
-    getFilterLabel,
 } from "../../constants/orderStatus";
 import {
     getOrderImageUrl,
     getOrderTitle,
     getOrderItemCount,
     getOrderSellerName,
-    formatOrderId,
 } from "../../utils/orderUtils";
 import { getInitials } from "../../utils/stringUtils";
 
@@ -67,7 +65,8 @@ function SellerOrders() {
         try {
             await updateOrderStatus(orderToUpdate, { status: actionToPerform });
             await loadOrders();
-            showToast(`Order ${ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() || 'updated'} successfully`, 'success');
+            const statusLabel = ORDER_STATUS_LABELS[actionToPerform] || 'updated';
+            showToast(`Order ${statusLabel.toLowerCase()} successfully`, 'success');
         } catch (err) {
             console.error(err);
             showToast(err.response?.data?.detail || 'Failed to update order', 'error');
@@ -81,21 +80,28 @@ function SellerOrders() {
 
     const getSellerActions = (status) => {
         const actions = {
-            pending: ['accept', 'reject'],
-            accepted: ['ready_for_pickup', 'cancel'],
-            ready_for_pickup: [],
-            picked_up: [],
-            out_for_delivery: [],
-            delivered: [],
-            completed: [],
-            rejected: [],
-            cancelled: [],
+            [ORDER_STATUS.PENDING]: ['accept', 'reject'],
+            [ORDER_STATUS.ACCEPTED]: ['ready_for_pickup', 'cancel'],
+            [ORDER_STATUS.READY_FOR_PICKUP]: [],
+            [ORDER_STATUS.PICKED_UP]: [],
+            [ORDER_STATUS.OUT_FOR_DELIVERY]: [],
+            [ORDER_STATUS.DELIVERED]: [],
+            [ORDER_STATUS.COMPLETED]: [],
+            [ORDER_STATUS.REJECTED]: [],
+            [ORDER_STATUS.CANCELLED]: [],
         };
         return actions[status] || [];
     };
 
-
+    // ✅ Map action to actual status
     const getActionButton = (action, orderId) => {
+        const actionToStatus = {
+            accept: ORDER_STATUS.ACCEPTED,
+            reject: ORDER_STATUS.REJECTED,
+            ready_for_pickup: ORDER_STATUS.READY_FOR_PICKUP,
+            cancel: ORDER_STATUS.CANCELLED,
+        };
+
         const configs = {
             accept: {
                 label: 'Accept',
@@ -116,17 +122,30 @@ function SellerOrders() {
         };
 
         const config = configs[action];
-        if (!config) return null;
+        const status = actionToStatus[action];
+        
+        if (!config || !status) return null;
 
         return (
             <button
-                onClick={(e) => handleStatusUpdate(orderId, action, e)}
+                onClick={(e) => handleStatusUpdate(orderId, status, e)}
                 disabled={updating}
                 className={`px-4 py-1.5 text-[9px] uppercase tracking-[0.2em] transition-colors disabled:opacity-50 ${config.className}`}
             >
                 {config.label}
             </button>
         );
+    };
+
+    // ✅ Helper to get display label from status
+    const getActionDisplayLabel = (status) => {
+        const statusToLabel = {
+            [ORDER_STATUS.ACCEPTED]: 'Accept',
+            [ORDER_STATUS.REJECTED]: 'Reject',
+            [ORDER_STATUS.READY_FOR_PICKUP]: 'Ready for Pickup',
+            [ORDER_STATUS.CANCELLED]: 'Cancel',
+        };
+        return statusToLabel[status] || 'Update';
     };
 
     if (loading) {
@@ -204,7 +223,6 @@ function SellerOrders() {
                                     const imageUrl = getOrderImageUrl(order);
                                     const title = getOrderTitle(order);
                                     const itemCount = getOrderItemCount(order);
-                                    const sellerName = getOrderSellerName(order);
                                     const actions = getSellerActions(order.status);
                                     
                                     return (
@@ -310,7 +328,7 @@ function SellerOrders() {
                 )}
             </div>
 
-            {/* Confirm Dialog */}
+            {/* ✅ Confirm Dialog - Now uses getActionDisplayLabel */}
             <ConfirmDialog
                 isOpen={showConfirm}
                 onClose={() => {
@@ -320,8 +338,8 @@ function SellerOrders() {
                 }}
                 onConfirm={confirmStatusUpdate}
                 title="Update Order Status"
-                message={`Are you sure you want to ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() : 'update'} this order?`}
-                confirmLabel={`Yes, ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform] : 'Update'}`}
+                message={`Are you sure you want to ${getActionDisplayLabel(actionToPerform)?.toLowerCase()} this order?`}
+                confirmLabel={`Yes, ${getActionDisplayLabel(actionToPerform)}`}
                 confirmVariant="primary"
                 loading={updating}
             />

@@ -1,4 +1,4 @@
-// src/pages/seller/EditListing.jsx - Clean Version
+// pages/seller/EditListing.jsx - Fixed Version
 import { useParams } from 'react-router-dom';
 import { useListingForm } from '../../hooks/useListingForm';
 import { Icons } from '../../components/Icons';
@@ -8,6 +8,7 @@ import { ToggleSwitch } from '../../components/common/ToggleSwitch';
 
 function EditListing() {
     const { id } = useParams();
+    
     const {
         loading,
         uploadingImages,
@@ -26,7 +27,7 @@ function EditListing() {
         handleSubmit,
         setFormData,
         options,
-    } = useListingForm(id);
+    } = useListingForm(id); // ✅ Pass the ID to the hook
 
     if (loading) return <LoadingSpinner message="Loading Studio Config..." />;
 
@@ -34,6 +35,7 @@ function EditListing() {
         <div className="bg-white min-h-screen py-12 md:py-16">
             <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12">
                 
+                {/* Header with Status Toggle */}
                 <div className="mb-10 border-b border-neutral-100 pb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                     <div>
                         <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">Studio</span>
@@ -45,10 +47,17 @@ function EditListing() {
                         <div className="flex items-center gap-3">
                             <button
                                 type="button"
-                                onClick={() => setFormData(prev => ({ ...prev, status: prev.status === 'active' ? 'inactive' : 'active' }))}
-                                className={`relative w-12 h-6 rounded-full transition-colors duration-300 flex-shrink-0 ${formData.status === 'active' ? 'bg-green-600' : 'bg-neutral-300'}`}
+                                onClick={() => setFormData(prev => ({ 
+                                    ...prev, 
+                                    status: prev.status === 'active' ? 'inactive' : 'active' 
+                                }))}
+                                className={`relative w-12 h-6 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                                    formData.status === 'active' ? 'bg-green-600' : 'bg-neutral-300'
+                                }`}
                             >
-                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${formData.status === 'active' ? 'translate-x-6' : 'translate-x-0'}`} />
+                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
+                                    formData.status === 'active' ? 'translate-x-6' : 'translate-x-0'
+                                }`} />
                             </button>
                             <span className={`text-sm font-medium ${formData.status === 'active' ? 'text-green-600' : 'text-neutral-400'}`}>
                                 {formData.status === 'active' ? 'Active' : 'Inactive'}
@@ -137,7 +146,9 @@ function EditListing() {
                         <FormField label="Category" required>
                             <select name="category_id" value={formData.category_id} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent" required>
                                 <option value="">Select Category</option>
-                                {options?.categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                                {options?.categories?.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
                             </select>
                         </FormField>
                         <FormField label="Quantity" required>
@@ -150,13 +161,13 @@ function EditListing() {
                         <FormField label="Gender" required>
                             <select name="gender" value={formData.gender} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize" required>
                                 <option value="">Select Gender</option>
-                                {options?.genders.map(g => <option key={g} value={g}>{g}</option>)}
+                                {options?.genders?.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
                         </FormField>
                         <FormField label="Size">
                             <select name="size" value={formData.size} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent uppercase">
                                 <option value="">Select Size</option>
-                                {options?.sizes.map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}
+                                {options?.sizes?.map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}
                             </select>
                         </FormField>
                     </div>
@@ -164,9 +175,17 @@ function EditListing() {
                     {/* Condition (Thrift only) */}
                     {!isRetailer && (
                         <FormField label="Condition" required>
-                            <select name="condition" value={formData.condition} onChange={handleChange} className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize" required>
+                            <select
+                                name="condition"
+                                value={formData.condition}
+                                onChange={handleChange}
+                                className="w-full border-b border-neutral-200 px-0 py-3 text-sm text-black focus:border-black outline-none transition-colors appearance-none cursor-pointer bg-transparent capitalize"
+                                required
+                            >
                                 <option value="">Select Condition</option>
-                                {options?.conditions.map(c => <option key={c} value={c}>{c.replaceAll('_', ' ')}</option>)}
+                                {options?.conditions?.map(c => (
+                                    <option key={c} value={c}>{c.replaceAll('_', ' ')}</option>
+                                ))}
                             </select>
                         </FormField>
                     )}
@@ -187,7 +206,11 @@ function EditListing() {
 
                     {/* Submit */}
                     <div className="pt-6 border-t border-neutral-100">
-                        <button type="submit" disabled={submitting} className="w-full bg-black text-white px-6 py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed">
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="w-full bg-black text-white px-6 py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                        >
                             {uploadingImages ? 'Uploading Images...' : submitting ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>

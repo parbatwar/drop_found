@@ -1,7 +1,7 @@
 // src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 
-import { useToast } from './hooks/useToast';
+import { useToast } from './context/ToastContext';
 import Toast from './components/Toast';
 
 import Layout from './components/Layout';
@@ -51,82 +51,96 @@ import Invoice from './pages/orders/Invoice';
 import ProductDetail from './pages/listings/ProductDetail';
 
 function App() {
-  return (
-    <Routes>
-        {/* Auth Routes */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
 
-        {/* ========================================================= */}
-        {/* 1. PUBLIC LANDING LAYER (Storefront Viewports)           */}
-        {/* ========================================================= */}
-        <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop/:slug" element={<SellerProfile />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/browse" element={<Browse />} />
-            {/* Category Pages */}
-            <Route path="/thrift" element={<Thrift />} />
-            <Route path="/brand-new" element={<Retailer />} />
-            
-            {/* Gender Pages */}
-            <Route path="/men" element={<Men />} />
-            <Route path="/women" element={<Women />} />
-            <Route path="/kids" element={<Kids />} />
-            <Route path="/unisex" element={<Unisex />} />
-        </Route>
+    const { toast, hideToast } = useToast();
 
-        {/* ========================================================= */}
-        {/* 2. BASE CUSTOMER ACCOUNTS ROUTING ENGINE                 */}
-        {/* ========================================================= */}
-        <Route element={<ProtectedRoute />}>
-            <Route element={<Layout />}>
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/apply" element={<SellerApply />} />
-                <Route path="/orders" element={<MyOrders />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/orders/invoice/:orderGroupId" element={<Invoice />} />
-            </Route>
-        </Route>
+    return (
+        <>
+            {/* Toast notification - shows on top of everything */}
+            {toast && (
+                <Toast 
+                    message={toast.message} 
+                    type={toast.type} 
+                    onClose={hideToast} 
+                />
+            )}
 
-        {/* ========================================================= */}
-        {/* 3. PROTECTED MERCHANT OPERATIONS LAYER (Seller Control)  */}
-        {/* ========================================================= */}
-        <Route element={<ProtectedRoute allowedRoles={['seller']} />}>
-            <Route element={<Layout />}>
-                <Route path="/seller/dashboard" element={<SellerDashboard />} />
-                <Route path="/seller/listings" element={<Listings />} />
-                <Route path="/seller/listings/new" element={<CreateListing />} />
-                <Route path="/seller/listings/:id/edit" element={<EditListing />} />
-                <Route path="/seller/orders" element={<SellerOrders />} />
-                <Route path="/seller/orders/:orderId" element={<SellerOrderDetails />} />
-                <Route path="/seller/shop/edit" element={<SellerEdit />} />\
-            </Route>
-        </Route>
+            <Routes>
+                {/* Auth Routes */}
+                <Route path="/register" element={<Register />} />
+                <Route path="/login" element={<Login />} />
 
-        {/* ========================================================= */}
-        {/* 4. PROTECTED ADMINISTRATIVE HUB LAYOUT LAYER (HQ Control) */}
-        {/* ========================================================= */}
-        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route element={<AdminLayout />}>
-                <Route path="/admin/dashboard" element={
-                    <div className="p-8 font-light text-neutral-500 uppercase tracking-widest text-xs">
-                        Overview Metrics Coming Soon...
-                    </div>
-                } />
-                <Route path="/admin/orders" element={<AdminOrders />} />
-                <Route path="/admin/sellers" element={<AdminSellers />} />
-                <Route path="/admin/categories" element={<AdminCategories />} />
-                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
-            </Route>
-        </Route>
+                {/* ========================================================= */}
+                {/* 1. PUBLIC LANDING LAYER (Storefront Viewports)           */}
+                {/* ========================================================= */}
+                <Route element={<Layout />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/shop/:slug" element={<SellerProfile />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/browse" element={<Browse />} />
+                    {/* Category Pages */}
+                    <Route path="/thrift" element={<Thrift />} />
+                    <Route path="/brand-new" element={<Retailer />} />
+                    
+                    {/* Gender Pages */}
+                    <Route path="/men" element={<Men />} />
+                    <Route path="/women" element={<Women />} />
+                    <Route path="/kids" element={<Kids />} />
+                    <Route path="/unisex" element={<Unisex />} />
+                </Route>
 
-        {/* Catch-All Fallback Block */}
-        <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
+                {/* ========================================================= */}
+                {/* 2. BASE CUSTOMER ACCOUNTS ROUTING ENGINE                 */}
+                {/* ========================================================= */}
+                <Route element={<ProtectedRoute />}>
+                    <Route element={<Layout />}>
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/apply" element={<SellerApply />} />
+                        <Route path="/orders" element={<MyOrders />} />
+                        <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/cart" element={<Cart />} />
+                        <Route path="/wishlist" element={<Wishlist />} />
+                        <Route path="/orders/invoice/:orderGroupId" element={<Invoice />} />
+                    </Route>
+                </Route>
+
+                {/* ========================================================= */}
+                {/* 3. PROTECTED MERCHANT OPERATIONS LAYER (Seller Control)  */}
+                {/* ========================================================= */}
+                <Route element={<ProtectedRoute allowedRoles={['seller']} />}>
+                    <Route element={<Layout />}>
+                        <Route path="/seller/dashboard" element={<SellerDashboard />} />
+                        <Route path="/seller/listings" element={<Listings />} />
+                        <Route path="/seller/listings/new" element={<CreateListing />} />
+                        <Route path="/seller/listings/:id/edit" element={<EditListing />} />
+                        <Route path="/seller/orders" element={<SellerOrders />} />
+                        <Route path="/seller/orders/:orderId" element={<SellerOrderDetails />} />
+                        <Route path="/seller/shop/edit" element={<SellerEdit />} />\
+                    </Route>
+                </Route>
+
+                {/* ========================================================= */}
+                {/* 4. PROTECTED ADMINISTRATIVE HUB LAYOUT LAYER (HQ Control) */}
+                {/* ========================================================= */}
+                <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                    <Route element={<AdminLayout />}>
+                        <Route path="/admin/dashboard" element={
+                            <div className="p-8 font-light text-neutral-500 uppercase tracking-widest text-xs">
+                                Overview Metrics Coming Soon...
+                            </div>
+                        } />
+                        <Route path="/admin/orders" element={<AdminOrders />} />
+                        <Route path="/admin/sellers" element={<AdminSellers />} />
+                        <Route path="/admin/categories" element={<AdminCategories />} />
+                        <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+                    </Route>
+                </Route>
+
+                {/* Catch-All Fallback Block */}
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+        </>
+    );
 }
 
 export default App;

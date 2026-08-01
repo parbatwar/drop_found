@@ -1,14 +1,13 @@
-// pages/orders/Cart.jsx - Properly Refactored
+// pages/orders/Cart.jsx - Fixed version
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCart, updateCartItem, removeCartItem, clearCart } from '../../api/cart';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../hooks/useToast';
+import { useToast } from '../../context/ToastContext';
 import { Icons } from '../../components/Icons';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
-import { getOrderImageUrl, getOrderTitle } from '../../utils/orderUtils';
 
 function Cart() {
     const navigate = useNavigate();
@@ -35,6 +34,7 @@ function Cart() {
         setError('');
         try {
             const res = await getCart();
+            console.log('📦 Cart data:', res.data); // Debug log
             setCart(res.data);
         } catch (err) {
             console.error(err);
@@ -171,34 +171,85 @@ function Cart() {
 
                                 <div className="space-y-3">
                                     {group.items.map((item) => {
-                                        const imageUrl = getOrderImageUrl({ items: [item] });
-                                        const title = getOrderTitle({ items: [item] });
+                                        // ✅ Direct access to item properties
+                                        const imageUrl = item.image_url || 
+                                            (item.listing?.images?.[0]?.image_url) || 
+                                            (item.listing?.image_url) || 
+                                            null;
+                                        
+                                        const title = item.title || 
+                                            item.listing?.title || 
+                                            'Product';
+                                        
                                         const price = item.price || 0;
 
                                         return (
-                                            <div key={item.id} className="flex gap-4 p-4 border border-neutral-100 hover:border-neutral-300 transition-colors duration-200">
+                                            <div 
+                                                key={item.id} 
+                                                className="flex gap-4 p-4 border border-neutral-100 hover:border-neutral-300 transition-colors duration-200"
+                                            >
+                                                {/* Product Image */}
                                                 <div className="w-24 h-28 flex-shrink-0 bg-neutral-50 border border-neutral-100 overflow-hidden">
                                                     {imageUrl ? (
-                                                        <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+                                                        <img
+                                                            src={imageUrl}
+                                                            alt={title}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-neutral-300 text-[8px] uppercase tracking-wider">No Image</div>';
+                                                            }}
+                                                        />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[8px] uppercase tracking-wider">No Image</div>
+                                                        <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[8px] uppercase tracking-wider">
+                                                            No Image
+                                                        </div>
                                                     )}
                                                 </div>
 
+                                                {/* Product Info */}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-light text-neutral-800">{title}</p>
-                                                    <p className="text-sm font-medium text-neutral-900 mt-2">NPR {Number(price).toLocaleString()}</p>
+                                                    <p className="text-sm font-light text-neutral-800 truncate">
+                                                        {title}
+                                                    </p>
+                                                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                        <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                                            Item
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm font-medium text-neutral-900 mt-2">
+                                                        NPR {Number(price).toLocaleString()}
+                                                    </p>
                                                 </div>
 
+                                                {/* Quantity & Actions */}
                                                 <div className="flex flex-col items-end justify-between gap-2 flex-shrink-0">
-                                                    <button onClick={() => handleRemoveItem(item.id)} className="text-neutral-400 hover:text-red-500 transition-colors" disabled={updating}>
+                                                    <button
+                                                        onClick={() => handleRemoveItem(item.id)}
+                                                        className="text-neutral-400 hover:text-red-500 transition-colors"
+                                                        disabled={updating}
+                                                    >
                                                         <Icons.X className="w-4 h-4" />
                                                     </button>
 
                                                     <div className="flex items-center border border-neutral-200">
-                                                        <button onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)} disabled={updating} className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50">−</button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                                            disabled={updating}
+                                                            className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50"
+                                                        >
+                                                            −
+                                                        </button>
                                                         <span className="w-8 text-center text-xs">{item.quantity || 0}</span>
-                                                        <button onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)} disabled={updating} className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50">+</button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                                            disabled={updating}
+                                                            className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50"
+                                                        >
+                                                            +
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>

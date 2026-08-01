@@ -1,14 +1,11 @@
-// pages/seller/SellerOrderDetails.jsx - Using new components
+// pages/seller/SellerOrderDetails.jsx - COMPLETELY FIXED
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getMyOrder, updateOrderStatus } from "../../api/orders";
 import StatusBadge from "../../components/common/StatusBadge";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import OrderItemsList from "../../components/orders/OrderItemsList";
-import OrderSummary from "../../components/orders/OrderSummary";
-import OrderStatusMessage from "../../components/orders/OrderStatusMessage";
-import { useToast } from "../../hooks/useToast";
+import { useToast } from "../../context/ToastContext";
 import { 
     ORDER_STATUS, 
     ORDER_STATUS_LABELS,
@@ -16,6 +13,10 @@ import {
     getStepIndex,
 } from "../../constants/orderStatus";
 import {
+    getOrderImageUrl,
+    getOrderTitle,
+    getOrderItemCount,
+    getOrderSellerName,
     formatOrderId,
     formatOrderDate,
 } from "../../utils/orderUtils";
@@ -32,6 +33,7 @@ function SellerOrderDetails() {
     const [error, setError] = useState(null);
     const [showConfirm, setShowConfirm] = useState(false);
     const [actionToPerform, setActionToPerform] = useState(null);
+    const [actionLabel, setActionLabel] = useState('');
 
     useEffect(() => {
         loadOrder();
@@ -51,8 +53,10 @@ function SellerOrderDetails() {
         }
     };
 
-    const handleStatusUpdate = async (status) => {
+    const handleStatusUpdate = async (status, label, e) => {
+        if (e) e.preventDefault();
         setActionToPerform(status);
+        setActionLabel(label);
         setShowConfirm(true);
     };
 
@@ -61,35 +65,51 @@ function SellerOrderDetails() {
         
         setUpdating(true);
         try {
+            // ✅ Use updateOrderStatus for all statuses including 'completed'
             await updateOrderStatus(order.id, { status: actionToPerform });
+            
             await loadOrder();
-            showToast(`Order ${ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() || 'updated'} successfully`, 'success');
+            const statusLabel = ORDER_STATUS_LABELS[actionToPerform] || 'updated';
+            showToast(`Order ${statusLabel.toLowerCase()} successfully`, 'success');
         } catch (err) {
             console.error(err);
-            showToast(err.response?.data?.detail || "Failed to update order", 'error');
+            const errorMsg = err.response?.data?.detail;
+            const message = typeof errorMsg === 'string' 
+                ? errorMsg 
+                : (errorMsg ? JSON.stringify(errorMsg) : "Failed to update order");
+            showToast(message, 'error');
         } finally {
             setUpdating(false);
             setShowConfirm(false);
             setActionToPerform(null);
+            setActionLabel('');
         }
     };
 
     const getSellerActions = (status) => {
         const actions = {
-            pending: ['accept', 'reject'],
-            accepted: ['ready_for_pickup', 'cancel'],
-            ready_for_pickup: [],
-            picked_up: [],
-            out_for_delivery: [],
-            delivered: [],
-            completed: [],
-            rejected: [],
-            cancelled: [],
+            [ORDER_STATUS.PENDING]: ['accept', 'reject'],
+            [ORDER_STATUS.ACCEPTED]: ['ready_for_pickup', 'cancel'],
+            [ORDER_STATUS.READY_FOR_PICKUP]: [],
+            [ORDER_STATUS.PICKED_UP]: [],
+            [ORDER_STATUS.OUT_FOR_DELIVERY]: [],
+            [ORDER_STATUS.DELIVERED]: ['complete'],
+            [ORDER_STATUS.COMPLETED]: [],
+            [ORDER_STATUS.REJECTED]: [],
+            [ORDER_STATUS.CANCELLED]: [],
         };
         return actions[status] || [];
     };
 
     const getActionButton = (action) => {
+        const actionToStatus = {
+            accept: ORDER_STATUS.ACCEPTED,
+            reject: ORDER_STATUS.REJECTED,
+            ready_for_pickup: ORDER_STATUS.READY_FOR_PICKUP,
+            cancel: ORDER_STATUS.CANCELLED,
+            complete: ORDER_STATUS.COMPLETED,
+        };
+
         const configs = {
             accept: {
                 label: 'Accept Order',
@@ -107,20 +127,50 @@ function SellerOrderDetails() {
                 label: 'Cancel Order',
                 className: 'border border-red-300 text-red-500 hover:bg-red-50',
             },
+            complete: {
+                label: 'Complete Order',
+                className: 'bg-emerald-600 text-white hover:bg-emerald-700',
+            },
         };
 
         const config = configs[action];
-        if (!config) return null;
+        const status = actionToStatus[action];
+        
+        if (!config || !status) return null;
 
         return (
             <button
-                onClick={() => handleStatusUpdate(action)}
+                onClick={() => handleStatusUpdate(status, config.label)}
                 disabled={updating}
                 className={`px-6 py-2.5 text-[10px] uppercase tracking-[0.2em] transition-colors disabled:opacity-50 ${config.className}`}
             >
                 {config.label}
             </button>
         );
+    };
+
+    const getStatusMessage = (status) => {
+        const messages = {
+            [ORDER_STATUS.READY_FOR_PICKUP]: 'Awaiting delivery partner pickup',
+            [ORDER_STATUS.PICKED_UP]: 'Package picked up by delivery partner',
+            [ORDER_STATUS.OUT_FOR_DELIVERY]: 'Package is out for delivery',
+            [ORDER_STATUS.DELIVERED]: 'Package delivered to customer',
+            [ORDER_STATUS.COMPLETED]: 'Order completed successfully',
+            [ORDER_STATUS.REJECTED]: 'Order was rejected',
+            [ORDER_STATUS.CANCELLED]: 'Order was cancelled',
+        };
+        return messages[status] || null;
+    };
+
+    const getActionDisplayLabel = (status) => {
+        const statusToLabel = {
+            [ORDER_STATUS.ACCEPTED]: 'Accept',
+            [ORDER_STATUS.REJECTED]: 'Reject',
+            [ORDER_STATUS.READY_FOR_PICKUP]: 'Ready for Pickup',
+            [ORDER_STATUS.CANCELLED]: 'Cancel',
+            [ORDER_STATUS.COMPLETED]: 'Complete',
+        };
+        return statusToLabel[status] || 'Update';
     };
 
     if (loading) {
@@ -148,6 +198,7 @@ function SellerOrderDetails() {
     const currentStepIndex = getStepIndex(order.status);
     const isRejectedOrCancelled = order.status === ORDER_STATUS.REJECTED || order.status === ORDER_STATUS.CANCELLED;
     const trackingSteps = getTrackingSteps();
+    const statusMessage = getStatusMessage(order.status);
 
     return (
         <div className="bg-neutral-50 min-h-screen py-10 md:py-14">
@@ -184,7 +235,7 @@ function SellerOrderDetails() {
                                 Total: NPR {Number(order.total_amount).toLocaleString()}
                             </p>
                             <p className="text-xs text-neutral-400">
-                                {order.items?.length || 0} item(s)
+                                {getOrderItemCount(order)} item(s)
                             </p>
                         </div>
                     </div>
@@ -254,21 +305,63 @@ function SellerOrderDetails() {
                         </div>
                     )}
 
-                    {/* Items List - Using OrderItemsList component */}
+                    {/* Items List */}
                     <div className="px-6 py-5 border-b border-neutral-100">
                         <h3 className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-4">
                             Items
                         </h3>
-                        <OrderItemsList items={order.items} showPrices={true} showQuantities={true} />
+                        <div className="space-y-4">
+                            {order.items?.map((item) => {
+                                const imageUrl = getOrderImageUrl({ items: [item] });
+                                const title = item.listing?.title || 'Product';
+                                const price = item.price_at_purchase || 0;
+                                
+                                return (
+                                    <div key={item.id} className="flex items-center gap-4">
+                                        <div className="w-16 h-16 flex-shrink-0 overflow-hidden bg-neutral-50 border border-neutral-100 rounded">
+                                            {imageUrl ? (
+                                                <img 
+                                                    src={imageUrl} 
+                                                    alt={title} 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[8px] uppercase tracking-wider">
+                                                    No Image
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-neutral-800">{title}</p>
+                                            <div className="flex items-center gap-3 text-xs text-neutral-400">
+                                                <span>Qty: {item.quantity}</span>
+                                                <span>·</span>
+                                                <span>NPR {Number(price).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-sm font-medium text-neutral-900">
+                                                NPR {Number(price * item.quantity).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
 
-                    {/* Order Summary - Using OrderSummary component */}
-                    <div className="px-6 py-4 bg-neutral-50/50">
-                        <OrderSummary 
-                            subtotal={order.subtotal}
-                            deliveryFee={order.delivery_fee}
-                            total={order.total_amount}
-                        />
+                    {/* Order Summary */}
+                    <div className="px-6 py-4 bg-neutral-50/50 flex flex-wrap items-center justify-between gap-3">
+                        <div className="text-sm text-neutral-500">
+                            <span>Subtotal: <span className="text-neutral-700">NPR {Number(order.subtotal).toLocaleString()}</span></span>
+                            <span className="mx-3">·</span>
+                            <span>Delivery: <span className="text-neutral-700">NPR {Number(order.delivery_fee).toLocaleString()}</span></span>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-sm font-medium text-neutral-900">
+                                Total: NPR {Number(order.total_amount).toLocaleString()}
+                            </p>
+                        </div>
                     </div>
 
                     {/* Action Buttons */}
@@ -282,10 +375,12 @@ function SellerOrderDetails() {
                         </div>
                     )}
 
-                    {/* Status Messages - Using OrderStatusMessage component */}
-                    {actions.length === 0 && order.status !== ORDER_STATUS.PENDING && (
+                    {/* Status Messages */}
+                    {actions.length === 0 && order.status !== ORDER_STATUS.PENDING && statusMessage && (
                         <div className="px-6 py-4 border-t border-neutral-100 bg-neutral-50">
-                            <OrderStatusMessage status={order.status} />
+                            <p className="text-center text-xs text-neutral-400">
+                                {statusMessage}
+                            </p>
                         </div>
                     )}
                 </div>
@@ -297,12 +392,13 @@ function SellerOrderDetails() {
                 onClose={() => {
                     setShowConfirm(false);
                     setActionToPerform(null);
+                    setActionLabel('');
                 }}
                 onConfirm={confirmStatusUpdate}
                 title="Update Order Status"
-                message={`Are you sure you want to ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform]?.toLowerCase() : 'update'} this order?`}
-                confirmLabel={`Yes, ${actionToPerform ? ORDER_STATUS_LABELS[actionToPerform] : 'Update'}`}
-                confirmVariant="primary"
+                message={`Are you sure you want to ${actionLabel?.toLowerCase() || getActionDisplayLabel(actionToPerform)?.toLowerCase() || 'update'} this order?`}
+                confirmLabel={`Yes, ${actionLabel || getActionDisplayLabel(actionToPerform) || 'Update'}`}
+                confirmVariant={actionToPerform === ORDER_STATUS.COMPLETED ? 'success' : 'primary'}
                 loading={updating}
             />
         </div>
