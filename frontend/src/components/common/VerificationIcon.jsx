@@ -6,13 +6,13 @@ function VerificationIcon({ type }) {
     const [showTooltip, setShowTooltip] = useState(false);
     
     const getTooltipText = () => {
-        if (type === 'individual') return 'Identity Verified';
+        if (type === 'unregistered') return 'Identity Verified';
         if (type === 'business') return 'Business Registered & Verified';
         return 'Verified Seller';
     };
     
     const getIconColor = () => {
-        if (type === 'individual') return 'text-green-500';
+        if (type === 'unregistered') return 'text-green-500';
         if (type === 'business') return 'text-blue-500';
         return 'text-blue-500';
     };

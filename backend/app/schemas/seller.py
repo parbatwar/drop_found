@@ -15,7 +15,7 @@ class SellerApply(BaseModel):
     business_phone: str
     business_email: EmailStr | None = None
 
-    business_type: BusinessType = BusinessType.individual
+    business_type: BusinessType = BusinessType.unregistered
 
     identity_front_url: str
     identity_back_url: str

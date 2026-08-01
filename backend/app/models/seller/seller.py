@@ -51,7 +51,7 @@ class SellerProfile(Base):
     # ✅ Business type
     business_type = Column(
         Enum(BusinessType, native_enum=False),
-        default="individual",
+        default="unregistered",
         nullable=False,
     )
 

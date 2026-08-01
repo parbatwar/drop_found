@@ -34,7 +34,7 @@ export const useListingForm = (listingId = null) => {
 
     const [existingImages, setExistingImages] = useState([]);
     const [newImages, setNewImages] = useState([]);
-    const isRetailer = seller?.seller_type === 'retailer';
+    const isRetailer = seller?.seller_type === 'retail_shop';
     const isEdit = !!listingId;
 
     // Load seller profile and options

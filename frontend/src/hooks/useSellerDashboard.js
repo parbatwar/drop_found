@@ -85,7 +85,7 @@ export const useSellerDashboard = () => {
             return 'business';
         }
         if (seller.is_identity_verified && seller.verification_status === 'approved') {
-            return 'individual';
+            return 'unregistered';
         }
         return null;
     };

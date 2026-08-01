@@ -22,7 +22,7 @@ function ShopProfileCard({ seller, stats, onFollowersClick }) {
     const verificationType = seller.is_business_verified && seller.verification_status === 'approved' 
         ? 'business' 
         : seller.is_identity_verified && seller.verification_status === 'approved' 
-            ? 'individual' 
+            ? 'unregistered' 
             : null;
 
     return (

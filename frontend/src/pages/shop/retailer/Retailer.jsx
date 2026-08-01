@@ -2,7 +2,7 @@
 /**
  * Retailer - Page component for displaying retailer (Brand New) collection
  * 
- * A wrapper component that renders ListingsPage with sellerType="retailer".
+ * A wrapper component that renders ListingsPage with sellerType="retail_shop".
  * This page shows all brand new items from retailers.
  * 
  * @example
@@ -15,7 +15,7 @@ import ListingsPage from '../../listings/ListingsPage';
 function Retailer() {
     return (
         <ListingsPage
-            sellerType="retailer"
+            sellerType="retail_shop"
             title="Shop Brand New"
             description="Fresh drops, current collections, and new arrivals from retailers across Nepal."
         />

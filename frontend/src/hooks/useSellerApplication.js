@@ -17,7 +17,7 @@ export const useSellerApplication = () => {
 
     const [sellerTypes, setSellerTypes] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
-    const [businessType, setBusinessType] = useState('individual');
+    const [businessType, setBusinessType] = useState('unregistered');
     const [isReapplying, setIsReapplying] = useState(false);
     const [fetchingOptions, setFetchingOptions] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -37,7 +37,7 @@ export const useSellerApplication = () => {
         location: '',
         seller_type: '',
         avatar_url: '',
-        business_type: 'individual',
+        business_type: 'unregistered',
         business_phone: '',
         business_email: '',
         identity_front_url: '',
@@ -79,7 +79,7 @@ export const useSellerApplication = () => {
             location: '',
             seller_type: '',
             avatar_url: '',
-            business_type: 'individual',
+            business_type: 'unregistered',
             business_phone: '',
             business_email: '',
             identity_front_url: '',
@@ -172,11 +172,11 @@ export const useSellerApplication = () => {
                                     location: profileData.location || '',
                                     seller_type: profileData.seller_type || typesData[0] || '',
                                     avatar_url: profileData.avatar_url || '',
-                                    business_type: profileData.business_type || 'individual',
+                                    business_type: profileData.business_type || 'unregistered',
                                     business_phone: profileData.business_phone || '',
                                     business_email: profileData.business_email || '',
                                 }));
-                                setBusinessType(profileData.business_type || 'individual');
+                                setBusinessType(profileData.business_type || 'unregistered');
                                 if (profileData.avatar_url) {
                                     setPreviews(prev => ({ ...prev, logo: profileData.avatar_url }));
                                 }

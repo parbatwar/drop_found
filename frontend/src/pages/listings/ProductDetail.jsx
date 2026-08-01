@@ -195,7 +195,7 @@ function ProductDetail() {
                                     {listing.size?.replace('_', ' ') || 'One Size'}
                                 </p>
                             </div>
-                            {listing.seller_type === "thrift" && (
+                            {listing.seller_type === "thrift_shop" && (
                                 <div>
                                     <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 mb-0.5">Condition</p>
                                     <p className="text-sm capitalize text-black">

@@ -126,7 +126,7 @@ function SellerApply() {
                                     Seller Type <span className="text-red-500">*</span>
                                 </label>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {['individual', 'registered'].map((type) => (
+                                    {['unregistered', 'registered'].map((type) => (
                                         <button
                                             key={type}
                                             type="button"
@@ -141,7 +141,7 @@ function SellerApply() {
                                                 {type} Seller
                                             </h4>
                                             <p className="text-xs text-gray-400 mt-1">
-                                                {type === 'individual' 
+                                                {type === 'unregistered'
                                                     ? 'Personal seller, no business registration'
                                                     : 'Registered business with PAN/registration'}
                                             </p>

@@ -31,7 +31,7 @@ export const useOrders = () => {
         }
     }, [showToast]);
 
-    // Get all individual orders with their group info
+    // Get all individual (unregistered) orders with their group info
     const getAllOrders = useCallback(() => {
         const allOrders = [];
         orderGroups.forEach(group => {

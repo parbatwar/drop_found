@@ -9,7 +9,7 @@ function AdminStatsBar({ stats, className = '' }) {
             approved: { dot: 'bg-green-500', label: 'Approved' },
             rejected: { dot: 'bg-red-500', label: 'Rejected' },
             business: { dot: 'bg-blue-500', label: 'Business' },
-            individual: { dot: 'bg-green-500', label: 'Individual' },
+            unregistered: { dot: 'bg-green-500', label: 'Unregistered' },
         };
         const config = colors[key] || { dot: 'bg-neutral-400', label: key };
         

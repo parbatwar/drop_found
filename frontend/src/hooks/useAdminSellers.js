@@ -163,7 +163,7 @@ export const useAdminSellers = () => {
             pending: allSellers.filter(s => s.verification_status === 'pending' || s.status === 'pending').length,
             approved: allSellers.filter(s => s.verification_status === 'approved' || s.status === 'approved').length,
             business: allSellers.filter(s => isBusiness(s)).length,
-            individual: allSellers.filter(s => !isBusiness(s)).length,
+            unregistered: allSellers.filter(s => !isBusiness(s)).length,
         };
     };
 

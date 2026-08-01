@@ -65,7 +65,7 @@ function AdminSellers() {
             defaultValue: 'all',
             options: [
                 { value: 'all', label: 'All Types' },
-                { value: 'individual', label: 'Individual' },
+                { value: 'unregistered', label: 'Unregistered Seller' },
                 { value: 'business', label: 'Business' },
             ],
         },
@@ -76,7 +76,7 @@ function AdminSellers() {
             options: [
                 { value: 'all', label: 'All Categories' },
                 { value: 'thrift', label: 'Thrift' },
-                { value: 'retailer', label: 'Retailer' },
+                { value: 'retail_shop', label: 'Retail Shop' },
             ],
         },
     ];
