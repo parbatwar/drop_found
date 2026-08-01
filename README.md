@@ -40,7 +40,7 @@ Drop Found is Nepal's marketplace for thrift clothing, vintage pieces, and brand
 - Shopping cart with seller-based grouping
 - Wishlist for saved items
 - Order groups for multi-seller checkout
-- Tiered delivery fees (NPR 80 under 700, NPR 120 for 700+)
+- Tiered delivery fees
 - Full order lifecycle tracking
 - Reviews & ratings for products and sellers
 
