@@ -2,8 +2,8 @@ import enum
 
 
 class BusinessType(str, enum.Enum):
-    individual = "individual"
     registered = "registered"
+    unregistered = "unregistered"
 
 
 class UserRole(str, enum.Enum):
@@ -13,8 +13,8 @@ class UserRole(str, enum.Enum):
 
 
 class SellerType(str, enum.Enum):
-    retailer = "retailer"
-    thrift = "thrift"
+    thrift_shop = "thrift_shop"
+    retail_shop = "retail_shop"
 
 
 class VerificationStatus(str, enum.Enum):

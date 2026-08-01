@@ -11,7 +11,7 @@ import FollowersModal from '../../components/FollowersModal';
 
 // ✅ Reusable Verified Badge Component
 const VerifiedBadge = ({ type }) => {
-    if (type === 'individual') {
+    if (type === 'unregistered') {
         return (
             <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] font-medium bg-green-100 text-green-800 border border-green-300 rounded-full shadow-sm">
                 <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -41,13 +41,13 @@ const VerificationIcon = ({ type }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     
     const getTooltipText = () => {
-        if (type === 'individual') return 'Identity Verified';
+        if (type === 'unregistered') return 'Identity Verified';
         if (type === 'business') return 'Business Registered & Verified';
         return 'Verified Seller';
     };
     
     const getIconColor = () => {
-        if (type === 'individual') return 'text-green-500';
+        if (type === 'unregistered') return 'text-green-500';
         if (type === 'business') return 'text-blue-500';
         return 'text-blue-500';
     };
@@ -208,7 +208,7 @@ function SellerProfile() {
             return 'business';
         }
         if (seller.is_identity_verified && seller.verification_status === 'approved') {
-            return 'individual';
+            return 'unregistered';
         }
         return null;
     };

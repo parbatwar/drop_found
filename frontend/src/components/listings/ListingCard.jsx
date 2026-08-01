@@ -12,12 +12,12 @@ function ListingCard({ listing }) {
         // Only show tags for:
         // 1. Thrift items (always show "Thrift")
         // 2. Surplus items (show "Surplus")
-        if (listing.seller_type === 'thrift') {
+        if (listing.seller_type === 'thrift_shop') {
             return 'Thrift';
         }
-        if (listing.seller_type === 'retailer') {
+        if (listing.seller_type === 'retail_shop') {
             if (listing.is_surplus) return 'Surplus';
-            return null; // Regular retailer - show nothing
+            return null; // Regular retail shop - show nothing
         }
         return null;
     };
@@ -26,12 +26,12 @@ function ListingCard({ listing }) {
 
     // ✅ Get tag styling
     const getTagStyles = () => {
-        if (listing.seller_type === 'retailer') {
+        if (listing.seller_type === 'retail_shop') {
             if (listing.is_surplus) {
                 return 'text-amber-600 border-amber-200 bg-amber-50';
             }
         }
-        if (listing.seller_type === 'thrift') {
+        if (listing.seller_type === 'thrift_shop') {
             return 'text-neutral-400 border-neutral-200';
         }
         return '';

@@ -6,7 +6,7 @@
  * Supports filtering by category, gender, size, color, search, and sorting.
  * 
  * @param {Object} props
- * @param {string} props.sellerType - 'thrift' or 'retailer' - filters listings by seller type
+ * @param {string} props.sellerType - 'thrift_shop' or 'retail_shop' - filters listings by seller type
  * @param {string} props.title - Page title displayed in the hero section
  * @param {string} props.description - Page description displayed in the hero section
  * @param {string} [props.gender] - Optional gender filter (men/women/unisex)
@@ -15,7 +15,7 @@
  * @example
  * // For thrift page
  * <ListingsPage 
- *   sellerType="thrift" 
+ *   sellerType="thrift_shop" 
  *   title="Shop Thrift" 
  *   description="Discover pre-loved fashion." 
  * />
@@ -121,9 +121,9 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-16">
                     <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-medium block mb-2">
                         {filters.seller_type === 'thrift' ? 'Thrift' : 
-                         filters.seller_type === 'retailer' ? 'Retailer' : 
+                         filters.seller_type === 'retail_shop' ? 'Retail Shop' : 
                          sellerType === 'thrift' ? 'Thrift' : 
-                         sellerType === 'retailer' ? 'Retailer' : 'Collection'}
+                         sellerType === 'retail_shop' ? 'Retail Shop' : 'Collection'}
                     </span>
                     <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black">
                         {title}

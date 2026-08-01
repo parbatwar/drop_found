@@ -44,7 +44,7 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
     const sellerTypes = [
         { label: "All", value: "" },
         { label: "Thrift", value: "thrift" },
-        { label: "Brand New", value: "retailer" },
+        { label: "Brand New", value: "retail_shop" },
     ];
 
     // Colors (uncommented if needed)

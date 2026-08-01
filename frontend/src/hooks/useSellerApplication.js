@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { applySeller, getMySellerProfile, getApplicationStatus } from '../api/seller';
 import { getSellerOptions } from '../api/meta';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary';
+import { useToast } from '../context/ToastContext';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const MAX_DOCUMENT_SIZE = 5 * 1024 * 1024;
@@ -12,10 +13,11 @@ const ACCEPTED_DOCUMENT_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/
 
 export const useSellerApplication = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [sellerTypes, setSellerTypes] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
-    const [businessType, setBusinessType] = useState('individual');
+    const [businessType, setBusinessType] = useState('unregistered');
     const [isReapplying, setIsReapplying] = useState(false);
     const [fetchingOptions, setFetchingOptions] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -27,15 +29,15 @@ export const useSellerApplication = () => {
     const [isInitialized, setIsInitialized] = useState(false);
     const [existingProfile, setExistingProfile] = useState(null);
     const [showForm, setShowForm] = useState(false);
-    const [isReapplyingManually, setIsReapplyingManually] = useState(false); // ✅ New flag
-    
+    const [isReapplyingManually, setIsReapplyingManually] = useState(false);
+
     const [formData, setFormData] = useState({
         shop_name: '',
         bio: '',
         location: '',
         seller_type: '',
         avatar_url: '',
-        business_type: 'individual',
+        business_type: 'unregistered',
         business_phone: '',
         business_email: '',
         identity_front_url: '',
@@ -62,7 +64,7 @@ export const useSellerApplication = () => {
     // Reset rejected status to allow reapplication
     const resetRejectedStatus = () => {
         console.log('🔄 Resetting rejected status for reapplication...');
-        setIsReapplyingManually(true); // ✅ Set the flag
+        setIsReapplyingManually(true);
         setApplicationStatus(null);
         setHasPendingApplication(false);
         setIsReapplying(true);
@@ -77,7 +79,7 @@ export const useSellerApplication = () => {
             location: '',
             seller_type: '',
             avatar_url: '',
-            business_type: 'individual',
+            business_type: 'unregistered',
             business_phone: '',
             business_email: '',
             identity_front_url: '',
@@ -103,7 +105,7 @@ export const useSellerApplication = () => {
     useEffect(() => {
         const init = async () => {
             try {
-                // ✅ If we're manually reapplying, skip the status check
+                // If we're manually reapplying, skip the status check
                 if (isReapplyingManually) {
                     console.log('🔄 Manual reapply - skipping status check');
                     setIsInitialized(true);
@@ -170,11 +172,11 @@ export const useSellerApplication = () => {
                                     location: profileData.location || '',
                                     seller_type: profileData.seller_type || typesData[0] || '',
                                     avatar_url: profileData.avatar_url || '',
-                                    business_type: profileData.business_type || 'individual',
+                                    business_type: profileData.business_type || 'unregistered',
                                     business_phone: profileData.business_phone || '',
                                     business_email: profileData.business_email || '',
                                 }));
-                                setBusinessType(profileData.business_type || 'individual');
+                                setBusinessType(profileData.business_type || 'unregistered');
                                 if (profileData.avatar_url) {
                                     setPreviews(prev => ({ ...prev, logo: profileData.avatar_url }));
                                 }

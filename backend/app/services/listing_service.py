@@ -18,9 +18,10 @@ class ListingService:
     def create_listing(data, user, db):
         seller = get_verified_seller(user, db)
 
-        if seller.seller_type == "thrift" and data.condition is None:
+        if seller.seller_type == "thrift_shop" and data.condition is None:
             raise HTTPException(
-                status_code=400, detail="Condition is required for thrift listings."
+                status_code=400,
+                detail="Condition is required for thrift shop listings.",
             )
 
         if len(data.images) > 6:
@@ -179,12 +180,13 @@ class ListingService:
         print(update_data)
 
         if (
-            seller.seller_type == "thrift"
+            seller.seller_type == "thrift_shop"
             and "condition" in update_data
             and update_data["condition"] is None
         ):
             raise HTTPException(
-                status_code=400, detail="Condition is required for thrift listings."
+                status_code=400,
+                detail="Condition is required for thrift shop listings.",
             )
 
         # Validate category if changing

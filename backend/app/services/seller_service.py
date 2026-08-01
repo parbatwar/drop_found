@@ -21,7 +21,7 @@ class SellerService:
         """
         Handles the application for a user to become a seller.
         ✅ Stores business phone and email during application.
-        ✅ Stores documents in both JSON and individual fields.
+        ✅ Stores documents in both JSON and unregistered fields.
         """
         existing_profile = (
             db.query(SellerProfile)
@@ -110,7 +110,7 @@ class SellerService:
             # ✅ Store documents in JSON field
             existing_profile.verification_documents = documents if documents else None
 
-            # ✅ ALSO store in individual fields for easy access
+            # ✅ ALSO store in unregistered fields for easy access
             existing_profile.identity_front_url = data.identity_front_url
             existing_profile.identity_back_url = data.identity_back_url
             existing_profile.pan_certificate_url = data.pan_certificate_url
@@ -151,7 +151,7 @@ class SellerService:
             # ✅ New fields
             business_phone=data.business_phone,
             business_email=data.business_email,
-            # ✅ Store documents in individual fields
+            # ✅ Store documents in unregistered fields
             identity_front_url=data.identity_front_url,
             identity_back_url=data.identity_back_url,
             pan_certificate_url=data.pan_certificate_url,

@@ -1,50 +1,63 @@
+// pages/seller/Listings.jsx - Refactored with ConfirmDialog
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getMyListings, deleteListing } from '../../api/listings';
+import { useToast } from '../../context/ToastContext';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import EmptyState from '../../components/common/EmptyState';
 
 function Listings() {
+    const { showToast } = useToast();
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [listingToDelete, setListingToDelete] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const listingsRes = await getMyListings();
-
-                console.log("RAW LISTINGS DATA FROM BACKEND:", listingsRes.data);
-
-                setListings(listingsRes.data);
-            } catch (err) {
-                console.error(err);
-                setError('Failed to securely pull repository inventory metadata.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
+        fetchListings();
     }, []);
 
-    const handleDelete = async (id) => {
-        if (!confirm('This action permanently expunges the asset record. Proceed?')) return;
+    const fetchListings = async () => {
+        setLoading(true);
         try {
-            await deleteListing(id);
-            setListings(listings.filter((l) => l.id !== id));
+            const res = await getMyListings();
+            setListings(res.data);
         } catch (err) {
-            console.error('Delete execution failure:', err);
-            alert('Failed to remove asset record from cluster.');
+            console.error(err);
+            setError('Failed to load listings.');
+            showToast('Failed to load listings', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteClick = (listing) => {
+        setListingToDelete(listing);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!listingToDelete) return;
+        setDeleting(true);
+        try {
+            await deleteListing(listingToDelete.id);
+            setListings(listings.filter((l) => l.id !== listingToDelete.id));
+            showToast('Listing deleted successfully', 'success');
+        } catch (err) {
+            console.error('Delete failed:', err);
+            showToast('Failed to delete listing', 'error');
+        } finally {
+            setDeleting(false);
+            setShowDeleteConfirm(false);
+            setListingToDelete(null);
         }
     };
 
     if (loading) {
-        return (
-            <div className="bg-white min-h-screen flex items-center justify-center">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 animate-pulse">
-                    Loading Stock Matrix...
-                </div>
-            </div>
-        );
+        return <LoadingSpinner message="Loading Stock Matrix..." />;
     }
 
     if (error) {
@@ -59,7 +72,7 @@ function Listings() {
         <div className="bg-white min-h-screen text-neutral-900 py-16 md:py-24">
             <div className="max-w-6xl mx-auto px-4 sm:px-6">
                 
-                {/* Minimal Header Block */}
+                {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-16 border-b border-neutral-100 pb-8">
                     <div className="space-y-2">
                         <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 font-medium block">
@@ -79,16 +92,16 @@ function Listings() {
 
                 {/* Empty State */}
                 {listings.length === 0 ? (
-                    <div className="border border-dashed border-neutral-200 py-24 text-center rounded-sm bg-neutral-50">
-                        <p className="text-xs tracking-widest uppercase text-neutral-400">
-                            No inventory variants registered in this vault.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon="📦"
+                        title="No listings found"
+                        subtitle="Create your first listing to start selling."
+                        actionLabel="Add Listing"
+                        actionLink="/seller/listings/new"
+                    />
                 ) : (
-                    /* Brutalist Luxury Responsive Core Grid Layout */
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
                         {listings.map((item) => {
-                            // Safely extract the root thumbnail pointer based on display order sorting
                             const coverImage = item.images && item.images.length > 0 
                                 ? item.images.find(img => img.display_order === 0) || item.images[0]
                                 : null;
@@ -96,7 +109,7 @@ function Listings() {
                             return (
                                 <div key={item.id} className="group flex flex-col h-full space-y-4">
                                     
-                                    {/* Image Display Shell */}
+                                    {/* Image */}
                                     <div className="relative aspect-[3/4] bg-neutral-50 overflow-hidden rounded-sm border border-neutral-100">
                                         {coverImage ? (
                                             <img
@@ -112,7 +125,7 @@ function Listings() {
                                             </div>
                                         )}
                                         
-                                        {/* Minimal Corner Status Pill */}
+                                        {/* Status Pill */}
                                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 border border-neutral-200/40 rounded-xs">
                                             <span className="text-[9px] tracking-widest uppercase text-black font-medium">
                                                 {item.status}
@@ -120,7 +133,7 @@ function Listings() {
                                         </div>
                                     </div>
 
-                                    {/* Typography Metadata Parameters */}
+                                    {/* Info */}
                                     <div className="flex flex-col flex-grow space-y-1">
                                         <div className="flex items-start justify-between gap-2">
                                             <h3 className="text-sm font-light text-black tracking-wide truncate max-w-[75%]">
@@ -142,29 +155,43 @@ function Listings() {
                                         </div>
                                     </div>
 
-                                    {/* System Modification Control Drawer */}
+                                    {/* Actions */}
                                     <div className="flex items-center space-x-4 pt-2 border-t border-neutral-100">
                                         <Link
                                             to={`/seller/listings/${item.id}/edit`}
                                             className="text-[10px] tracking-widest uppercase font-medium text-neutral-500 hover:text-black underline underline-offset-4 transition-colors duration-200"
                                         >
-                                            Edit Listing
+                                            Edit
                                         </Link>
                                         <button
                                             type="button"
-                                            onClick={() => handleDelete(item.id)}
+                                            onClick={() => handleDeleteClick(item)}
                                             className="text-[10px] tracking-widest uppercase font-medium text-red-400 hover:text-red-600 transition-colors duration-200"
                                         >
                                             Delete
                                         </button>
                                     </div>
-
                                 </div>
                             );
                         })}
                     </div>
                 )}
             </div>
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                onClose={() => {
+                    setShowDeleteConfirm(false);
+                    setListingToDelete(null);
+                }}
+                onConfirm={confirmDelete}
+                title="Delete Listing"
+                message={`Are you sure you want to delete "${listingToDelete?.title}"? This action cannot be undone.`}
+                confirmLabel="Delete"
+                confirmVariant="danger"
+                loading={deleting}
+            />
         </div>
     );
 }

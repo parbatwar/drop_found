@@ -6,7 +6,7 @@ import apiClient from './client';
 export const checkoutCart = (data) => apiClient.post('/orders/checkout', data);
 export const quickBuy = (data) => apiClient.post('/orders/quick-buy', data);
 
-// Get all orders (individual - keep for backward compatibility)
+// Get all individual (unregistered) orders with their group info
 export const getMyOrders = () => apiClient.get('/orders/me');
 
 // ✅ NEW: Get all order groups (grouped by checkout)
