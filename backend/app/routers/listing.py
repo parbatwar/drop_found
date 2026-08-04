@@ -15,6 +15,7 @@ from app.schemas.listing import (
     ListingResponse,
     ListingUpdate,
 )
+from app.schemas.pagination import PaginatedResponse
 from app.services.listing_service import ListingService
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
@@ -29,7 +30,7 @@ def create_listing(
     return ListingService.create_listing(data=data, user=current_user, db=db)
 
 
-@router.get("/", response_model=list[ListingResponse])
+@router.get("/", response_model=PaginatedResponse[ListingResponse])
 def get_listings(
     search: str | None = None,
     category_id: UUID | None = None,
@@ -38,8 +39,8 @@ def get_listings(
     color: ListingColor | None = None,
     seller_type: SellerType | None = None,
     sort: str = "newest",
+    page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
     """Get listings with pagination and rating stats."""
@@ -52,8 +53,8 @@ def get_listings(
         color=color,
         seller_type=seller_type,
         sort=sort,
+        page=page,
         limit=limit,
-        offset=offset,
     )
 
 

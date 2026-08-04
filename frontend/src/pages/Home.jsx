@@ -19,8 +19,8 @@ function Home() {
     useEffect(() => {
         Promise.all([getListings(), getSellers()])
             .then(([listingsRes, sellersRes]) => {
-                setListings(listingsRes?.data || []);
-                setSellers(sellersRes?.data || []);
+                setListings(listingsRes?.data?.items || []);
+                setSellers(sellersRes?.data?.items || []);
             })
             .catch((err) => console.error('Failed to load homepage data:', err))
             .finally(() => setLoading(false));

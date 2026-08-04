@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
     UUID,
+    Index,
 )
 from sqlalchemy import Enum
 from sqlalchemy.orm import relationship
@@ -32,6 +33,16 @@ class Listing(Base):
     """Represents a clothing item listed for sale by a seller."""
 
     __tablename__ = "listings"
+
+    __table_args__ = (
+        Index("ix_listings_status", "status"),
+        Index("ix_listings_category_id", "category_id"),
+        Index("ix_listings_seller_id", "seller_id"),
+        Index("ix_listings_created_at", "created_at"),
+        Index(
+            "ix_listings_status_created_at", "status", "created_at"
+        ),  # composite — see below
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 

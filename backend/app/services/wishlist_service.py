@@ -1,3 +1,5 @@
+from app.utils.pagination import paginate
+
 from fastapi import HTTPException
 from app.models.social.wishlist import Wishlist
 from app.models.catalog.listing import Listing
@@ -34,9 +36,13 @@ class WishlistService:
         return wishlist
 
     @staticmethod
-    def get_my_wishlist(current_user, db):
-
-        return db.query(Wishlist).filter(Wishlist.buyer_id == current_user.id).all()
+    def get_my_wishlist(current_user, db, page: int = 1, limit: int = 20):
+        query = (
+            db.query(Wishlist)
+            .filter(Wishlist.buyer_id == current_user.id)
+            .order_by(Wishlist.created_at.desc())
+        )
+        return paginate(query, page, limit)
 
     @staticmethod
     def remove_from_wishlist(listing_id, current_user, db):

@@ -1,4 +1,4 @@
-# backend/app/services/admin_service.py
+from app.utils.pagination import paginate
 import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -12,15 +12,16 @@ from datetime import datetime
 
 class AdminService:
     @staticmethod
-    def get_pending_sellers(db: Session):
+    def get_pending_sellers(db: Session, page: int = 1, limit: int = 20):
         """
-        Retrieves all pending seller requests with verification details.
+        Retrieves paginated pending seller requests with verification details.
         """
-        return (
+        query = (
             db.query(SellerProfile)
             .filter(SellerProfile.verification_status == VerificationStatus.pending)
-            .all()
+            .order_by(SellerProfile.created_at.desc())
         )
+        return paginate(query, page, limit)
 
     @staticmethod
     def review_seller(seller_id: uuid.UUID, data: ReviewSellerRequest, db: Session):

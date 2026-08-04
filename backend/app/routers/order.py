@@ -1,11 +1,10 @@
 # app/routes/order.py
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from app.core.dependencies import get_current_user
 from app.database import get_db
 from app.models.catalog.listing import Listing
 from app.models.enums.enums import OrderStatus
 from app.models.order.order import Order, OrderGroup, OrderItem
-from app.models.order.order import OrderGroup
 from app.schemas.order import (
     OrderGroupResponse,
     OrderResponse,
@@ -13,18 +12,25 @@ from app.schemas.order import (
     CheckoutRequest,
     QuickBuyRequest,
 )
+from app.schemas.pagination import PaginatedResponse
 from app.services.order_service import OrderService
 from app.models.user.user import User
 from sqlalchemy.orm import joinedload
+from app.core.rate_limit import limiter
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 
 # ─── Buyer Endpoints ───
-@router.get("/me", response_model=list[OrderResponse])
-def view_orders(current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    """Get all orders for the current buyer"""
-    return OrderService.view_order(current_user, db)
+@router.get("/me", response_model=PaginatedResponse[OrderResponse])
+def view_orders(
+    current_user: User = Depends(get_current_user),
+    db=Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Get paginated orders for the current buyer"""
+    return OrderService.view_order(current_user, db, page, limit)
 
 
 @router.get("/me/{order_id}", response_model=OrderResponse)
@@ -38,14 +44,16 @@ def get_buyer_order(
 
 
 # ─── Seller Endpoints ───
-@router.get("/seller", response_model=list[OrderResponse])
+@router.get("/seller", response_model=PaginatedResponse[OrderResponse])
 def view_seller_orders(
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
-    status: OrderStatus | None = None,  # ✅ Optional filter by status
+    status: OrderStatus | None = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
 ):
-    """Get all orders for the current seller (optionally filtered by status)"""
-    return OrderService.view_seller_orders(current_user, db, status)
+    """Get paginated orders for the current seller (optionally filtered by status)"""
+    return OrderService.view_seller_orders(current_user, db, status, page, limit)
 
 
 @router.put("/{order_id}/status")
@@ -77,7 +85,12 @@ def view_my_order_groups(
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
 ):
-    """Get all order groups for the current buyer with orders and sellers loaded"""
+    """Get all order groups for the current buyer with orders and sellers loaded.
+
+    NOTE: still unpaginated — flagged as the next candidate. It eager-loads
+    items → listing → images for every order in every group, so this one
+    gets expensive per-page faster than the others. Left as-is for now.
+    """
     order_groups = (
         db.query(OrderGroup)
         .options(
@@ -99,7 +112,9 @@ def view_my_order_groups(
 
 # ─── Checkout Endpoints ───
 @router.post("/checkout", response_model=OrderGroupResponse)
+@limiter.limit("5/minute")
 def checkout(
+    request: Request,
     data: CheckoutRequest,
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
@@ -109,7 +124,9 @@ def checkout(
 
 
 @router.post("/quick-buy", response_model=OrderGroupResponse)
+@limiter.limit("5/minute")
 def quick_buy(
+    request: Request,
     data: QuickBuyRequest,
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
@@ -119,24 +136,22 @@ def quick_buy(
 
 
 # ─── Admin Endpoints ───
-@router.get("/admin/all", response_model=list[OrderResponse])
+@router.get("/admin/all", response_model=PaginatedResponse[OrderResponse])
 def view_all_orders_for_admin(
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
-    status: OrderStatus | None = None,  # ✅ Optional filter
+    status: OrderStatus | None = None,
+    page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
 ):
     """
-    Admin only: View all orders with pagination and optional status filter.
+    Admin only: paginated view of all orders with optional status filter.
 
     - `status`: Filter by order status (pending, accepted, etc.)
-    - `limit`: Number of orders per page (max 100)
-    - `offset`: Pagination offset
+    - `page`: Page number, starting at 1
+    - `limit`: Items per page (max 100)
     """
-    return OrderService.view_all_orders_for_admin(
-        current_user, db, status, limit, offset
-    )
+    return OrderService.view_all_orders_for_admin(current_user, db, status, page, limit)
 
 
 @router.get("/admin/{order_id}", response_model=OrderResponse)

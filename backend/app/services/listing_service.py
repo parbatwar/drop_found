@@ -1,3 +1,4 @@
+from app.utils.pagination import paginate
 from fastapi import HTTPException
 from app.models.seller.seller import SellerProfile
 from app.models.enums.listing_enum import ListingStatus
@@ -11,6 +12,7 @@ from app.utils.seller import (
     validate_listing_owner,
 )
 from app.utils.category import get_active_category
+from app.schemas.pagination import PaginatedResponse
 
 
 class ListingService:
@@ -73,8 +75,8 @@ class ListingService:
         color=None,
         seller_type=None,
         sort="newest",
+        page: int = 1,
         limit: int = 20,
-        offset: int = 0,
     ):
         query = (
             db.query(Listing)
@@ -84,41 +86,32 @@ class ListingService:
 
         if search:
             query = query.filter(Listing.title.ilike(f"%{search}%"))
-
         if category_id:
             query = query.filter(Listing.category_id == category_id)
-
         if gender:
             query = query.filter(Listing.gender == gender)
-
         if size:
             query = query.filter(Listing.size == size)
-
         if color:
             query = query.filter(Listing.color == color)
-
         if seller_type:
             query = query.filter(SellerProfile.seller_type == seller_type)
 
-        # Sorting
         if sort == "price_asc":
             query = query.order_by(Listing.price.asc())
-
         elif sort == "price_desc":
             query = query.order_by(Listing.price.desc())
-
         else:
             query = query.order_by(Listing.created_at.desc())
 
-        listings = query.offset(offset).limit(limit).all()
+        result = paginate(query, page, limit)
 
-        # Add rating stats to each listing
-        for listing in listings:
+        for listing in result["items"]:
             rating_stats = ReviewService.get_listing_rating_stats(listing.id, db)
             listing.average_rating = rating_stats["average_rating"]
             listing.total_reviews = rating_stats["total_reviews"]
 
-        return listings
+        return result
 
     @staticmethod
     def get_my_listings(current_user, db):

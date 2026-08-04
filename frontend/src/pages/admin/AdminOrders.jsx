@@ -1,10 +1,11 @@
-// pages/admin/AdminOrders.jsx - COMPLETELY FIXED
+// pages/admin/AdminOrders.jsx
 import { useState, useEffect } from 'react';
 import { getAllOrders, adminUpdateOrderStatus, completeOrder } from '../../api/orders';
 import StatusBadge from '../../components/common/StatusBadge';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Pagination from '../../components/common/Pagination';  // ← NEW
 import { useToast } from '../../context/ToastContext';
 import { 
     ORDER_STATUS, 
@@ -29,27 +30,56 @@ function AdminOrders() {
     const [showConfirm, setShowConfirm] = useState(false);
     const [orderToUpdate, setOrderToUpdate] = useState(null);
     const [actionToPerform, setActionToPerform] = useState(null);
-    const [actionLabel, setActionLabel] = useState('');  // ✅ Added
+    const [actionLabel, setActionLabel] = useState('');
     const [updating, setUpdating] = useState(false);
 
+    // ✅ Pagination state
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [hasNext, setHasNext] = useState(false);
+    const [hasPrevious, setHasPrevious] = useState(false);
+    const [totalOrders, setTotalOrders] = useState(0);
+
+    // ✅ Refetch when filter or page changes
     useEffect(() => {
         loadOrders();
-    }, [filter]);
+    }, [filter, page]);
 
     const loadOrders = async () => {
         setLoading(true);
         setError('');
         try {
             const res = await getAllOrders({ 
-                status: filter || undefined, 
-                limit: 100 
+                status: filter || undefined,
+                page: page,
+                limit: 20,
             });
             
             let ordersData = [];
+            let paginationData = {};
+            
             if (res.data) {
-                ordersData = Array.isArray(res.data) ? res.data : res.data.data || [];
+                if (Array.isArray(res.data)) {
+                    ordersData = res.data;
+                } else if (res.data.items) {
+                    ordersData = res.data.items;
+                    paginationData = {
+                        total: res.data.total,
+                        page: res.data.page,
+                        total_pages: res.data.total_pages,
+                        has_next: res.data.has_next,
+                        has_previous: res.data.has_previous,
+                    };
+                } else if (res.data.data) {
+                    ordersData = res.data.data;
+                }
             }
+            
             setOrders(ordersData);
+            setTotalOrders(paginationData.total || ordersData.length);
+            setTotalPages(paginationData.total_pages || 1);
+            setHasNext(paginationData.has_next || false);
+            setHasPrevious(paginationData.has_previous || false);
         } catch (err) {
             console.error('Failed to load orders:', err);
             setError(err.response?.data?.detail || 'Failed to load orders');
@@ -62,7 +92,6 @@ function AdminOrders() {
     const handleStatusUpdate = async (orderId, newStatus) => {
         setOrderToUpdate(orderId);
         setActionToPerform(newStatus);
-        // ✅ Set the label for the confirm dialog
         const label = ORDER_STATUS_LABELS[newStatus] || newStatus;
         setActionLabel(label);
         setShowConfirm(true);
@@ -73,7 +102,6 @@ function AdminOrders() {
         
         setUpdating(true);
         try {
-            // ✅ If it's a complete action, use completeOrder API
             if (actionToPerform === ORDER_STATUS.COMPLETED) {
                 await completeOrder(orderToUpdate);
             } else {
@@ -99,8 +127,8 @@ function AdminOrders() {
 
     const handleCompleteOrder = async (orderId) => {
         setOrderToUpdate(orderId);
-        setActionToPerform(ORDER_STATUS.COMPLETED);  // ✅ Use actual status value
-        setActionLabel('Complete');  // ✅ Set the label
+        setActionToPerform(ORDER_STATUS.COMPLETED);
+        setActionLabel('Complete');
         setShowConfirm(true);
     };
 
@@ -114,7 +142,6 @@ function AdminOrders() {
         return actions[status] || [];
     };
 
-    // ✅ Helper to get display label from action
     const getActionDisplayLabel = (action) => {
         const actionToLabel = {
             'picked_up': 'Pick Up',
@@ -209,7 +236,7 @@ function AdminOrders() {
                 </div>
                 <div className="text-right">
                     <span className="text-2xl font-light text-neutral-300">
-                        {orders.length}
+                        {totalOrders}
                     </span>
                     <p className="text-[9px] text-neutral-400 uppercase tracking-wider">
                         Orders
@@ -259,112 +286,130 @@ function AdminOrders() {
                     subtitle="Orders will appear here once customers make purchases."
                 />
             ) : (
-                <div className="bg-white border border-neutral-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr className="border-b border-neutral-200 bg-neutral-50">
-                                    <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
-                                        Order
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
-                                        Product
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
-                                        Buyer
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
-                                        Amount
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
-                                        Status
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-100">
-                                {filteredOrders.map((order) => {
-                                    const status = order.status;
-                                    const actions = getAdminActions(status);
-                                    const imageUrl = getOrderImageUrl(order);
-                                    const title = getOrderTitle(order);
-                                    const itemCount = getOrderItemCount(order);
+                <>
+                    <div className="bg-white border border-neutral-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="border-b border-neutral-200 bg-neutral-50">
+                                        <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
+                                            Order
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
+                                            Product
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
+                                            Buyer
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
+                                            Amount
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
+                                            Status
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-medium">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-neutral-100">
+                                    {filteredOrders.map((order) => {
+                                        const status = order.status;
+                                        const actions = getAdminActions(status);
+                                        const imageUrl = getOrderImageUrl(order);
+                                        const title = getOrderTitle(order);
+                                        const itemCount = getOrderItemCount(order);
 
-                                    return (
-                                        <tr key={order.id} className="hover:bg-neutral-50 transition-colors">
-                                            <td className="px-4 py-4">
-                                                <p className="text-xs font-mono text-neutral-600">
-                                                    #{formatOrderId(order.id)}
-                                                </p>
-                                                <p className="text-[9px] text-neutral-400">
-                                                    {formatOrderDate(order.created_at)}
-                                                </p>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-12 bg-neutral-100 overflow-hidden flex-shrink-0">
-                                                        {imageUrl ? (
-                                                            <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[8px]">
-                                                                No Image
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-medium text-neutral-800 truncate max-w-[120px]">
-                                                            {title}
-                                                        </p>
-                                                        {itemCount > 1 && (
-                                                            <p className="text-[9px] text-neutral-400">+{itemCount - 1} more</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[9px] font-medium text-neutral-500">
-                                                        {getInitials(order.buyer?.first_name, order.buyer?.last_name)}
-                                                    </div>
-                                                    <span className="text-xs text-neutral-700">
-                                                        {order.buyer?.first_name} {order.buyer?.last_name}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <span className="text-sm font-medium text-neutral-900">
-                                                    NPR {Number(order.total_amount || 0).toLocaleString()}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <StatusBadge status={status} size="sm" />
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex justify-end gap-1.5 flex-wrap">
-                                                    {actions.map((action) => (
-                                                        <div key={action}>
-                                                            {getActionButton(action, order.id)}
+                                        return (
+                                            <tr key={order.id} className="hover:bg-neutral-50 transition-colors">
+                                                {/* ... table cells ... */}
+                                                <td className="px-4 py-4">
+                                                    <p className="text-xs font-mono text-neutral-600">
+                                                        #{formatOrderId(order.id)}
+                                                    </p>
+                                                    <p className="text-[9px] text-neutral-400">
+                                                        {formatOrderDate(order.created_at)}
+                                                    </p>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-12 bg-neutral-100 overflow-hidden flex-shrink-0">
+                                                            {imageUrl ? (
+                                                                <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[8px]">
+                                                                    No Image
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    ))}
-                                                    {actions.length === 0 && (
-                                                        <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
-                                                            {status === ORDER_STATUS.COMPLETED ? 'Done' : 
-                                                             status === ORDER_STATUS.REJECTED ? 'Rejected' :
-                                                             status === ORDER_STATUS.CANCELLED ? 'Cancelled' :
-                                                             'Waiting'}
+                                                        <div>
+                                                            <p className="text-xs font-medium text-neutral-800 truncate max-w-[120px]">
+                                                                {title}
+                                                            </p>
+                                                            {itemCount > 1 && (
+                                                                <p className="text-[9px] text-neutral-400">+{itemCount - 1} more</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[9px] font-medium text-neutral-500">
+                                                            {getInitials(order.buyer?.first_name, order.buyer?.last_name)}
+                                                        </div>
+                                                        <span className="text-xs text-neutral-700">
+                                                            {order.buyer?.first_name} {order.buyer?.last_name}
                                                         </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <span className="text-sm font-medium text-neutral-900">
+                                                        NPR {Number(order.total_amount || 0).toLocaleString()}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <StatusBadge status={status} size="sm" />
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex justify-end gap-1.5 flex-wrap">
+                                                        {actions.map((action) => (
+                                                            <div key={action}>
+                                                                {getActionButton(action, order.id)}
+                                                            </div>
+                                                        ))}
+                                                        {actions.length === 0 && (
+                                                            <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
+                                                                {status === ORDER_STATUS.COMPLETED ? 'Done' : 
+                                                                 status === ORDER_STATUS.REJECTED ? 'Rejected' :
+                                                                 status === ORDER_STATUS.CANCELLED ? 'Cancelled' :
+                                                                 'Waiting'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+
+                    {/* ✅ Pagination */}
+                    <Pagination
+                        page={page}
+                        totalPages={totalPages}
+                        hasNext={hasNext}
+                        hasPrevious={hasPrevious}
+                        onPrevious={() => setPage(p => Math.max(1, p - 1))}
+                        onNext={() => setPage(p => p + 1)}
+                        loading={loading}
+                    />
+                    
+                    <div className="mt-4 text-[9px] text-neutral-400 uppercase tracking-wider">
+                        Showing {orders.length} of {totalOrders} orders
+                    </div>
+                </>
             )}
 
             {/* Confirm Dialog */}

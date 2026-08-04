@@ -38,7 +38,7 @@ function SellerOrders() {
         setLoading(true);
         try {
             const res = await getSellerOrders();
-            setOrders(res.data || []);
+            setOrders(res.data?.items || []);
         } catch (err) {
             console.error(err);
             showToast('Failed to load orders', 'error');

@@ -1,19 +1,32 @@
-// pages/Browse.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { getListings } from '../../api/listings';
 import { getCategories } from '../../api/category';
 import ListingCard from '../../components/listings/ListingCard';
 import ListingGrid from '../../components/listings/ListingGrid';
 import ListingFilters from '../../components/listings/ListingFilters';
+import Pagination from '../../components/common/Pagination';
 
 function Browse() {
+    const [searchParams] = useSearchParams();  // ← NEW
+    const initialSearch = searchParams.get('search') || '';  // ← NEW
+
     const [listings, setListings] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    // ✅ Pagination state
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [hasNext, setHasNext] = useState(false);
+    const [hasPrevious, setHasPrevious] = useState(false);
+    const [total, setTotal] = useState(0);
+
     const [filters, setFilters] = useState({
-        search: "",
+        search: initialSearch,
+        // search: "",
         category_id: "",
         seller_type: "",
         gender: "",
@@ -22,7 +35,6 @@ function Browse() {
         sort: "newest",
     });
 
-    // Fetch categories from backend
     useEffect(() => {
         getCategories()
             .then(res => setCategories(res.data || []))
@@ -40,9 +52,18 @@ function Browse() {
                 size: filters.size || undefined,
                 color: filters.color || undefined,
                 sort: filters.sort,
+                page: page,
+                limit: 20,
             };
             const res = await getListings(params);
-            setListings(res.data || []);
+            const data = res.data;
+
+            // ✅ Unwrap paginated response
+            setListings(data.items || []);
+            setTotal(data.total || 0);
+            setTotalPages(data.total_pages || 1);
+            setHasNext(data.has_next || false);
+            setHasPrevious(data.has_previous || false);
         } catch (error) {
             console.error("Failed to fetch listings:", error);
         } finally {
@@ -53,10 +74,11 @@ function Browse() {
     useEffect(() => {
         const delayDebounceFn = setTimeout(fetchListings, 300);
         return () => clearTimeout(delayDebounceFn);
-    }, [filters]);
+    }, [filters, page]);
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
+        setPage(1); // Reset to first page on filter change
     };
 
     const clearFilters = () => {
@@ -69,7 +91,11 @@ function Browse() {
             color: "",
             sort: "newest",
         });
+        setPage(1);
     };
+
+    const handleNextPage = () => setPage(p => p + 1);
+    const handlePreviousPage = () => setPage(p => Math.max(1, p - 1));
 
     const getActiveFilterCount = () => {
         let count = 0;
@@ -118,7 +144,7 @@ function Browse() {
                         )}
                     </button>
                     <span className="text-[10px] tracking-wider text-neutral-400">
-                        {!loading && `${listings.length} items`}
+                        {!loading && `${total} items`}
                     </span>
                 </div>
             </div>
@@ -140,20 +166,29 @@ function Browse() {
                 {loading ? (
                     <ListingGrid.Loading count={8} />
                 ) : listings.length > 0 ? (
-                    <ListingGrid>
-                        {listings.map((item) => (
-                            <ListingCard key={item.id} listing={item} />
-                        ))}
-                    </ListingGrid>
+                    <>
+                        <ListingGrid>
+                            {listings.map((item) => (
+                                <ListingCard key={item.id} listing={item} />
+                            ))}
+                        </ListingGrid>
+
+                        {/* ✅ Pagination Component */}
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            hasNext={hasNext}
+                            hasPrevious={hasPrevious}
+                            onPrevious={handlePreviousPage}
+                            onNext={handleNextPage}
+                            loading={loading}
+                        />
+                    </>
                 ) : (
                     <div className="border border-neutral-200 bg-neutral-50 p-20 text-center">
                         <div className="text-4xl font-light text-neutral-300 mb-4">🔍</div>
-                        <p className="text-sm text-neutral-400 uppercase tracking-wider">
-                            No items found
-                        </p>
-                        <p className="text-[10px] text-neutral-300 mt-2">
-                            Try adjusting your filters or search terms.
-                        </p>
+                        <p className="text-sm text-neutral-400 uppercase tracking-wider">No items found</p>
+                        <p className="text-[10px] text-neutral-300 mt-2">Try adjusting your filters or search terms.</p>
                         <button 
                             onClick={clearFilters}
                             className="mt-4 text-[10px] uppercase tracking-[0.2em] text-neutral-400 hover:text-black transition-colors border-b border-transparent hover:border-black pb-0.5"

@@ -41,7 +41,8 @@ export const useSellerDashboard = () => {
             let itemsSold = 0;
             try {
                 const ordersRes = await getSellerOrders();
-                ordersData = ordersRes.data || [];
+                // ✅ Unwrap paginated response
+                ordersData = ordersRes.data?.items || [];
                 
                 // Calculate items sold from delivered orders
                 const deliveredOrders = ordersData.filter(o => o.status === 'delivered');

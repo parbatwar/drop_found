@@ -24,7 +24,7 @@ function Wishlist() {
         setLoading(true);
         try {
             const res = await getWishlist();
-            setWishlist(res.data || []);
+            setWishlist(res.data?.items || []);
         } catch (err) {
             console.error(err);
             showToast('Failed to load wishlist', 'error');

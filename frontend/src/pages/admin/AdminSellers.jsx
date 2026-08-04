@@ -6,6 +6,7 @@ import AdminStatsBar from '../../components/admin/AdminStatsBar';
 import DocumentViewerModal from '../../components/admin/DocumentViewerModal';
 import SellerTableRow from '../../components/admin/SellerTableRow';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Pagination from '../../components/common/Pagination';
 
 function AdminSellers() {
     const {
@@ -28,6 +29,13 @@ function AdminSellers() {
         getFilteredSellers,
         getStats,
         getInitials,
+        // ✅ New pagination values
+        page,
+        totalPages,
+        hasNext,
+        hasPrevious,
+        totalSellers,
+        setPage,
     } = useAdminSellers();
 
     if (loading) {
@@ -157,6 +165,17 @@ function AdminSellers() {
                     </tbody>
                 </table>
             </div>
+
+            {/* ✅ Pagination */}
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                hasNext={hasNext}
+                hasPrevious={hasPrevious}
+                onPrevious={() => setPage(p => Math.max(1, p - 1))}
+                onNext={() => setPage(p => p + 1)}
+                loading={loading}
+            />
 
             {/* Footer */}
             <div className="mt-4 flex items-center justify-between text-[9px] text-neutral-400 uppercase tracking-wider">

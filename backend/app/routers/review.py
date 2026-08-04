@@ -1,5 +1,5 @@
 # app/routes/review.py
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -13,12 +13,15 @@ from app.models.catalog.listing import Listing
 from app.models.social.review import Review
 from fastapi import HTTPException
 import uuid
+from app.core.rate_limit import limiter
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 
 @router.post("/order/{order_id}/listing/{listing_id}", response_model=ReviewResponse)
+@limiter.limit("5/minute")
 def create_review(
+    request: Request,
     order_id: UUID,
     listing_id: UUID,
     data: ReviewCreate,

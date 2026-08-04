@@ -1,5 +1,5 @@
 # backend/app/routers/seller.py
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.database import get_db
@@ -14,12 +14,16 @@ from app.services.seller_service import SellerService
 from app.models.user.user import User
 from app.core.dependencies import get_current_user_optional
 from app.models.seller import SellerProfile
+from app.schemas.pagination import PaginatedResponse
+from app.core.rate_limit import limiter
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
 
 @router.post("/apply", response_model=SellerResponse)
+@limiter.limit("2/minute")
 def apply_for_seller(
+    request: Request,
     data: SellerApply,
     current_user=Depends(get_current_user),
     db=Depends(get_db),
@@ -41,10 +45,14 @@ def update_seller_profile(
     return SellerService.update_seller_profile(current_user, data, db)
 
 
-@router.get("/", response_model=list[SellerResponse])
-def get_all_sellers(db: Session = Depends(get_db)):
-    """Get all approved sellers."""
-    return SellerService.get_all_sellers(db)
+@router.get("/", response_model=PaginatedResponse[SellerResponse])
+def get_all_sellers(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Get paginated approved sellers."""
+    return SellerService.get_all_sellers(db, page, limit)
 
 
 @router.get("/me", response_model=SellerResponse)

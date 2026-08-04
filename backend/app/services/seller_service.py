@@ -1,4 +1,4 @@
-# backend/app/services/seller_service.py
+from app.utils.pagination import paginate
 from fastapi import HTTPException
 from app.models.catalog.listing import Listing
 from app.models.seller.seller import SellerProfile
@@ -240,24 +240,26 @@ class SellerService:
         return seller
 
     @staticmethod
-    def get_all_sellers(db):
-        sellers = (
+    def get_all_sellers(db, page: int = 1, limit: int = 20):
+        query = (
             db.query(SellerProfile)
             .filter(SellerProfile.verification_status == VerificationStatus.approved)
-            .all()
+            .order_by(SellerProfile.created_at.desc())
         )
 
-        for seller in sellers:
+        result = paginate(query, page, limit)
+
+        # Stats still need to run per-item, on just this page's sellers
+        for seller in result["items"]:
             followers_count = (
                 db.query(Follow).filter(Follow.seller_id == seller.id).count()
             )
             rating_stats = ReviewService.get_seller_rating_stats(seller.id, db)
-
             seller.followers_count = followers_count
             seller.average_rating = rating_stats["average_rating"]
             seller.total_reviews = rating_stats["total_reviews"]
 
-        return sellers
+        return result
 
     @staticmethod
     def get_my_seller_profile(current_user, db):

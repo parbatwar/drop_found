@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { useAnnouncement } from '../hooks/useAnnouncement';
+import SearchModal from './SearchModal';
 
 function Navbar() {
     const { user, logout } = useAuth();
@@ -11,6 +12,7 @@ function Navbar() {
     const { announcements, loading } = useAnnouncement();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const dropdownRef = useRef(null);
     const [isScrolled, setIsScrolled] = useState(false);
 
@@ -138,7 +140,10 @@ function Navbar() {
                         {/* Right Actions Block */}
                         <div className="flex items-center space-x-5 order-last">
                             {/* Search */}
-                            <button className="text-neutral-400 hover:text-black transition-colors duration-200">
+                            <button 
+                                onClick={() => setIsSearchOpen(true)}
+                                className="text-neutral-400 hover:text-black transition-colors duration-200"
+                            >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
@@ -157,10 +162,6 @@ function Navbar() {
                                         d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                                     />
                                 </svg>
-
-                                <span className="absolute -top-1.5 -right-1.5 bg-black text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-light">
-                                    0
-                                </span>
                             </Link>
 
                             {/* Authentication Node */}
@@ -334,6 +335,11 @@ function Navbar() {
                     </div>
                 </div>
             )}
+            {/* Search Modal */}
+            <SearchModal 
+                isOpen={isSearchOpen} 
+                onClose={() => setIsSearchOpen(false)} 
+            />
         </>
     );
 }

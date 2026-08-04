@@ -1,34 +1,3 @@
-/**
- * ListingsPage - Reusable page component for displaying product listings with filters
- * 
- * This component serves as the main listing page for any product category.
- * It fetches listings from the API based on provided filters and displays them in a grid.
- * Supports filtering by category, gender, size, color, search, and sorting.
- * 
- * @param {Object} props
- * @param {string} props.sellerType - 'thrift_shop' or 'retail_shop' - filters listings by seller type
- * @param {string} props.title - Page title displayed in the hero section
- * @param {string} props.description - Page description displayed in the hero section
- * @param {string} [props.gender] - Optional gender filter (men/women/unisex)
- * @param {string} [props.categoryId] - Optional category ID filter
- * 
- * @example
- * // For thrift page
- * <ListingsPage 
- *   sellerType="thrift_shop" 
- *   title="Shop Thrift" 
- *   description="Discover pre-loved fashion." 
- * />
- * 
- * // For men's category
- * <ListingsPage 
- *   gender="men" 
- *   title="Men's Collection" 
- *   description="Curated pieces for men." 
- * />
- */
-
-// pages/listings/ListingsPage.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getListings } from '../../api/listings';
@@ -36,26 +5,33 @@ import { getCategories } from '../../api/category';
 import ListingCard from '../../components/listings/ListingCard';
 import ListingGrid from '../../components/listings/ListingGrid';
 import ListingFilters from '../../components/listings/ListingFilters';
+import Pagination from '../../components/common/Pagination';
 
 function ListingsPage({ sellerType, title, description, gender, categoryId }) {
     const [listings, setListings] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    // ✅ Pagination state
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [hasNext, setHasNext] = useState(false);
+    const [hasPrevious, setHasPrevious] = useState(false);
+    const [total, setTotal] = useState(0);
+
     const [filters, setFilters] = useState({
         search: "",
         category_id: "",
         seller_type: sellerType || "",
         gender: gender || "",
         size: "",
-        // color: "",
         sort: "newest",
     });
 
-    // Fetch categories from backend
     useEffect(() => {
         getCategories()
-            .then(res => setCategories(res.data))
+            .then(res => setCategories(res.data || []))
             .catch(err => console.error('Failed to fetch categories:', err));
     }, []);
 
@@ -68,12 +44,20 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
                 seller_type: filters.seller_type || undefined,
                 gender: filters.gender || gender || undefined,
                 size: filters.size || undefined,
-                // color: filters.color || undefined,
                 sort: filters.sort,
+                page: page,
+                limit: 20,
                 ...(categoryId && { category_id: categoryId }),
             };
             const res = await getListings(params);
-            setListings(res.data || []);
+            const data = res.data;
+
+            // ✅ Unwrap paginated response
+            setListings(data.items || []);
+            setTotal(data.total || 0);
+            setTotalPages(data.total_pages || 1);
+            setHasNext(data.has_next || false);
+            setHasPrevious(data.has_previous || false);
         } catch (error) {
             console.error("Failed to fetch listings:", error);
         } finally {
@@ -84,10 +68,11 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
     useEffect(() => {
         const delayDebounceFn = setTimeout(fetchListings, 300);
         return () => clearTimeout(delayDebounceFn);
-    }, [filters, sellerType, gender, categoryId]);
+    }, [filters, sellerType, gender, categoryId, page]);
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
+        setPage(1);
     };
 
     const clearFilters = () => {
@@ -97,10 +82,13 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
             seller_type: sellerType || "",
             gender: gender || "",
             size: "",
-            // color: "",
             sort: "newest",
         });
+        setPage(1);
     };
+
+    const handleNextPage = () => setPage(p => p + 1);
+    const handlePreviousPage = () => setPage(p => Math.max(1, p - 1));
 
     const getActiveFilterCount = () => {
         let count = 0;
@@ -109,7 +97,6 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
         if (filters.seller_type && filters.seller_type !== sellerType) count++;
         if (filters.gender && filters.gender !== gender) count++;
         if (filters.size) count++;
-        // if (filters.color) count++;
         if (filters.sort !== "newest") count++;
         return count;
     };
@@ -152,7 +139,7 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
                         )}
                     </button>
                     <span className="text-[10px] tracking-wider text-neutral-400">
-                        {!loading && `${listings.length} items`}
+                        {!loading && `${total} items`}
                     </span>
                 </div>
             </div>
@@ -165,7 +152,7 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
                     onFilterChange={handleFilterChange}
                     onClearFilters={clearFilters}
                     onClose={() => setIsFilterOpen(false)}
-                    showSellerTypeFilter={!sellerType} // ✅ Show seller type filter only on gender pages
+                    showSellerTypeFilter={!sellerType}
                 />
             )}
 
@@ -174,20 +161,29 @@ function ListingsPage({ sellerType, title, description, gender, categoryId }) {
                 {loading ? (
                     <ListingGrid.Loading count={8} />
                 ) : listings.length > 0 ? (
-                    <ListingGrid>
-                        {listings.map((item) => (
-                            <ListingCard key={item.id} listing={item} />
-                        ))}
-                    </ListingGrid>
+                    <>
+                        <ListingGrid>
+                            {listings.map((item) => (
+                                <ListingCard key={item.id} listing={item} />
+                            ))}
+                        </ListingGrid>
+
+                        {/* ✅ Pagination Component */}
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            hasNext={hasNext}
+                            hasPrevious={hasPrevious}
+                            onPrevious={handlePreviousPage}
+                            onNext={handleNextPage}
+                            loading={loading}
+                        />
+                    </>
                 ) : (
                     <div className="border border-neutral-200 bg-neutral-50 p-20 text-center">
                         <div className="text-4xl font-light text-neutral-300 mb-4">🔍</div>
-                        <p className="text-sm text-neutral-400 uppercase tracking-wider">
-                            No items found
-                        </p>
-                        <p className="text-[10px] text-neutral-300 mt-2">
-                            Try adjusting your filters or search terms.
-                        </p>
+                        <p className="text-sm text-neutral-400 uppercase tracking-wider">No items found</p>
+                        <p className="text-[10px] text-neutral-300 mt-2">Try adjusting your filters or search terms.</p>
                     </div>
                 )}
             </div>

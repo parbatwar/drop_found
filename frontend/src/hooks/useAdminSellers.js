@@ -32,8 +32,9 @@ export const useAdminSellers = () => {
                 getSellers()
             ]);
             
-            const pending = pendingRes.data || [];
-            const approved = approvedRes.data || [];
+            // ✅ Unwrap paginated responses
+            const pending = pendingRes.data?.items || [];
+            const approved = approvedRes.data?.items || [];
             
             const all = [
                 ...pending.map(s => ({ ...s, status: 'pending' })),
