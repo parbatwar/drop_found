@@ -195,6 +195,33 @@ function Home() {
                 </div>
             </section>
 
+            {/* This Week - New Drops */}
+            <section className="py-16">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-end justify-between mb-10">
+                        <div>
+                            <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block mb-1">Latest Arrivals</span>
+                            <h2 className="text-xl font-light tracking-[0.15em] uppercase text-black">New Drops</h2>
+                        </div>
+                        <Link to="/all" className="text-xs text-neutral-400 hover:text-black transition-colors tracking-widest uppercase border-b border-transparent hover:border-black pb-0.5">
+                            Browse All
+                        </Link>
+                    </div>
+
+                    {loading ? (
+                        <ListingGrid.Loading count={8} />
+                    ) : listings.length === 0 ? (
+                        <p className="text-xs tracking-wider text-neutral-400 py-4">No drops found this week.</p>
+                    ) : (
+                        <ListingGrid>
+                            {listings.slice(0, 8).map((item) => (
+                                <ListingCard key={item.id} listing={item} />
+                            ))}
+                        </ListingGrid>
+                    )}
+                </div>
+            </section>
+
             {/* Featured Shops */}
             <section className="py-16 border-b border-neutral-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -238,32 +265,7 @@ function Home() {
                 </div>
             </section>
 
-            {/* This Week - New Drops */}
-            <section className="py-16">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-end justify-between mb-10">
-                        <div>
-                            <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block mb-1">Latest Arrivals</span>
-                            <h2 className="text-xl font-light tracking-[0.15em] uppercase text-black">New Drops</h2>
-                        </div>
-                        <Link to="/all" className="text-xs text-neutral-400 hover:text-black transition-colors tracking-widest uppercase border-b border-transparent hover:border-black pb-0.5">
-                            Browse All
-                        </Link>
-                    </div>
 
-                    {loading ? (
-                        <ListingGrid.Loading count={8} />
-                    ) : listings.length === 0 ? (
-                        <p className="text-xs tracking-wider text-neutral-400 py-4">No drops found this week.</p>
-                    ) : (
-                        <ListingGrid>
-                            {listings.slice(0, 8).map((item) => (
-                                <ListingCard key={item.id} listing={item} />
-                            ))}
-                        </ListingGrid>
-                    )}
-                </div>
-            </section>
 
             {/* For Sellers B2B CTA - Dynamic based on status */}
             <section className="bg-neutral-50 py-20 border-t border-neutral-100">
