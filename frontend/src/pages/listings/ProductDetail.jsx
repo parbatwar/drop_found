@@ -68,6 +68,24 @@ function ProductDetail() {
     const isBuyable = canBuy(listing);
     const statusMessage = getStatusDisplay(listing.status, listing.quantity);
 
+    // Try to get shop name from different possible locations
+    const shopName = listing?.seller?.shop_name || 
+                     listing?.shop_name || 
+                     listing?.seller_shop_name || 
+                     'Unknown Shop';
+
+    const shopSlug = listing?.seller?.slug || 
+                     listing?.shop_slug || 
+                     '';
+
+    const isVerified = listing?.seller?.verified || 
+                       listing?.verified || 
+                       false;
+
+    const sellerType = listing?.seller_type || 
+                       listing?.type || 
+                       '';
+
     return (
         <div className="bg-white min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-14">
@@ -140,149 +158,150 @@ function ProductDetail() {
                     </div>
 
                     {/* RIGHT: PRODUCT INFO */}
-                    <div className="space-y-8">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                                <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400">
-                                    {listing.category_name || 'Uncategorized'}
-                                </span>
-                                <span className="w-px h-3 bg-neutral-300"></span>
-                                <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400">
-                                    {listing.gender || 'Unisex'}
-                                </span>
-                            </div>
-                            <h1 className="text-3xl md:text-4xl font-light tracking-tight text-black leading-tight">
+                    <div className="space-y-6">
+                        {/* Category & Gender */}
+                        <div className="flex items-center gap-3">
+                            <span className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
+                                {shopName}
+                            </span>
+                            <span className="w-px h-3 bg-neutral-200"></span>
+                            <span className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
+                                {listing.gender || 'Unisex'}
+                            </span>
+                            <span className="w-px h-3 bg-neutral-200"></span>
+                            <span className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 font-medium">
+                                {listing.category_name || 'Uncategorized'}
+                            </span>
+                        </div>
+
+                        {/* Title & Price */}
+                        <div className="space-y-2">
+                            <h1 className="text-2xl md:text-[26px] font-normal tracking-tight text-neutral-900 leading-snug">
                                 {listing.title}
                             </h1>
-                            <p className="text-2xl font-light text-neutral-900">
-                                {getPriceDisplay(listing.price)}
-                            </p>
+                            <div className="flex items-baseline gap-3">
+                                <p className="text-xl font-normal text-neutral-900">
+                                    {getPriceDisplay(listing.price)}
+                                </p>
+                                {listing.status === "active"}
+                            </div>
                         </div>
 
+                        {/* Tags / Badges & Ratings */}
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex flex-wrap gap-2">
-                                <span className="text-[10px] uppercase tracking-widest border border-neutral-200 px-3 py-1">
-                                    {listing.seller_type === "thrift" ? "Thrift" : "Retailer"}
-                                </span>
-                                {listing.status === "active" && listing.quantity > 0 && (
-                                    <span className="text-[10px] uppercase tracking-widest bg-green-50 text-green-700 px-3 py-1 border border-green-200">
-                                        In Stock
+                                {sellerType === "thrift_shop" && (
+                                    <span className="text-[10px] uppercase tracking-wider border border-green-200 bg-green-50 text-green-800 px-2.5 py-0.5 rounded">
+                                        Thrift
                                     </span>
                                 )}
-                                {listing.quantity <= 3 && listing.quantity > 0 && (
-                                    <span className="text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-3 py-1 border border-amber-200">
-                                        Only {listing.quantity} left
+                                {sellerType === "thrift_shop" && listing.condition && (
+                                    <span className="text-[10px] uppercase tracking-wider bg-neutral-100 text-neutral-700 px-2.5 py-0.5 rounded capitalize">
+                                        {listing.condition.replace("_", " ")}
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                                {totalReviews > 0 && (
-                                    <div className="flex items-center gap-1.5">
-                                        <StarRating rating={averageRating} />
-                                        <span className="text-sm font-light">{averageRating.toFixed(1)}</span>
-                                    </div>
-                                )}
-                                <span className="text-[10px] text-neutral-400">
-                                    ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
-                                </span>
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4 py-6 border-t border-b border-neutral-100">
-                            <div>
-                                <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 mb-0.5">Size</p>
-                                <p className="text-sm uppercase text-black">
-                                    {listing.size?.replace('_', ' ') || 'One Size'}
-                                </p>
-                            </div>
-                            {listing.seller_type === "thrift_shop" && (
-                                <div>
-                                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 mb-0.5">Condition</p>
-                                    <p className="text-sm capitalize text-black">
-                                        {listing.condition?.replace("_", " ") || 'Not specified'}
-                                    </p>
-                                </div>
-                            )}
-                            <div>
-                                <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 mb-0.5">Quantity</p>
-                                <p className="text-sm text-black">{listing.quantity} available</p>
-                            </div>
-                            {listing.seller && (
-                                <div>
-                                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 mb-0.5">Seller</p>
-                                    <Link 
-                                        to={`/shop/${listing.seller.slug}`} 
-                                        className="text-sm text-black hover:underline transition-colors"
-                                    >
-                                        {listing.seller.shop_name}
-                                    </Link>
+                            {totalReviews > 0 && (
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <StarRating rating={averageRating} />
+                                    <span className="text-xs font-light text-neutral-800">{averageRating.toFixed(1)}</span>
+                                    <span className="text-[10px] text-neutral-400">({totalReviews})</span>
                                 </div>
                             )}
                         </div>
 
+                        {/* Size Display Info */}
+                        <div className="pt-2">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-neutral-500">
+                                    Size: <strong className="font-medium text-neutral-900 uppercase">{listing.size?.replace('_', ' ') || 'One Size'}</strong>
+                                </span>
+                            </div>
+                        </div>
+
+
+                        {/* Description */}
                         {listing.description && (
-                            <div>
-                                <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 mb-2">Description</p>
-                                <p className="text-sm text-neutral-600 leading-relaxed">{listing.description}</p>
+                            <div className="pt-2">
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 mb-1.5">Description</p>
+                                <p className="text-xs text-neutral-600 leading-relaxed">{listing.description}</p>
                             </div>
                         )}
 
-                        <div className="space-y-3 pt-4">
+                        {/* Actions & Quantity */}
+                        <div className="space-y-4 pt-4">
                             {isBuyable ? (
                                 <>
-                                    <div className="flex items-center gap-4 py-1">
-                                        <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">Quantity</label>
-                                        <div className="flex items-center border border-neutral-200">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center bg-neutral-100 rounded-full overflow-hidden border border-neutral-200/60">
                                             <button 
                                                 onClick={() => setQuantity((q) => Math.max(1, q - 1))} 
-                                                className="w-8 h-8 flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                                                className="w-10 h-10 flex items-center justify-center hover:bg-neutral-200/50 transition-colors text-neutral-700"
+                                                aria-label="Decrease quantity"
                                             >
                                                 −
                                             </button>
-                                            <span className="w-10 text-center text-sm">{quantity}</span>
+                                            <span className="w-8 text-center text-xs font-medium text-neutral-900">{quantity}</span>
                                             <button 
                                                 onClick={() => setQuantity((q) => Math.min(listing.quantity, q + 1))} 
-                                                className="w-8 h-8 flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                                                className="w-10 h-10 flex items-center justify-center hover:bg-neutral-200/50 transition-colors text-neutral-700"
+                                                aria-label="Increase quantity"
                                             >
                                                 +
                                             </button>
                                         </div>
-                                        {listing.quantity <= 3 && (
-                                            <span className="text-[9px] text-amber-600 uppercase tracking-wider">
-                                                Only {listing.quantity} left
-                                            </span>
-                                        )}
+
+
                                     </div>
+
+                                    {listing.quantity <= 3 && listing.quantity > 0 && (
+                                        <p className="text-[10px] text-amber-600 uppercase tracking-wider">
+                                            Only {listing.quantity} left in stock
+                                        </p>
+                                    )}
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 
                                             onClick={() => handleBuyNow(quantity)} 
-                                            className="bg-black text-white py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-neutral-800 transition-colors"
+                                            className="border border-black text-black py-3.5 text-[11px] tracking-[0.2em] uppercase rounded-full hover:bg-black hover:text-white transition-colors"
                                         >
                                             Buy Now
                                         </button>
                                         <button 
                                             onClick={() => handleAddToCart(quantity)} 
                                             disabled={addingToCart} 
-                                            className="border border-black py-3.5 text-[11px] tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="bg-black text-white py-3.5 px-6 text-[11px] tracking-[0.2em] uppercase rounded-full hover:bg-neutral-800 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {addingToCart ? "Adding..." : "Add to Cart"}
                                         </button>
                                     </div>
                                 </>
                             ) : (
-                                <div className="w-full border border-neutral-200 py-4 text-center text-[11px] text-neutral-400 uppercase tracking-[0.25em] bg-neutral-50">
+                                <div className="w-full border border-neutral-200 py-4 text-center text-[11px] text-neutral-400 uppercase tracking-[0.2em] bg-neutral-50 rounded-full">
                                     {statusMessage}
                                 </div>
                             )}
 
-                            <button 
-                                onClick={toggleWishlist} 
-                                className="w-full flex items-center justify-center gap-2 border border-neutral-200 py-3 text-[10px] uppercase tracking-[0.2em] hover:border-black transition-colors"
-                            >
-                                <Icons.Heart className="w-4 h-4" filled={isWishlisted} />
-                                {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-                            </button>
+                            {/* Secondary Actions: Share & Wishlist */}
+                            <div className="flex items-center gap-2 pt-2">
+
+
+                                <button 
+                                    onClick={toggleWishlist} 
+                                    className="flex-1 flex items-center justify-center gap-2 border border-neutral-200 py-3 px-4 text-[10px] uppercase tracking-[0.2em] rounded-full hover:border-neutral-900 transition-colors text-neutral-800"
+                                >
+                                    <Icons.Heart className="w-4 h-4" filled={isWishlisted} />
+                                    {isWishlisted ? "Remove from Wishlist" : "Add to Wish list"}
+                                </button>
+                            </div>
+
+                            {/* Shipping info */}
+                            <div className="pt-3 border-t border-neutral-100">
+                                <p className="text-[11px] text-neutral-500">
+                                    SHIPS FREE: For orders over NPR 5,000.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

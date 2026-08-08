@@ -11,6 +11,8 @@
  * @param {Function} props.onFilterChange - Callback when filter changes
  * @param {Function} props.onClearFilters - Callback to clear all filters
  * @param {Function} props.onClose - Callback to close the drawer
+ * @param {Boolean} props.showSellerTypeFilter - Whether to show seller type filter
+ * @param {Boolean} props.showGenderFilter - Whether to show gender filter
  * 
  * @example
  * <ListingFilters
@@ -19,10 +21,19 @@
  *   onFilterChange={handleFilterChange}
  *   onClearFilters={clearFilters}
  *   onClose={() => setIsFilterOpen(false)}
+ *   showSellerTypeFilter={true}
+ *   showGenderFilter={true}
  * />
  */
-// components/listings/ListingFilters.jsx
-function ListingFilters({ categories, filters, onFilterChange, onClearFilters, onClose, showSellerTypeFilter = false }) {
+function ListingFilters({ 
+    categories, 
+    filters, 
+    onFilterChange, 
+    onClearFilters, 
+    onClose, 
+    showSellerTypeFilter = false,
+    showGenderFilter = true 
+}) {
     const sizes = [
         { label: "XS", value: "xs" },
         { label: "S", value: "s" },
@@ -40,35 +51,44 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
         { label: "Unisex", value: "unisex" },
     ];
 
-    // ✅ Updated: Use 'retailer' instead of 'brand_new'
     const sellerTypes = [
         { label: "All", value: "" },
         { label: "Thrift", value: "thrift" },
         { label: "Brand New", value: "retail_shop" },
     ];
 
-    // Colors (uncommented if needed)
-    // const colors = [
-    //     { label: "Black", value: "black" },
-    //     { label: "White", value: "white" },
-    //     { label: "Blue", value: "blue" },
-    //     { label: "Red", value: "red" },
-    //     { label: "Green", value: "green" },
-    //     { label: "Yellow", value: "yellow" },
-    //     { label: "Brown", value: "brown" },
-    //     { label: "Gray", value: "gray" },
-    //     { label: "Navy", value: "navy" },
-    //     { label: "Other", value: "other" },
-    // ];
+    // Colors for future use
+    const colors = [
+        { label: "Black", value: "black" },
+        { label: "White", value: "white" },
+        { label: "Blue", value: "blue" },
+        { label: "Red", value: "red" },
+        { label: "Green", value: "green" },
+        { label: "Yellow", value: "yellow" },
+        { label: "Brown", value: "brown" },
+        { label: "Gray", value: "gray" },
+        { label: "Navy", value: "navy" },
+    ];
+
+    // Check if a filter value is active
+    const isActive = (filterKey, value) => {
+        if (value === '') {
+            return !filters[filterKey] || filters[filterKey] === '';
+        }
+        return filters[filterKey] === value;
+    };
 
     return (
         <>
+            {/* Backdrop */}
             <div 
                 className="fixed inset-0 bg-black/20 z-40" 
                 onClick={onClose} 
             />
             
+            {/* Drawer */}
             <div className="fixed top-0 left-0 h-full w-full max-w-sm bg-white z-50 p-8 shadow-2xl overflow-y-auto">
+                {/* Header */}
                 <div className="flex justify-between items-center mb-8">
                     <h2 className="text-xl font-light tracking-tight text-black">
                         Filters
@@ -76,6 +96,7 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                     <button 
                         onClick={onClose}
                         className="text-neutral-400 hover:text-black transition-colors"
+                        aria-label="Close filters"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -92,7 +113,7 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                         <div className="relative">
                             <input 
                                 className="w-full border-b border-neutral-200 py-2.5 pl-8 text-sm focus:border-black outline-none transition-colors bg-transparent" 
-                                value={filters.search} 
+                                value={filters.search || ''} 
                                 onChange={(e) => onFilterChange('search', e.target.value)} 
                                 placeholder="Search by product name..." 
                             />
@@ -105,24 +126,58 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                         </p>
                     </div>
 
-                    {/* ✅ Seller Type Filter - Only show on gender pages */}
+                    {/* Seller Type Filter - Shows on Men/Women pages */}
                     {showSellerTypeFilter && (
                         <div>
                             <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
                                 Seller Type
                             </label>
                             <div className="flex flex-wrap gap-2">
-                                {sellerTypes.map(s => (
+                                {sellerTypes.map((s) => (
                                     <button 
                                         key={s.value} 
                                         onClick={() => onFilterChange('seller_type', s.value)} 
-                                        className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                            filters.seller_type === s.value 
+                                        className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                            isActive('seller_type', s.value)
                                                 ? "bg-black text-white border-black" 
                                                 : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                                         }`}
                                     >
                                         {s.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Gender Filter - Shows on Thrift/Brand pages */}
+                    {showGenderFilter && (
+                        <div>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
+                                Gender
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                <button 
+                                    onClick={() => onFilterChange('gender', '')} 
+                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                        isActive('gender', '')
+                                            ? "bg-black text-white border-black" 
+                                            : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
+                                    }`}
+                                >
+                                    All
+                                </button>
+                                {genders.map((g) => (
+                                    <button 
+                                        key={g.value} 
+                                        onClick={() => onFilterChange('gender', g.value)} 
+                                        className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                            isActive('gender', g.value)
+                                                ? "bg-black text-white border-black" 
+                                                : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
+                                        }`}
+                                    >
+                                        {g.label}
                                     </button>
                                 ))}
                             </div>
@@ -137,20 +192,20 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                         <div className="flex flex-wrap gap-2">
                             <button 
                                 onClick={() => onFilterChange('category_id', '')} 
-                                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                    !filters.category_id 
+                                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                    isActive('category_id', '')
                                         ? "bg-black text-white border-black" 
                                         : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                                 }`}
                             >
                                 All
                             </button>
-                            {categories.map(cat => (
+                            {categories.map((cat) => (
                                 <button 
                                     key={cat.id} 
-                                    onClick={() => onFilterChange('category_id', filters.category_id === cat.id ? '' : cat.id)} 
-                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                        filters.category_id === cat.id 
+                                    onClick={() => onFilterChange('category_id', String(cat.id))} 
+                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                        isActive('category_id', String(cat.id))
                                             ? "bg-black text-white border-black" 
                                             : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                                     }`}
@@ -161,40 +216,6 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                         </div>
                     </div>
 
-                    {/* Gender - Only show if not already filtered */}
-                    {!filters.gender && (
-                        <div>
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
-                                Gender
-                            </label>
-                            <div className="flex flex-wrap gap-2">
-                                <button 
-                                    onClick={() => onFilterChange('gender', '')} 
-                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                        !filters.gender 
-                                            ? "bg-black text-white border-black" 
-                                            : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                                    }`}
-                                >
-                                    All
-                                </button>
-                                {genders.map(g => (
-                                    <button 
-                                        key={g.value} 
-                                        onClick={() => onFilterChange('gender', filters.gender === g.value ? '' : g.value)} 
-                                        className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                            filters.gender === g.value 
-                                                ? "bg-black text-white border-black" 
-                                                : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                                        }`}
-                                    >
-                                        {g.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Size */}
                     <div>
                         <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
@@ -203,20 +224,20 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                         <div className="flex flex-wrap gap-2">
                             <button 
                                 onClick={() => onFilterChange('size', '')} 
-                                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                    !filters.size 
+                                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                    isActive('size', '')
                                         ? "bg-black text-white border-black" 
                                         : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                                 }`}
                             >
                                 All
                             </button>
-                            {sizes.map(s => (
+                            {sizes.map((s) => (
                                 <button 
                                     key={s.value} 
-                                    onClick={() => onFilterChange('size', filters.size === s.value ? '' : s.value)} 
-                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                        filters.size === s.value 
+                                    onClick={() => onFilterChange('size', s.value)} 
+                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                        isActive('size', s.value)
                                             ? "bg-black text-white border-black" 
                                             : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                                     }`}
@@ -227,64 +248,43 @@ function ListingFilters({ categories, filters, onFilterChange, onClearFilters, o
                         </div>
                     </div>
 
-                    {/* Color - Uncommented if you want to use it 
-                    <div>
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
-                            Color
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            <button 
-                                onClick={() => onFilterChange('color', '')} 
-                                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                    !filters.color 
-                                        ? "bg-black text-white border-black" 
-                                        : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                                }`}
-                            >
-                                All
-                            </button>
-                            {colors.map(c => (
+                    {/* Color (Optional - uncomment when ready) */}
+                    {/* {showColorFilter && (
+                        <div>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
+                                Color
+                            </label>
+                            <div className="flex flex-wrap gap-2">
                                 <button 
-                                    key={c.value} 
-                                    onClick={() => onFilterChange('color', filters.color === c.value ? '' : c.value)} 
-                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                        filters.color === c.value 
+                                    onClick={() => onFilterChange('color', '')} 
+                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md ${
+                                        isActive('color', '')
                                             ? "bg-black text-white border-black" 
                                             : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                                     }`}
                                 >
-                                    {c.label}
+                                    All
                                 </button>
-                            ))}
+                                {colors.map((c) => (
+                                    <button 
+                                        key={c.value} 
+                                        onClick={() => onFilterChange('color', c.value)} 
+                                        className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 rounded-md flex items-center gap-2 ${
+                                            isActive('color', c.value)
+                                                ? "bg-black text-white border-black" 
+                                                : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
+                                        }`}
+                                    >
+                                        <span 
+                                            className="w-3 h-3 rounded-full border border-neutral-300"
+                                            style={{ backgroundColor: c.value }}
+                                        />
+                                        {c.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                    */}
-
-                    {/* Sort */}
-                    <div>
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-3 block">
-                            Sort By
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            {[
-                                { label: "Newest", value: "newest" },
-                                { label: "Price: Low to High", value: "price_asc" },
-                                { label: "Price: High to Low", value: "price_desc" },
-                            ].map(s => (
-                                <button 
-                                    key={s.value} 
-                                    onClick={() => onFilterChange('sort', s.value)} 
-                                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wider border transition-all duration-200 ${
-                                        filters.sort === s.value 
-                                            ? "bg-black text-white border-black" 
-                                            : "border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                                    }`}
-                                >
-                                    {s.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    )} */}
 
                     {/* Clear All */}
                     <button 

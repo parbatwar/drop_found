@@ -21,6 +21,7 @@ import AdminCategories from './pages/admin/Categories';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 
 // Seller Pages
+import SellerLanding from './pages/seller/SellerLanding';
 import SellerApply from './pages/seller/SellerApply';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import Listings from './pages/seller/Listings';
@@ -33,12 +34,6 @@ import SellerEdit from './pages/seller/SellerEdit';
 // Shop Pages
 import Browse from './pages/listings/Browse';
 import SellerProfile from './pages/shop/SellerProfile';
-import Thrift from './pages/shop/thrift/Thrift';
-import Retailer from './pages/shop/retailer/Retailer';
-import Men from './pages/listings/Men';
-import Women from './pages/listings/Women';
-import Kids from './pages/listings/Kids';
-import Unisex from './pages/listings/Unisex';
 
 // Order Pages
 import MyOrders from './pages/orders/MyOrders';
@@ -78,15 +73,7 @@ function App() {
                     <Route path="/shop/:slug" element={<SellerProfile />} />
                     <Route path="/product/:id" element={<ProductDetail />} />
                     <Route path="/browse" element={<Browse />} />
-                    {/* Category Pages */}
-                    <Route path="/thrift" element={<Thrift />} />
-                    <Route path="/brand-new" element={<Retailer />} />
-                    
-                    {/* Gender Pages */}
-                    <Route path="/men" element={<Men />} />
-                    <Route path="/women" element={<Women />} />
-                    <Route path="/kids" element={<Kids />} />
-                    <Route path="/unisex" element={<Unisex />} />
+                    <Route path="/sell" element={<SellerLanding />} />
                 </Route>
 
                 {/* ========================================================= */}

@@ -105,7 +105,7 @@ function Home() {
         // No application
         return {
             label: 'Partnership',
-            title: 'Become a Curator',
+            title: 'Become a Seller',
             description: 'Open your shop on Drop Found. List your pre-loved inventory, set your own rates, and reach intentional buyers across Nepal without initial listing fees.',
             buttonText: 'Apply To Sell',
             buttonLink: '/apply',
@@ -128,72 +128,100 @@ function Home() {
     return (
         <div className="bg-white min-h-screen text-neutral-900">
 
-            {/* Hero Section - Full Width Premium Editorial */}
-            <section className="w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 w-full">
-                    
-                    {/* Thrift Half */}
-                    <Link 
-                        to="/thrift" 
-                        className="group relative overflow-hidden h-[85vh] md:h-[95vh] bg-neutral-100"
+            {/* Hero Section */}
+            <section className="relative w-full h-[88vh] min-h-[520px] max-h-[820px] bg-neutral-900 overflow-hidden">
+            {/* Background Video */}
+            <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+                poster="https://images.pexels.com/photos/6070170/pexels-photo-6070170.jpeg"
+            >
+                <source 
+                src="https://www.pexels.com/download/video/8306456/" 
+                type="video/mp4" 
+                />
+                {/* Fallback: Your browser does not support the video tag. */}
+            </video>
+
+            {/* Fallback Image (shows if video fails) */}
+            <img
+                src="https://images.pexels.com/photos/6070170/pexels-photo-6070170.jpeg"
+                alt="Drop Found — Nepal's Clothing Marketplace"
+                className="absolute inset-0 w-full h-full object-cover object-center scale-105 hidden"
+            />
+
+            {/* Overlay — stronger on the left for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+            {/* Content */}
+            <div className="relative h-full flex items-center">
+                <div className="max-w-7xl mx-auto w-full px-5 sm:px-8 lg:px-12">
+                <div className="max-w-xl">
+                    {/* Label */}
+                    <p className="inline-flex items-center gap-2.5 text-[11px] tracking-[0.22em] uppercase text-white/55 font-medium mb-5">
+                    <span className="w-8 h-px bg-red-600" />
+                    Nepal's Clothing Marketplace
+                    </p>
+
+                    {/* Heading */}
+                    <h1 className="text-[2.5rem] sm:text-5xl md:text-6xl lg:text-[4.25rem] font-semibold tracking-tight leading-[1.08] text-white">
+                    Discover
+                    <br />
+                    <span className="text-red-500">Pre-loved &amp; New</span>
+                    </h1>
+
+                    {/* Description */}
+                    <p className="mt-5 text-[15px] sm:text-base text-white/65 max-w-md leading-relaxed">
+                    Shop curated thrift finds and brand-new fashion from verified sellers across Nepal. Every piece tells a story.
+                    </p>
+
+                    {/* CTAs */}
+                    <div className="mt-9 flex flex-wrap items-center gap-3.5">
+                    <Link
+                        to="/browse"
+                        className="inline-flex items-center gap-2 h-12 px-7 bg-white text-neutral-900 text-[12px] font-semibold tracking-[0.14em] uppercase rounded-full hover:bg-red-600 hover:text-white transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
                     >
-                        <img 
-                            src="https://images.pexels.com/photos/6070170/pexels-photo-6070170.jpeg?_gl=1*143wv0j*_ga*ODI3MDMzMTU5LjE3ODQxMzAyODg.*_ga_8JE65Q40S6*czE3ODQxMzAyODckbzEkZzEkdDE3ODQxMzAzMzYkajExJGwwJGgw"
-                            alt="Thrift Collection"
-                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/50 transition-colors duration-700" />
-                        
-                        {/* Left Bottom Text Placement */}
-                        <div className="absolute bottom-12 left-8 md:bottom-16 md:left-12 text-white max-w-sm">
-                            <span className="text-[10px] tracking-[0.3em] uppercase font-light opacity-70 block mb-3">
-                                Collection
-                            </span>
-                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.05em] uppercase">
-                                Thrift
-                            </h2>
-                            <div className="w-10 h-px bg-white/40 mt-3 mb-3" />
-                            <p className="text-sm font-light leading-relaxed opacity-80 max-w-xs">
-                                Pre-loved vintage & modern pieces. Each item tells a story.
-                            </p>
-                            <span className="inline-block mt-5 text-[11px] tracking-[0.25em] uppercase text-white/80 hover:text-white transition-colors duration-300 border-b border-white/30 hover:border-white pb-0.5">
-                                Explore Thrift →
-                            </span>
-                        </div>
+                        Start Shopping
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
                     </Link>
 
-                    {/* Brand New Half */}
-                    <Link 
-                        to="/brand-new" 
-                        className="group relative overflow-hidden h-[85vh] md:h-[95vh] bg-neutral-100"
+                    <Link
+                        to="/sell"
+                        className="inline-flex items-center gap-2 h-12 px-7 border border-white/35 text-white text-[12px] font-semibold tracking-[0.14em] uppercase rounded-full hover:bg-white/10 hover:border-white/55 hover:text-white/90 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
                     >
-                        <img 
-                            src="https://images.pexels.com/photos/15722837/pexels-photo-15722837.jpeg?_gl=1*jzdztu*_ga*ODI3MDMzMTU5LjE3ODQxMzAyODg.*_ga_8JE65Q40S6*czE3ODQxMzAyODckbzEkZzEkdDE3ODQxMzA1MDckajEwJGwwJGgw"
-                            alt="Brand New Collection"
-                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/50 transition-colors duration-700" />
-                        
-                        {/* Left Bottom Text Placement */}
-                        <div className="absolute bottom-12 left-8 md:bottom-16 md:left-12 text-white max-w-sm">
-                            <span className="text-[10px] tracking-[0.3em] uppercase font-light opacity-70 block mb-3">
-                                Collection
-                            </span>
-                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.05em] uppercase">
-                                Brand New
-                            </h2>
-                            <div className="w-10 h-px bg-white/40 mt-3 mb-3" />
-                            <p className="text-sm font-light leading-relaxed opacity-80 max-w-xs">
-                                Shop authentic brand new clothing from trusted brands and verified sellers.
-                            </p>
-                            <span className="inline-block mt-5 text-[11px] tracking-[0.25em] uppercase text-white/80 hover:text-white transition-colors duration-300 border-b border-white/30 hover:border-white pb-0.5">
-                                Explore Brand New →
-                            </span>
-                        </div>
+                        Become a Seller
+                        <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
                     </Link>
+                    </div>
 
+                    {/* Trust row */}
+                    <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-[11px] tracking-[0.12em] uppercase text-white/45">
+                    <span className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        Verified Sellers
+                    </span>
+                    <span className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        Secure Checkout
+                    </span>
+                    <span className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        Nepal-Wide Shipping
+                    </span>
+                    </div>
                 </div>
+                </div>
+            </div>
             </section>
+
 
             {/* This Week - New Drops */}
             <section className="py-16">
@@ -222,79 +250,167 @@ function Home() {
                 </div>
             </section>
 
-            {/* Featured Shops */}
-            <section className="py-16 border-b border-neutral-100">
+{/* Featured Shop — Editorial Campaign Banner */}
+            <section className="py-12 sm:py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="mb-10">
-                        <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block mb-1">Curated Spaces</span>
-                        <h2 className="text-xl font-light tracking-[0.15em] uppercase text-black">Verified Shops</h2>
-                    </div>
+                    <div className="group relative overflow-hidden rounded-2xl bg-neutral-900 aspect-[16/7] sm:aspect-[16/6] md:aspect-[21/8] shadow-xl">
+                        {/* Background Image with Zoom Effect */}
+                        <img 
+                            src="https://images.pexels.com/photos/15722837/pexels-photo-15722837.jpeg"
+                            alt="Curated Collection"
+                            className="w-full h-full object-cover object-center opacity-80 group-hover:scale-105 transition-transform duration-700 ease-out"
+                        />
+                        
+                        {/* Gradient Overlays for Readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
 
-                    {loading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                            {[...Array(5)].map((_, i) => <SkeletonCard key={i} aspect="aspect-square" />)}
+                        {/* Content Box */}
+                        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 md:p-12">
+                            <div className="max-w-xl">
+                                <span className="inline-block text-[10px] tracking-[0.3em] uppercase text-white/70 font-medium mb-2 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
+                                    Editor's Pick
+                                </span>
+                                <h3 className="text-xl sm:text-2xl md:text-3xl font-light tracking-wide uppercase text-white leading-tight">
+                                    The Sustainable Archive
+                                </h3>
+                                <p className="mt-2 text-xs sm:text-sm text-white/70 font-light tracking-wide line-clamp-2 max-w-md">
+                                    Explore hand-picked vintage layers and archival streetwear curated exclusively by our top-rated creators.
+                                </p>
+                                
+                                <div className="mt-5">
+                                    <Link 
+                                        to="/browse" 
+                                        className="inline-flex items-center gap-2 px-6 py-3 bg-white text-neutral-900 text-[11px] tracking-[0.2em] uppercase font-medium rounded-full hover:bg-neutral-100 transition-all duration-300 shadow-md group/btn"
+                                    >
+                                        <span>Explore Collection</span>
+                                        <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
-                    ) : sellers.length === 0 ? (
-                        <p className="text-xs tracking-wider text-neutral-400 py-4">No verified shops listed at the moment.</p>
-                    ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                            {sellers.slice(0, 5).map((shop) => (
-                                <Link key={shop.id} to={`/shop/${shop.slug}`} className="group block">
-                                    <div className="aspect-square bg-neutral-50 border border-neutral-100 overflow-hidden mb-3 relative">
-                                        {shop.avatar_url ? (
-                                            <img
-                                                src={shop.avatar_url}
-                                                alt={shop.shop_name}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform cubic-bezier(0.4, 0, 0.2, 1) duration-500"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-neutral-50 text-neutral-300 text-xs tracking-widest uppercase">
-                                                {shop.shop_name?.slice(0,2)}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <h3 className="text-xs uppercase tracking-wider text-neutral-800 group-hover:text-black transition-colors">{shop.shop_name}</h3>
-                                    <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 mt-1 uppercase tracking-widest">
-                                        <span className="text-neutral-300">/</span>
-                                        <span>{shop.seller_type || 'Curator'}</span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                    </div>
                 </div>
             </section>
 
+            {/* Featured Shops*/}
+            <section className="py-16 border-b border-neutral-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                {/* Header */}
+                <div className="flex items-end justify-between mb-10">
+                    <div>
+                        <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 block mb-1">Explore shops</span>
+                        <h2 className="text-xl font-light tracking-[0.15em] uppercase text-black">Shops</h2>
+                    </div>
+                    <Link to="/all" className="text-xs text-neutral-400 hover:text-black transition-colors tracking-widest uppercase border-b border-transparent hover:border-black pb-0.5">
+                        Browse All
+                    </Link>
+                </div>
 
-
-            {/* For Sellers B2B CTA - Dynamic based on status */}
-            <section className="bg-neutral-50 py-20 border-t border-neutral-100">
-                <div className="max-w-3xl mx-auto px-4 text-center space-y-5">
-                    <span className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 block">
-                        {sectionContent.label}
-                    </span>
-                    <h2 className="text-2xl font-light tracking-[0.1em] text-black uppercase">
-                        {sectionContent.title}
-                    </h2>
-                    <p className="text-neutral-500 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-                        {sectionContent.description}
-                    </p>
-                    <div className="pt-2">
-                        {sectionContent.buttonDisabled ? (
-                            <button
-                                className={`inline-block px-9 py-3 text-xs tracking-[0.2em] uppercase ${sectionContent.buttonClass}`}
-                                disabled
-                            >
-                                {sectionContent.buttonText}
-                            </button>
+                {loading ? (
+                <div className="flex gap-8 overflow-x-auto pb-4">
+                    {[...Array(6)].map((_, i) => (
+                    <div key={i} className="flex-shrink-0 w-28 animate-pulse">
+                        <div className="aspect-square bg-neutral-100 rounded-full mb-3" />
+                        <div className="h-3.5 bg-neutral-100 rounded w-20 mx-auto" />
+                        <div className="h-2.5 bg-neutral-100 rounded w-14 mx-auto mt-1" />
+                    </div>
+                    ))}
+                </div>
+                ) : sellers.length === 0 ? (
+                <p className="text-sm text-neutral-400 text-center py-12">No verified shops yet</p>
+                ) : (
+                <div className="flex gap-8 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+                    {sellers.slice(0, 10).map((shop) => (
+                    <Link
+                        key={shop.id}
+                        to={`/shop/${shop.slug}`}
+                        className="flex-shrink-0 flex flex-col items-center group w-28"
+                    >
+                        {/* Avatar */}
+                        <div className="w-24 h-24 rounded-full bg-neutral-100 border-2 border-neutral-200 overflow-hidden group-hover:border-neutral-400 transition-all duration-300 shadow-sm group-hover:shadow-md">
+                        {shop.avatar_url ? (
+                            <img
+                            src={shop.avatar_url}
+                            alt={shop.shop_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
                         ) : (
-                            <Link
-                                to={sectionContent.buttonLink}
-                                className={`inline-block px-9 py-3 text-xs tracking-[0.2em] uppercase transition-colors duration-300 ${sectionContent.buttonClass}`}
-                            >
-                                {sectionContent.buttonText}
-                            </Link>
+                            <div className="w-full h-full flex items-center justify-center text-neutral-400 text-lg font-light tracking-wider uppercase">
+                            {shop.shop_name?.slice(0, 2)}
+                            </div>
                         )}
+                        </div>
+                        
+                        {/* Name */}
+                        <p className="mt-3 text-sm font-medium text-neutral-700 group-hover:text-neutral-900 transition-colors truncate max-w-[100px]">
+                        {shop.shop_name}
+                        </p>
+                        
+                        {/* Seller Type */}
+                        <p className="text-[10px] uppercase tracking-wider text-neutral-400">
+                        {shop.seller_type || 'Curator'}
+                        </p>
+                    </Link>
+                    ))}
+                </div>
+                )}
+            </div>
+            </section>
+
+            {/* For Sellers */}
+            <section className="py-0 overflow-hidden">
+                <div className="w-full bg-neutral-900 relative">
+                    {/* Subtle decorative background detail */}
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+                    
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-24 relative z-10">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 lg:gap-16">
+                            
+                            {/* Left: Content */}
+                            <div className="text-center lg:text-left max-w-2xl">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-4">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span className="text-[10px] tracking-[0.25em] uppercase text-white/70 font-medium">
+                                        {sectionContent.label}
+                                    </span>
+                                </div>
+                                <h2 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-white leading-snug">
+                                    {sectionContent.title}
+                                </h2>
+                                <p className="mt-3 text-sm sm:text-base text-white/50 font-light leading-relaxed max-w-xl">
+                                    {sectionContent.description}
+                                </p>
+                            </div>
+                            
+                            {/* Right: Modern Action Button */}
+                            <div className="flex-shrink-0 flex justify-center lg:justify-end">
+                                {sectionContent.buttonDisabled ? (
+                                    <button
+                                        className={`inline-flex items-center justify-center px-8 py-4 text-[11px] tracking-[0.2em] uppercase font-medium rounded-full bg-white/10 text-white/40 cursor-not-allowed border border-white/5 ${sectionContent.buttonClass}`}
+                                        disabled
+                                    >
+                                        {sectionContent.buttonText}
+                                    </button>
+                                ) : (
+                                    <Link
+                                        to={sectionContent.buttonLink}
+                                        className="group relative inline-flex items-center justify-center px-8 py-4 text-[11px] tracking-[0.2em] uppercase font-medium rounded-full bg-white text-neutral-900 transition-all duration-300 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-white/5 overflow-hidden"
+                                    >
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            {sectionContent.buttonText}
+                                            <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                            </svg>
+                                        </span>
+                                    </Link>
+                                )}
+                            </div>
+                            
+                        </div>
                     </div>
                 </div>
             </section>
